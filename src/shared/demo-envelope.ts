@@ -1638,7 +1638,16 @@ export function demoEnvelope() {
                                 // word, which would be a new local default on the same shape: the read-out
                                 // reads EMPTY until a `'record'`-arm delivery paints it, which is never wrong,
                                 // and that paint is `renderer.ts`'s `renderPaneSize` (`S1`–`S4`) — the delivery
-                                // is the read-out's only author.
+                                // is the read-out's only author. **AND THAT AUTHOR IS A READ-OUT AND NOT A
+                                // FIGURE FIELD, WHICH IS WHY IT CAN SAY WHERE THE PANE WENT**: `pane-a` may be
+                                // dragged out of this card into one of the four zones, and the card is then left
+                                // holding its `h2` and this node around nothing — so `renderPaneSize`'s `S2`
+                                // paints the record's own statement of where the pane stands (`pane-a is in the
+                                // left zone`) where the record states a `zone`, and the record's stored figure
+                                // where it states none, because an absent `zone` IS the stage (`C-9`). **NO
+                                // NODE IS ADDED FOR IT AND THE HEADING IS NOT WRITTEN**: this is the one member
+                                // of the card already painted from the record on every delivery, and "home" is
+                                // still no destination — nothing here authors a fifth drop or a record member.
                                 type: 'div',
                                 css: { id: GUTTER_STATUS_ID, classes: ['gutter-status'] },
                                 props: { id: GUTTER_STATUS_ID },

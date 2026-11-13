@@ -13,7 +13,7 @@ import { createTabsClient, NEW_TAB_TARGET_PREFIX, type TabsClient, type TabsClie
 import { createViewClient, type ViewClient, type ViewClientReading, type ViewSubscription, type ViewWriteOutcome } from './view-client.js'
 import { createModuleClient, type ModuleClient, type ModuleClientReading, type ModuleSubscription } from './module-client.js'
 import { createSecurityClient, type SecurityClient, type SecurityClientReading, type SecuritySubscription } from './security-client.js'
-import { DECLARED_PANE_IDS, DEFAULT_PANE_BOUNDS, DEFAULT_PANE_ID, INSPECTOR_PANE_ID, MENUS_PANE_ID, defaultPaneGeometry, zoneIn, type ViewPaneGeometry, type ViewThemeRecord } from '../shared/view-shape.js'
+import { DECLARED_PANE_IDS, DEFAULT_PANE_BOUNDS, DEFAULT_PANE_ID, INSPECTOR_PANE_ID, MENUS_PANE_ID, defaultPaneGeometry, paneGeometryIn, zoneIn, type ViewPaneGeometry, type ViewThemeRecord } from '../shared/view-shape.js'
 /** **THE APPEARANCE MECHANISM IS NO LONGER IMPORTED HERE, AND THAT IS THE INSTRUCTION THIS HEAD CARRIES** (`D-97`: *"No boot
  *  time declarations — use constraint repairs"*). `D-96` wired `resolveTheme`/`applyThemeDeclaration` into `startThemeDeclaration`
  *  in THIS file and drove it from the boot's change push, which is exactly the shape `D-96` had to bolt a `changed` guard on
@@ -685,9 +685,13 @@ export function startGutterAffordance (runtime: Runtime): {
    *  `#gutter-status`'s one writer from here on. It is RETURNED for the ghost turn's reason — the delivery
    *  that drives it is the shape's — and `main()` hands it to `startViewShape` as its THIRD turn, so ONE
    *  subscription body repaints the appearance, the transient and the read-out and no second subscription
-   *  is taken (`D-90`, `D-126`). **IT READS THE SHAPE AND NEVER THE GESTURE**: the value is the record's
-   *  stored `paneSizeOf(DEFAULT_PANE_ID)`, the same member `startSizeOf` answers, so the read-out and the
-   *  next gesture's start figure cannot disagree (`D-117`). */
+   *  is taken (`D-90`, `D-126`). **IT READS THE SHAPE AND NEVER THE GESTURE**: where the record keeps the
+   *  pane in the STAGE the value is its stored `paneSizeOf(DEFAULT_PANE_ID)`, the same member `startSizeOf`
+   *  answers, so the read-out and the next gesture's start figure cannot disagree (`D-117`); and where the
+   *  record stands the pane in one of the four zones it is the record's own statement of WHERE — the pane is
+   *  not in this card any more, so a figure would be a reading of a surface that no longer holds it, and an
+   *  empty card saying nothing reads as a fault rather than as a consequence. Both arms are one function of
+   *  the same reading, which is what makes the return need no arm of its own. */
   readonly renderPaneSize: () => void
 } {
   // **THE TARGET IS RESOLVED ONCE AND IS THE SAME NODE FOR EVERY ENTRY** (`D-144`): `GUTTER_TARGET_ID` is the element the
@@ -738,11 +742,25 @@ export function startGutterAffordance (runtime: Runtime): {
    *  default over a shape `panesMustStand` already enforces, `D-129`'s case (b) — so the node authors no figure at
    *  all and `authoredSettingOf` reads that absence as a readable `''`, which no size string can equal (`D-174`:
    *  an empty reading that is never wrong, rather than a `'100'` that was right on one boot and false on the next).
-   *  `S2` — **THE VALUE IS THE RECORD'S, AND IT IS THE SAME MEMBER THE GESTURE READS**:
+   *  `S2` — **THE VALUE IS THE RECORD'S, AND THE READING IT IS COMES FROM THE RECORD TOO**:
    *  `String(getViewClient().paneSizeOf(DEFAULT_PANE_ID))`, which is what `startSizeOf` answers, so the
    *  read-out and the next gesture's start figure cannot disagree (`D-117`). Its per-id default arm is
    *  not a second authority one level below `S1`: a `'record'` family that does not name the pane answers
    *  `paneGeometryIn`'s declared figure — the same derivation the gesture reads.
+   *  **AND THE SAME DERIVATION ANSWERS WHETHER THE PANE IS HERE AT ALL**: a pane whose `zone` is ABSENT is
+   *  the STAGE's (`C-9`, `D-243`, `D-253`), so the read-out is the figure above; a pane whose `zone` is
+   *  STATED stands in that zone, and the card that owns it is left holding its heading and this read-out
+   *  around an empty hole. **A FIGURE THERE WOULD BE TRUE OF THE RECORD AND FALSE OF THE SURFACE** — the
+   *  card no longer holds that pane — so the read-out states the consequence instead, in the record's own
+   *  two words: the id the family keys the pane by and the zone it stands in (`pane-a is in the left zone`).
+   *  **THAT IS ONE RULE WITH TWO READINGS AND NOT A SPECIAL CASE**: both are a function of this one shape,
+   *  so the pane's return paints the figure back through this same turn and this same `S3` check, with no
+   *  arm of its own, nothing remembered and no "previous zone" (`D-252`: the destination is read on every
+   *  delivery and never cached). **AND IT COSTS NO NODE, NO WRITE AND NO MEMBER**: the read-out is the one
+   *  node in this card that is already painted from the record on every delivery, so the message needs no
+   *  fifth authored node and the census does not move; `D-264`'s record that *"home" is not a destination*
+   *  stands untouched, and D-264's own note that the card *"keeps its heading and status read-out around an
+   *  empty hole"* is answered here in the read-out and not by inventing the missing destination.
    *  `S3` — **THE STATE CHECK**: `authoredSettingOf(runtime, GUTTER_STATUS_ID)` — this realm's own authored
    *  read, the relation the appearance act's baseline already uses — asks whether the node already carries
    *  that `content`, and the write is SKIPPED where it does, so "not owed" means "the write would be a
@@ -756,8 +774,18 @@ export function startGutterAffordance (runtime: Runtime): {
       const client = getViewClient()
       // S1 — the family's own arm, never `filled`: a `'default'` panes family is one the record did not answer.
       if (client.shape().source.panes !== 'record') return
-      // S2 — the record's stored figure, spelled exactly as the drag's `startSizeOf` reads it.
-      const value = String(client.paneSizeOf(DEFAULT_PANE_ID))
+      // S2 — THE READING THE RECORD'S OWN MEMBERS SELECT, and never a reading this turn chooses (`D-243`/`D-253`): a pane
+      // stating NO `zone` stands in the STAGE, and the card's read-out is then the record's stored figure, spelled exactly
+      // as the drag's `startSizeOf` reads it; a pane stating a zone DOES NOT STAND IN THIS CARD AT ALL, and a figure would
+      // be a statement about a pane this surface no longer holds — so the read-out names that consequence, in the record's
+      // own two words: the id the family keys it by and the zone it stands in. ONE RULE, TWO READINGS: both arms are a
+      // function of this one reading, so the pane's return writes the figure back through this same turn and this same
+      // state check, with no special case and nothing remembered (`D-252`).
+      const zone = paneGeometryIn(client.shape().panes, DEFAULT_PANE_ID).pane.zone
+      const value =
+        typeof zone === 'string' && zone !== ''
+          ? `${DEFAULT_PANE_ID} is in the ${zone} zone`
+          : String(client.paneSizeOf(DEFAULT_PANE_ID))
       // S3 — the surface is asked, and nothing is remembered: a node already carrying this content owes no write.
       const authored = authoredSettingOf(runtime, GUTTER_STATUS_ID)
       if (authored.readable && authored.setting === value) return
