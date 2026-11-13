@@ -5732,3 +5732,22 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **THE READINGS.** `npm test` **`2,961 passed / 2 skipped` of `2,965`** with **only the two by-construction worktree rows** red before the commit; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; **census unmoved, no authored node, no new channel**; the demo rebuilt. **The app is live on `http://127.0.0.1:3787/mcp`.**
 
 **ITS REGISTER IS `D-71` TO `D-259`** as prose, unchanged and extended by this row only. **This row records a preview that shadowed its own drop, a stacking context that no child could escape, a shortcut that skipped the restore, and a keyboard affordance that turned out never to have existed.**
+## D-261 — THE RESIZE STRIP PAINTS OVER THE CONTENT: **a missing rank, not `D-260`'s trap** — and a centre hit-test would have called it fine
+
+**Status:** ACTIVE · **Date:** 2026-11-09 · **Source (user):** *"Resize handle should be over the pane contents instead of under"* — with a screenshot of the two `top`-zone panes whose strips were painted beneath their content.
+
+**THE CAUSE WAS THE FIRST OF THE TWO CANDIDATES: A RANK NEVER CLAIMED.** **The strip was already `sticky`** — **but its `z-index` was `auto`**, **so within the positioned band of its ONE stacking context DOCUMENT ORDER decided**, **and the four `.menus-menu` chips (`position: relative`, `z-index: auto`, LATER IN THE TREE) covered it.** **Measured: every ancestor to `#app` computes `static` or `auto` with no stacking context anywhere** — **so nothing was confined, and `D-260`'s trap did not apply one node down.**
+
+**AND THE MEASUREMENT THAT MATTERS IS THE ONE A CENTRE PROBE WOULD NOT HAVE MADE.** **Sampling NINE BY FIVE POINTS across the strip's own box: NINE OF FORTY-FIVE WERE COVERED WHILE ITS CENTRE READ `self`.** **So a single `elementFromPoint` at the centre would have pronounced the strip fine**, **and the defect only existed in the parts a person actually presses.** **That is the difference between a hit-test and a hit-SCAN, and this corpus should take the scan for any control it claims is reachable.**
+
+**THE FIX IS ONE RANK.** **`z-index: 1` on `#menus-vertical`, `#inspector-vertical` and `.pane-grab`** — **a positive rank paints above every `auto`-positioned sibling and all in-flow content in that context**, **so each control is topmost at its own box while the content scrolls UNDER it.** **`:focus-within { z-index: 4 }` still outranks it, so `D-260`'s drops are untouched**; **and the one box deliberately left above the strip's top band is an OPEN menu's panel** — focus-keyed, closed otherwise.
+
+**AND THE `⠿` GRAB WAS WORSE THAN THE REPORT SAID, IN BOTH ARMS.** **It answered itself at rest, and then only ONE of forty-five points in `top` at `scrollLeft 78`, and NINE of forty-five in `left` at `scrollTop 38`** — **content was painting over the very control a person must press to begin a drag.** **The same rank fixes it in both arms.**
+
+**THE TABLE COVERS EVERY HANDLE IN THE APP, IN BOTH ZONE ARMS.** **Both vertical strips and both grabs now read `self` at all forty-five points in `top`, scrolled, `left`, left-scrolled and back.** **`#gutter-horizontal` and the four ZONE STRIPS never failed** — **because a zone strip is its zone's SIBLING in the row or column, so zone content can never overlap it** — **structural rather than accidental, which is the same property `D-244` chose them for.**
+
+**AND NOTHING MOVED**: **the strips' boxes are byte-identical before and after** (`[118,36,14,125]`, `[0,276,105,14]`), **the panes' too**, **and the `top` → `left` → `top` round trip stays byte-identical.** **A paint order fix that changes no geometry is the cheapest kind there is.**
+
+**THE READINGS.** `npm test` **`2,961 passed / 2 skipped` of `2,965`** with **only the two by-construction worktree rows** red before the commit; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; `src` and `dist` byte-equal. **The app is live on `http://127.0.0.1:3787/mcp`.**
+
+**ITS REGISTER IS `D-71` TO `D-260`** as prose, unchanged and extended by this row only. **This row records a rank never claimed, a scan that caught what a centre would not, a grab covered in both arms, and two controls that were never at risk because of where they stand.**
