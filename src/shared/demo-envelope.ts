@@ -863,12 +863,17 @@ function paneMoveGripNodeOf (id: string, paneId: string, style: Record<string, s
  *  drop set. It therefore takes `D-246`'s SECOND form instead — the SAME pin the resize strip in this pane already
  *  carries — with the float's lane on the LEFT, where this grip stands and where the resize strip does not:
  *  `float: left` takes it OUT OF THE MENUS' LINE (`white-space: nowrap` would otherwise put it on a line of its own),
- *  `position: sticky` + `left: 0` holds it against the pane's left edge while the menus scroll under it, and
+ *  `position: sticky` + a `left` inset holds it against the pane's left edge while the menus scroll under it, and
  *  `position: sticky` is a POSITIONED value, so it is also the containing block its four `position: absolute` drops
- *  are placed against. **THE BOX IT TAKES IS THE LANE ITS OWN FLOAT CREATES**: the menus start where the float ends,
- *  so the strip's `14px` is spent out of the content the pane scrolls and no `padding` on the pane moves — which is
- *  what keeps `D-246`'s measured `#menus-vertical` box (`[86,36,14,125]`) exactly where it was measured. **AND NO
- *  FIGURE OF THE RECORD'S STANDS HERE**: no width of the pane, no height of the zone — only the grip's own `14px`
+ *  are placed against. **THE BOX IT TAKES IS A LANE OF THE PANE'S OWN PADDING AND NEVER A COLUMN OF THE MENUS' LINE**:
+ *  measured on a real window, the float's `14px` narrowed the line to `186px` at the widest figure the record admits,
+ *  so the four names could not fit even when the pane was at its maximum — the grip spending part of the box the painted
+ *  figure described, exactly as the resize strip's lane did (`src/renderer/index.html`'s `#pane-menus` rule states the
+ *  `box-sizing` that spends neither). **SO THE INSET IS THE LANE'S OWN WIDTH, NEGATIVE** — `-0.875rem` is the LEFT
+ *  PADDING the sheet reserves for it (`0.875rem` is this grip's authored `14px`, the one figure below), which is what
+ *  makes the pin and the lane the SAME point in either kind of zone: sticky insets resolve against the pane's CONTENT
+ *  edge, so `left: 0` would pin the grip `14px` inside the pane's left edge and over the first name. **AND NO**
+ *  **FIGURE OF THE RECORD'S STANDS HERE**: no width of the pane, no height of the zone — only the grip's own `14px`
  *  thickness, `OWED-1`'s measured handle box (`D-194`). */
 const menusGrabStyle: Record<string, string> = {
   cursor: 'grab',
@@ -876,7 +881,7 @@ const menusGrabStyle: Record<string, string> = {
   height: '14px',
   float: 'left',
   position: 'sticky',
-  left: '0',
+  left: '-0.875rem',
 }
 /** **THE GUTTER PANE'S MOVE GRIP — THE DESIGN'S OWN FORM, BECAUSE THIS PANE DOES NOT SCROLL.** `#gutter-pane`
  *  computes no `overflow` and `D-246` measured `scrollWidth == clientWidth == 100` on it, so nothing inside it can

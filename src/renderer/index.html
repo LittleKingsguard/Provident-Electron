@@ -500,9 +500,15 @@
     .menus-menu:focus-within > .menu-item:nth-of-type(6) { margin-top: calc(5 * var(--menu-row)); }
     .menus-menu:focus-within > .menu-item:nth-of-type(7) { margin-top: calc(6 * var(--menu-row)); }
     /* THE CLIP IS RELEASED ONLY WHILE A MENU IS OPEN — the pane and the zone it stands in both scroll their own axis
-       (`D-187`) and both would otherwise cut the drop-down off at the name strip's own height. */
+       (`D-187`) and both would otherwise cut the drop-down off at the name strip's own height. **AND THE ZONE IS WHICHEVER
+       ONE THE PANE STANDS IN** (`D-252`): `top`/`bottom` and the two sidebars are the four places it can be, and a sidebar
+       panel opens SIDEWAYS into the stage, so `#left`/`#right` must release their own scroll for exactly as long as a name
+       holds focus — the same release, one axis over. */
     #pane-menus:has(.menus-menu:focus-within),
-    #top:has(.menus-menu:focus-within) { overflow: visible !important; }
+    #top:has(.menus-menu:focus-within),
+    #bottom:has(.menus-menu:focus-within),
+    #left:has(.menus-menu:focus-within),
+    #right:has(.menus-menu:focus-within) { overflow: visible !important; }
     /* …AND THE RECEIPT KEEPS WRAPPING: the pane is a `nowrap` strip (so the four names hold ONE line), which would put the
        route's answer on a single scrolled line instead of the box it has always been read in. */
     #menus-receipt { white-space: normal; }
@@ -520,9 +526,9 @@
        carried a height would push every menu below itself, and a strip that carried none is the invisible one that
        shipped — so the strip is TAKEN OUT OF THE LINE (`float: right`, and `position: sticky` on top of it) and given the
        pane's OWN height, which leaves the pane's own flow exactly as the record paints it. The pane's `padding-right`
-       reserves the strip's lane, so the menus sit beside the grip instead of under it; `box-sizing: border-box` keeps the
-       pane's painted `width` the RECORD's figure (`['panes','pane-menus','width']`) with the 14px coming out of the
-       CONTENT — this sheet adds no second width authority, it only spends part of the width the record stated.
+       reserves the strip's lane, so the menus sit beside the grip instead of under it; **THE LANE IS CUT FROM THE PANE'S
+       PADDING AND NEVER FROM ITS CONTENT** — the rule below states `box-sizing: content-box` for exactly that reason, so
+       the figure the record states is the content's own and the two handles spend none of it.
        **AND THE SECOND DEFECT WAS THE SAME CLASS, UNSEEN: THE GRIP STOOD INSIDE THE SCROLLER** (the user's report
        *"The drag handle moves with the scrollbar, it should be external"*). The pane carries the painted `overflow-x: auto`
        (`D-243`) because it *"scrolls the axis it adjusts"*, and every descendant of a scroll container is translated by its
@@ -574,8 +580,25 @@
     /* **`position` IS DELIBERATELY ABSENT**: it stood here only to be the containing block of the absolutely placed
        grip, and the strip is a PINNED FLOAT now (see the block above) — a declaration whose reason has gone is a claim
        nothing keeps. Nothing else in this pane is positioned against it: each `.menus-menu` is `position: relative` for
-       its own drop-down. */
-    #pane-menus { box-sizing: border-box; padding-right: 1.125rem; white-space: nowrap; }
+       its own drop-down.
+       **AND THE FIGURE NOW DESCRIBES THE PANE'S CONTENT BOX, WITH BOTH HANDLES STANDING OUTSIDE IT.** The defect, measured
+       on a real window at the pane's own MAXIMUM width (`DEFAULT_PANE_BOUNDS`' `max`, `200`): the node painted
+       `width: 200px` and served `clientWidth 200` against `scrollWidth 210` — a HORIZONTAL SCROLLBAR AT THE WIDEST THE
+       PANE CAN BE — because under `border-box` the strip's `1.125rem` lane and the move grip's own `14px` float were spent
+       out of the figure, so the menus got `184px` of content for a line that needs `210`. `D-246` had to PIN the strip
+       because the pane scrolls, and this must not undo that: the pin is untouched (`float: right; position: sticky` with an
+       inset built from the pane's content width), and so is the grip's `float: left` pin. What moves is only WHICH BOX the
+       two lanes are cut from — the padding, outside the figure, instead of the content inside it — so the record's own
+       figure buys the menus their full width and the scrollbar is gone at `200` (`clientWidth 232` = `200 + 14 + 18` over
+       `scrollWidth 232`). NOTHING OF THE RECORD'S IS RESTATED: the painted `width` is still
+       `['panes','pane-menus','width']` and the drag still writes it; `box-sizing` spends no figure and states no preference. */
+    #pane-menus { box-sizing: content-box; padding-left: 0.875rem; padding-right: 1.125rem; white-space: nowrap; }
+    /* **THE MOVE GRIP'S LANE IS THE LEFT PADDING, AND THE NEGATIVE MARGIN IS WHAT PUTS IT THERE**: the grip is a `float:
+       left` in the pane's flow (`D-248`), so without this its own `14px` would narrow the menus' line by exactly that much
+       — the second handle spending part of the box the painted figure describes. Pulled `0.875rem` left it overhangs into
+       the lane the padding above reserves, the content starts at its own origin, and the strip stays pinned to the pane's
+       left edge (`position: sticky; left: 0`, authored on the node) where `D-248` measured it at `[0,36,14,14]`. */
+    #menus-grab { margin-left: -0.875rem; }
     #menus-vertical {
       float: right;
       position: sticky;                       /* a FLOAT can be sticky; an absolutely positioned box cannot (`D-244`'s class) */
@@ -587,6 +610,88 @@
       margin-right: -1.125rem;                /* …and the lane is where its static box lands: the pane's padding edge */
       height: 100%;
       flex: 0 0 auto;
+    }
+    /* ══ IN A SIDEBAR THE PANE'S AXES FLIP, AND SO DOES EVERYTHING THAT STANDS ON THEM ══════════════════════════════════
+       `D-243`'s rule is that a pane FILLS the axis its zone fixes and ADJUSTS the orthogonal one, and `D-252` moves the
+       pane into the zone its record names — so in `left`/`right` the pane adjusts its HEIGHT, and three authored truths
+       that were written for the `top`/`bottom` form stop being true at the same instant. **THE KEY IS THE RECORD'S OWN
+       `zone`**, published by `renderer.ts`'s pane arm as the bare `zone` attribute in the SAME `state-slice` that paints
+       the style (`props.zone`, rewritten from the record on every delivery, so it can neither go stale nor be touched by
+       the whole-key `css.style` replacement beside it) — there is no second copy of the zone in this sheet and none is
+       inferred from a box.
+         (1) THE LANES FOLLOW THE GRIP, AND THE BOX MODEL FOLLOWS THE LANES. The figure the record states is the HEIGHT
+             here and the horizontal one is the FILL (`width: 100%`), so the strip's right-hand lane is dropped and the
+             pane returns to `border-box`: an 18px lane on the fill's axis would push a `100%` pane past the zone's own
+             width and scroll the ZONE, and on the height axis there is no lane to spend at all (the strip is placed by
+             the flow below), so the record's figure IS the content's on the axis it now stands for. The GRIP's left lane
+             stays, in both forms: it costs `14px` of the pane's width either way and its pin already points at it.
+         (2) THE GRIP STANDS ON THE PANE'S BOTTOM, the edge the height moves. It cannot be flowed (`D-246`'s class, on the
+             other axis): `#pane-menus` is a scroller on that axis too (`overflow-y: auto`, `D-243`), so a control in its
+             flow travels with the scroll. It takes `D-246`'s own remedy — `position: sticky` against the scrollport's
+             BOTTOM edge — and its static position is made that same edge by `order`/`margin-top: auto` in a COLUMN, so
+             it is on the bottom edge whether the menus overflow or not. `width: auto !important` and `cursor: row-resize
+             !important` are the strip's own THICKNESS declaration and its cursor re-read on the axis it now spans: the
+             authored `css` carries them inline (`width: 14px`, `cursor: col-resize`), and an inline declaration yields to
+             a sheet only with `!important` — the same trade the clip-release rule above already makes. Neither states a
+             figure the record owns.
+         (3) THE FOUR MENUS STACK, AND EACH ONE'S PANEL OPENS TO THE SIDE. A tall narrow column has no room BELOW a name,
+             so a drop-down is meaningless there. The STACK costs one declaration (`display: flex; flex-direction:
+             column` on the pane blockifies the four chips into one row each, at the pane's own width) and the PANEL is
+             `D-231`/`D-233`'s mechanism untouched — `:focus-within` on the name, a `::before` box carrying the fill, the
+             border and the shadow, and the items `position: absolute` with one `--menu-row` offset each. Only the two
+             OFFSETS move: the panel leaves the name's RIGHT edge (`left: 100%`, `top: 0`) instead of its bottom, and its
+             items with it — and in the `right` zone both open LEFTWARD (`right: 100%`), because a panel opening right
+             from the window's own right column would paint outside the window. The row ladder is unmoved: it is
+             `margin-top`, which is the offset a vertical stack needs. */
+    #pane-menus[zone="left"],
+    #pane-menus[zone="right"] {
+      box-sizing: border-box;
+      padding-left: 0.875rem;              /* the move grip's lane, unmoved: its pin points at this edge in either form */
+      padding-right: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    #pane-menus[zone="left"] > #menus-grab,
+    #pane-menus[zone="right"] > #menus-grab { flex: 0 0 auto; }
+    #pane-menus[zone="left"] > .menus-menu,
+    #pane-menus[zone="right"] > .menus-menu { flex: 0 0 auto; }
+    #pane-menus[zone="left"] > #menus-receipt,
+    #pane-menus[zone="right"] > #menus-receipt { flex: 0 0 auto; }
+    #pane-menus[zone="left"] > #menus-vertical,
+    #pane-menus[zone="right"] > #menus-vertical {
+      order: 1;                            /* LAST in the column: its static position is the pane's bottom edge */
+      flex: 0 0 auto;
+      float: none;                         /* the pin that held it against the RIGHT edge is the height-axis lane's job now */
+      position: sticky;
+      bottom: 0;                           /* `D-246`'s remedy, on the axis this pane scrolls */
+      left: auto;
+      /* THE STATIC POSITION AND THE PIN ARE THE SAME EDGE, WHICH IS `D-246`'s OWN TWO-PART SHAPE: `margin-top: auto`
+         spends the free space ABOVE the strip when the menus are shorter than the pane, so it stands on the bottom edge
+         with nothing to scroll, and against an overflowing column the auto margin is `0` and the `bottom: 0` pin is what
+         holds it there — measured at `scrollTop 0 / 5 / 10`: `[14,276,91,14]` at every one, its bottom `290` on the
+         pane's own bottom `290`. */
+      margin: auto 0 0 0;
+      width: auto !important;              /* it spans the pane's width: the authored `14px` is its THICKNESS, now the height */
+      height: 14px;
+      cursor: row-resize !important;        /* …and the cursor follows the axis it spans (the authored one is `col-resize`) */
+    }
+    #pane-menus[zone="left"] > .menus-menu:focus-within::before {
+      left: 100%;
+      top: 0;
+    }
+    #pane-menus[zone="left"] > .menus-menu:focus-within > .menu-item {
+      left: calc(100% + var(--menu-pad));
+      top: 1px;
+    }
+    #pane-menus[zone="right"] > .menus-menu:focus-within::before {
+      right: 100%;
+      left: auto;
+      top: 0;
+    }
+    #pane-menus[zone="right"] > .menus-menu:focus-within > .menu-item {
+      right: calc(100% + var(--menu-pad));
+      left: auto;
+      top: 1px;
     }
     .gutter-handle {
       color: #6f7d90;

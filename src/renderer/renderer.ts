@@ -3363,6 +3363,26 @@ function paneFillAxisOf(zone: unknown): { readonly fill: 'width' | 'height'; rea
   return held === undefined ? null : { fill: held.member, scroll: held.scroll }
 }
 
+/** **THE RECORD'S `zone`, ANSWERED AS A DECLARED ID OR AS NOTHING — THE ATTRIBUTE THE PANE ARM PUBLISHES** (`D-243`, the
+ *  same table one declaration up). **IT EXISTS BECAUSE A RULE CANNOT KEY ON A STYLE**: `D-243` writes the pane's fill,
+ *  figure and scroll from the record's `zone`, and the sheet can read none of the three — a declaration's VALUE is not a
+ *  selector — so before this function the four zone-derived rules had no key at all and the pane's own box model, its
+ *  grip's EDGE and the menus' STACK were all authored for the `top`/`bottom` form whatever the record said. What the arm
+ *  publishes is the member itself, in the one form a stylesheet can ask about: `zone="left"` on the pane node, written
+ *  from the record on EVERY delivery, in the SAME `state-slice` as the style, on the `props` path that the whole-key
+ *  `css.style` replacement cannot reach.
+ *
+ *  **ITS ANSWER IS THE CLOSED FOUR OR `null`, AND THE `null` IS THE STATED ABSENCE** (`D-174`, `D-129`): a pane stating no
+ *  `zone` stands in the STAGE (`C-9`) and its node carries NO attribute — which the arm spells as a REMOVAL, so a pane
+ *  whose record once named a zone and no longer does cannot keep the old one (a stale attribute is a rule keyed on a
+ *  record that has moved, the one failure a published member must not have). An id the closed four do not name is the
+ *  same answer as an absent one, and a non-string never compares equal to a declared id: `find` over `LAYOUT_ZONE_AXES`
+ *  compares, exactly as `paneFillAxisOf` and `paneStandsIn`'s destination read do. */
+function declaredZoneNameOf(zone: unknown): string | null {
+  const held = LAYOUT_ZONE_AXES.find((entry) => entry.id === zone)
+  return held === undefined ? null : held.id
+}
+
 /** **THE PANE ↔ NODE MAP: WHICH AUTHORED NODE A RECORD'S PANE ID IS PAINTED ONTO** (`D-194`'s gap, `D-214`'s
  *  measurement, `D-224`'s limits; `docs/L3/renderer-wiring/design-pane-node-map.md` §2–§3). **IT EXISTS BECAUSE BOTH
  *  RE-NAMINGS ARE REFUSED, AND THAT IS THE WHOLE OF ITS REASON**: `src/shared/view-shape.ts:136-139` states the position
@@ -3532,13 +3552,33 @@ function cssTextOf(style: Record<string, string>): string {
     .join('; ')
 }
 
-function paintStyle(runtime: TabsPageRuntime, nodeId: string, style: Record<string, string>): boolean {
+/** **THE ONE THING A `css.style` WRITE CANNOT CARRY, CARRIED BESIDE IT IN THE SAME COMMAND: AN ATTRIBUTE** — and its
+ *  first and only caller is the pane arm's publication of the record's `zone` (see the site). **IT IS A `props` WRITE AND
+ *  NOT A `css` ONE**, which is the whole of why it survives the delivery: `paintStyle` hands the engine ONE `css.style`
+ *  value in `replace` mode (`D-225`, `D-234`, `D-240`), so every OTHER key is untouched by that replacement, and
+ *  `props.<key>` is the runtime's own attribute path — the route `props.id`, `props.inert` and the theme declaration
+ *  already take (`runtime.ts`'s amended predicate: a `props.<key>` mutation is the engine's attribute write, and an
+ *  ABSENT value on it is a legitimate attribute REMOVAL the engine APPLIES rather than a shape it refuses).
+ *  **TWO MUTATIONS IN ONE `state-slice` AND NOT TWO COMMANDS**: `applyCommand` forwards the mutation ARRAY as handed, so
+ *  one delivery writes one node in one turn — the same discipline `secure-panels` already takes, and the reason no second
+ *  recompile, journal entry or render pass is spent on the attribute. **AN OMITTED `value` IS THE REMOVAL AND IT IS
+ *  SPELLED AS AN ABSENT MEMBER**, never as `undefined` handed to the engine: the mutation array is what a caller reads
+ *  back, and a member that is not there says "no value" exactly as the record's own absent member does (`D-174`). */
+function paintStyle(
+  runtime: TabsPageRuntime,
+  nodeId: string,
+  style: Record<string, string>,
+  attributes?: readonly (readonly [string, string | undefined])[],
+): boolean {
+  const mutation: { targetProp: string; mode: string; value?: string }[] = [
+    { targetProp: 'css.style', mode: 'replace', value: cssTextOf(style) },
+  ]
+  for (const [name, text] of attributes ?? []) {
+    if (text === undefined) mutation.push({ targetProp: `props.${name}`, mode: 'replace' })
+    else mutation.push({ targetProp: `props.${name}`, mode: 'replace', value: text })
+  }
   try {
-    const answer = runtime.applyCommand({
-      kind: 'state-slice',
-      node: nodeId,
-      mutation: [{ targetProp: 'css.style', mode: 'replace', value: cssTextOf(style) }],
-    })
+    const answer = runtime.applyCommand({ kind: 'state-slice', node: nodeId, mutation })
     return (typeof answer?.status === 'string' ? answer.status : 'no-answer') === 'applied'
   } catch {
     return false
@@ -3658,11 +3698,24 @@ function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPage
     // `css.style` whole, so a pane's authored `overflow-x` does not survive it and the pane must restate it here — which is
     // what makes the eighteen items scroll rather than clip when the menus pane is dragged narrow.
     if (placement !== null) style[placement.scroll] = 'auto'
+    // ⟶ **THE ZONE ITSELF, PUBLISHED AS AN ATTRIBUTE ON THIS SAME NODE IN THIS SAME COMMAND** — the one member the three
+    //    parts above READ and the sheet could never ASK ABOUT. **A `css.style` VALUE IS NOT A SELECTOR**: the fill, the
+    //    figure and the scroll are all derived from `record['zone']`, and a stylesheet can key on none of them, so until
+    //    this write the pane's BOX MODEL, its GRIP'S EDGE and the MENUS' STACK were authored for the `top`/`bottom` form
+    //    and followed no record at all. The attribute is a `props` write (`paintStyle`'s second mutation, the engine's
+    //    attribute path), so the whole-key `css.style` replacement beside it cannot touch it, and it is REWRITTEN FROM THE
+    //    RECORD ON EVERY DELIVERY — so it cannot go stale, which is the one property a rule keyed on it needs.
+    //    **`null` IS THE STAGE AND SPELLS A REMOVAL, NOT NOTHING** (`D-174`, `C-9`): a pane whose record names no declared
+    //    zone carries NO `zone` attribute, and a pane that once named one and no longer does loses it in the same turn —
+    //    an attribute left standing would be a rule keyed on a record that has moved, which is `D-129`'s fault in the one
+    //    form a stylesheet cannot detect.
     // NOTHING STATED, NOTHING WRITTEN — the one rule that makes an unstated figure silent rather than defaulted. **IT IS
     // REACHED ONLY BY A PANE THAT FILLS NOTHING** (the stage pane with no stated member): a zone-resident pane is still a
-    // pane and always carries its fill and its scroll, so this `continue` never withholds them (`D-187`, `D-189`).
+    // pane and always carries its fill and its scroll, so this `continue` never withholds them (`D-187`, `D-189`) — and it
+    // withholds the ATTRIBUTE with them, on the same reading: a pane this turn writes nothing on is a pane whose record
+    // stated nothing to publish.
     if (Object.keys(style).length === 0) continue
-    if (!paintStyle(runtime, nodeId, style)) {
+    if (!paintStyle(runtime, nodeId, style, [['zone', declaredZoneNameOf(record['zone']) ?? undefined]])) {
       console.error(`[provident-renderer] layout paint: the pane ${pane.id} (node ${nodeId}) refused its ${Object.keys(style).join('/')}`)
     }
   }
