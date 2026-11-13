@@ -896,11 +896,16 @@
        asked for: *"click-drag into the vicinity of a zone and it shows a preview of the pane's placement, release causes
        it to commit"*). `src/shared/demo-envelope.ts` authors TWO `.pane-grab` grips (`#menus-grab` in the menus pane,
        `#gutter-grab` in the gutter pane), each carrying `props.tabindex: '0'` and four `.pane-drop` children whose `props`
-       name the pane and the zone a drag into them means. **THE REVEAL IS `:focus-within` AND NOTHING IS STORED**: a press
-       focuses a `tabindex="0"` element and a click elsewhere blurs it, so the four overlays open while the grip is held
-       and close when it is let go — *"NO STATE, NO TOGGLE AND NO NEW RECORD"*, exactly the four menus' rule above — and
-       THE HIDING IS CSS AND NEVER DELETION, so all eight drops stay in the markup for `provident.dispatch`,
-       `list_targets`, `get_rendered_html` and `get_markdown` while nothing renders them until a grip holds focus.
+       name the pane and the zone a drag into them means. **THE FORM IS `:focus-within`'s AND THE VISIBILITY IS THE
+       GESTURE'S** (correcting `D-248`'s *"the reveal is `:focus-within` and nothing is stored"*, which was true of
+       the ARM and false of the gesture): a press focuses a `tabindex="0"` element, so `:focus-within` is what gives the four
+       overlays their fill, their border and their label — *"NO STATE, NO TOGGLE AND NO NEW RECORD"*, exactly the four
+       menus' rule above — **but FOCUS IS NOT A DRAG**, and a released drag leaves the grip focused, so an arm keyed on
+       focus alone leaves four one-word labels standing over the pane (the user's report, measured). So the arm below is
+       the CLOSED state — `opacity: 0` and `visibility: hidden`, neither painted nor hit-testable — and `renderer.ts`'s
+       press OPENS each drop that has a window, in the same inline transient that carries its box, clearing both on every
+       end. THE HIDING IS CSS AND NEVER DELETION, so all twelve drops stay in the markup for `provident.dispatch`,
+       `list_targets`, `get_rendered_html` and `get_markdown` while nothing renders them outside a gesture.
        **THE OVERLAYS' BOX IS NOT THIS SHEET'S AND IS NO LONGER THE ENVELOPE'S EITHER — IT IS THE DRAG'S** (the `14px` grip
        thickness, `cursor: grab` and — for the menus pane only — `D-246`'s `float`/`position: sticky` pin are authored there;
        the drops themselves author `position: fixed`, a pointer cursor and `opacity: 0`, and NO extent at all): a zone's
@@ -913,10 +918,14 @@
        border, the centred one-word label and the `z-index` that keeps an overlay above the pane it was opened from — and,
        on the overlay the pointer is standing in during a drag, one TRANSIENT inline `background-color` written and cleared
        by `renderer.ts`'s `paneMovePreviewWrite`/`paneMovePreviewClear`, which is the preview's own state and no record's.
-       **AND `opacity` IS THE VISIBILITY OF THE WHOLE AFFORDANCE**: the authored `0` above is every drop's closed state, and
-       the drag raises the ONE under the pointer to `1` and drops its three siblings back to `0` — so the four windows are
-       never all painted at once (they used to be, and a drag released over no zone left them standing over the app, which
-       is exactly the debris the user reported as *"something appears in the right side of the top zone"*).
+       **AND `opacity` IS THE VISIBILITY OF THE WHOLE AFFORDANCE**: the closed `0` below is every drop's state outside a
+       gesture, and the drag raises the ONE under the pointer to `1` and keeps its three siblings at `0` — so the four
+       windows are never all painted at once (they used to be, and a drag released over no zone left them standing over the
+       app, which is exactly the debris the user reported as *"something appears in the right side of the top zone"*).
+       **THE AUTHORED `opacity: 0` ON THE ENVELOPE'S DROPS IS NO LONGER THE MECHANISM**: the gesture's clear removes an
+       inline property by name and an AUTHORED inline declaration goes with it, which is how four `opacity: 1` labels
+       survived a release — a closed state a transient can delete is not a closed state, so it is declared here
+       and the transient falls back to it.
        **AND `-webkit-app-region` IS DELIBERATELY NOT DECLARED HERE**: the drag region is the top-bar's alone and both
        grips stand OUTSIDE it — the menus pane in the `top` ZONE below the bar, the gutter pane in the stage's own card
        — so a `no-drag` here would guard against a region the compositor never had, which is the reading
@@ -934,12 +943,31 @@
       transition: background-color 120ms ease, box-shadow 120ms ease;
     }
     .pane-grab:hover, .pane-grab:focus-within { background-color: #c3ccd8; box-shadow: inset 0 0 0 1px #8f9dae; }
+    /* ══ THE GRIP IS LIFTED SO ITS OWN FOUR WINDOWS CAN BE HIT — THE OTHER HALF OF THIS PASS, AND THE REASON A DRAG *BACK* TO
+       `top` COULD NOT LAND** ══ The grip is `position: sticky` in both forms and a sticky box makes a stacking context, so
+       the `z-index: 3` on its drops is CONFINED to that context: against the pane's own positioned content — the four
+       `.menus-menu` chips are `position: relative` — the chips are later in the tree and paint ABOVE the overlays however
+       large their `z-index` is (measured live: `elementsFromPoint(490,106)` answers `menus-menu` FIRST and
+       `menus-grab-top` second). That is invisible while the dragged pane is narrow, and fatal to the user's own direction:
+       a pane arriving from a sidebar still carries `width: 100%`, so it spans the whole `top` band and its chips cover
+       every point the pointer can stand on there — so the release resolved NO drop, wrote nothing, and the pane stayed
+       where the preview had put it. **THE LIFT IS ON THE GRIP AND NOT ON THE DROP** because the drop's own `z-index` is
+       trapped inside the grip's context: a declaration on the box that MAKES the context is the only one that can raise
+       it. It costs no figure the record owns, changes no geometry, and it is also the right pinning for the sidebar's
+       sticky header row (`D-246`'s rule, third form): a pinned control belongs above the content that scrolls under it. */
+    .pane-grab:focus-within { z-index: 4; }
     /* THE FOUR ZONES ARE CLOSED UNTIL THE GRIP IS HELD, AND THEN THEY ARE FOUR TRANSLUCENT WINDOWS OVER THE LAYOUT. */
     .pane-grab > .pane-drop { display: none; }
     .pane-grab:focus-within > .pane-drop {
       display: flex;
       align-items: center;
       justify-content: center;
+      /* THE CLOSED STATE, AND IT IS THE SHEET'S SO NO CLEAR CAN DELETE IT: invisible AND not under the pointer,
+         which are two facts and need both declarations — an `opacity: 0` box still answers `elementFromPoint`, and a box
+         with no extent answers it at its static position, so a closed drop would swallow clicks meant for the pane. The
+         press writes `visibility: visible` beside the box and removes it on every end. */
+      opacity: 0;
+      visibility: hidden;
       z-index: 3;
       color: #1b2430;
       background-color: rgba(150, 174, 200, 0.35);

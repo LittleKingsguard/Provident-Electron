@@ -2926,13 +2926,21 @@ function paneMovePreviewClear(element: unknown, kind: 'zone' | 'drop'): void {
  *  `window − bottom.size … window` and `left`/`right` own the lanes BETWEEN those two bands, at their own width. **THE
  *  FOUR WINDOWS ARE DISJOINT BY CONSTRUCTION** and the stage — the middle, below the top band and beside the lanes — belongs
  *  to none of them, which is what keeps a release elsewhere from being read as a destination.
- *  **`opacity` IS PART OF THIS LIST AND NOT DECORATION**: the sheet reveals all four drops on `.pane-grab:focus-within`, and
- *  an overlay that is not the one under the pointer is debris over the whole app (measured: a drag released over no zone
- *  leaves the grip focused and four translucent windows standing). The authored state is `opacity: 0`; the drag shows the
- *  hovered one and hides the rest. **OPACITY AND NOT `display`**: a `display: none` element is not hit-testable, and these
- *  four boxes are exactly what `document.elementFromPoint` has to answer. */
+ *  **`opacity` IS PART OF THIS LIST AND NOT DECORATION**: the sheet's revealed arm is the CLOSED state — `opacity: 0` and
+ *  `visibility: hidden`, i.e. neither painted nor hit-testable — and an overlay that is not the one under the pointer is
+ *  debris over the whole app (measured: a drag released over no zone leaves the grip focused and four translucent windows
+ *  standing). The drag shows the hovered one and hides the rest. **OPACITY AND NOT `display`**: a `display: none` element
+ *  is not hit-testable, and these four boxes are exactly what `document.elementFromPoint` has to answer.
+ *  **`visibility` IS THE GESTURE'S AND NOT FOCUS'S** (`D-248`'s "no state" read to its consequence, and the user's
+ *  verbatim *"the drop overlays' text is visible outside a drag"*): `:focus-within` cannot tell a drag from a grip that merely kept the focus a gesture gave it — measured, a
+ *  released drag leaves the grip focused and the four one-word labels standing over the pane — so the sheet declares the
+ *  closed state and THIS turn is what opens it, at the press and only where a window stands. `visibility` is the one
+ *  property that is both "not painted" and "not under the pointer", so a drop that is closed can neither be read nor
+ *  swallow a click that belongs to the pane beneath it; the transient is removed by `paneMoveDropBoxClear` beside the box
+ *  and the opacity, so the authored style and the sheet's closed arm are what stand again with nothing remembered. */
 const PANE_MOVE_DROP_BOX: readonly string[] = ['top', 'right', 'bottom', 'left', 'width', 'height']
 const PANE_MOVE_DROP_OPACITY: Readonly<Record<'shown' | 'hidden', string>> = { shown: '1', hidden: '0' }
+const PANE_MOVE_DROP_OPEN: Readonly<{ readonly property: string; readonly text: string }> = { property: 'visibility', text: 'visible' }
 
 /** **THE FOUR ZONES' PAINTED FIGURES, READ OFF THE RECORD'S OWN FAMILY ONCE PER PRESS** (`D-129`'s ask-don't-remember:
  *  the drag asks the standing record at the gesture's first instant rather than remembering a shape a delivery may have
@@ -2986,9 +2994,13 @@ function paneMoveDropBoxOf (zone: string, figures: ReadonlyMap<string, number>):
 function paneMoveDropBoxWrite (element: unknown, zone: string, figures: ReadonlyMap<string, number>): void {
   const style = paneMoveStyleOf(element)
   if (style === null) return
-  style.set('opacity', PANE_MOVE_DROP_OPACITY.hidden)
   const box = paneMoveDropBoxOf(zone, figures)
+  // **A DROP WITH NO WINDOW IS NOT OPENED** (`D-174`'s stated absence, and the order that matters here): a zone whose
+  // record states no figure takes no box, so it is unreachable and stays exactly as the sheet leaves it — closed. Opening
+  // it here would paint a label at the drop's static position over the pane, which is the debris this turn removes.
   if (box === null) return
+  style.set('opacity', PANE_MOVE_DROP_OPACITY.hidden)
+  style.set(PANE_MOVE_DROP_OPEN.property, PANE_MOVE_DROP_OPEN.text)
   for (const property of PANE_MOVE_DROP_BOX) {
     const text = box[property]
     if (text === undefined) continue
@@ -2996,13 +3008,19 @@ function paneMoveDropBoxWrite (element: unknown, zone: string, figures: Readonly
   }
 }
 
-/** **AND CLEARED ON THE RELEASE, THE CANCEL AND A NEW PRESS** — the same six properties and the opacity, by NAME, so the
- *  authored style (fixed, a pointer cursor, `opacity: 0`) is what stands afterwards and nothing is remembered. */
+/** **AND CLEARED ON THE RELEASE, THE CANCEL AND A NEW PRESS** — the same six properties, the opacity and the open state,
+ *  by NAME, so the sheet's closed arm is what stands afterwards and nothing is remembered. **AND THE CLOSED STATE NO
+ *  LONGER LIVES IN THE AUTHORED INLINE STYLE IT USED TO REMOVE** (`D-249`'s closed state, put where a clear cannot delete
+ *  it): `removeProperty('opacity')` took the authored
+ *  `opacity: 0` with it, so the four labels stood at `opacity: 1` behind a released gesture — the sheet declares the closed
+ *  arm now, which is why a clear falls back to `opacity: 0` and `visibility: hidden` whether or not the node still carries
+ *  an authored declaration. */
 function paneMoveDropBoxClear (element: unknown): void {
   const style = paneMoveStyleOf(element)
   if (style === null) return
   for (const property of PANE_MOVE_DROP_BOX) style.remove(property)
   style.remove('opacity')
+  style.remove(PANE_MOVE_DROP_OPEN.property)
 }
 
 /** **THE ONE DROP THE DRAG IS OFFERING, AND ITS THREE SIBLINGS MADE INVISIBLE** — the emphasis transition, written and
@@ -3393,9 +3411,13 @@ function paneMoveDropUnderPointer (event: unknown, targets: ReadonlyMap<unknown,
  *  move that re-lays anything would take the pointer off the grip, the release would miss, and the session's slot would
  *  latch (`D-245` measured that latch silencing five other handles for the page's life; this turn has no session slot to
  *  latch, but it has the same lost release, which is the same defect with one fewer casualty).
- *  **THE PRESS ALSO REVEALS THE DROPS, AND THAT IS STILL NO STATE** (`D-248`): a `pointerdown` on a `tabindex="0"` node
- *  focuses it in this realm and the page sheet's `:focus-within` rule is what shows the four overlays — the menus'
- *  mechanism, *"NO STATE, NO TOGGLE AND NO NEW RECORD"*. The drag adds no class, no attribute and no member.
+ *  **THE PRESS ALSO OPENS THE DROPS, AND THAT IS STILL NO STATE** (`D-248`'s rule, re-grained below): a `pointerdown`
+ *  on a `tabindex="0"` node focuses it in this realm and the page sheet's `:focus-within` rule is what gives the four
+ *  overlays their form — the menus' mechanism, *"NO STATE, NO TOGGLE AND NO NEW RECORD"* — while WHAT A PERSON CAN SEE AND
+ *  THE POINTER CAN HIT is this gesture's own transient (`paneMoveDropBoxWrite`'s `visibility`, cleared by the same turn
+ *  that clears the box). **FOCUS ALONE PAINTS NOTHING**, which is the second defect this turn corrects: measured, a
+ *  released drag leaves the grip focused, so a reveal keyed on focus alone left four one-word labels standing over the
+ *  pane. The drag adds no class, no attribute and no member.
  *  **THE ARMING DISTANCE KEEPS A CLICK A CLICK** (`PANE_MOVE_ARM_DISTANCE`): the grip's own box stands inside one of its
  *  own overlays (the menus pane is in the `top` zone), so a press-and-release in place would otherwise commit the zone the
  *  grip happens to sit in — which is not a gesture a person performed.
@@ -3418,11 +3440,15 @@ function paneMoveDropUnderPointer (event: unknown, targets: ReadonlyMap<unknown,
  *  **THE RELEASE COMMITS EXACTLY ONE ACT** — `paneMoveAct(runtime, <the drop's node id>, <the pointer>)`, one whole-family
  *  write at `['panes']` at `file` carrying the destination AND the order, both figures kept and `bounds` dropped from the
  *  pane that moved, never through `commitPane` — and the two authored operands are read OFF THE DROP NODE by that act, so
- *  the drag supplies a node id and a coordinate and invents no value. **A RELEASE OVER NO ZONE WRITES NOTHING AT ALL**: the
- *  preview and the arrangement are restored and the gesture ends where it began — the four overlays stay revealed because
- *  the grip still holds focus, which is the same screen a plain press on the grip leaves. **A COMMITTED RELEASE BLURS THE
- *  GRIP**, which is how the reveal collapses behind the act: the preview's own `style` declarations are gone either way,
- *  and the overlays are the sheet's to hide. */
+ *  the drag supplies a node id and a coordinate and invents no value. **A RELEASE OVER NO ZONE WRITES NOTHING AT ALL, AND
+ *  IT MUST NOW PUT THE TREE BACK** (the preview `D-259` made REAL is a re-parent with no record behind it, so an end that
+ *  leaves it standing leaves the pane in a zone the record does not name while the `[zone]` attribute and the style — both
+ *  painted from that record — still describe the zone it left. `highlight`'s absence arm is what restores it, and the
+ *  `restore` flag is why the committing arm does not: a commit's own delivery re-arranges to the same sequence, so nothing
+ *  flicks back before the write lands. **THE OVERLAYS CLOSE ON EVERY END** — the box, the opacity and the open state go in
+ *  the same turn — so the screen after a gesture is the screen before it, whatever the gesture did. **A COMMITTED RELEASE
+ *  ALSO BLURS THE GRIP**: the reveal key is the sheet's and the focus is the grip's, and a control that keeps the focus of
+ *  a gesture it has finished is a focus a person did not ask for. */
 function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: readonly PaneMoveDropTarget[]): boolean {
   let element: unknown = null
   try {
@@ -3497,14 +3523,25 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
    *  SKIPPED**: a delivery would replace a zone's `css.style` WHOLE (`D-234`) and silently take the outline with it, so a
    *  re-write of the same two declarations is what keeps the preview from vanishing under a pointer that has not moved —
    *  it is idempotent and costs two property writes per move. No delivery runs mid-gesture, which is `D-246`'s measurement
-   *  and not this turn's assumption. */
+   *  and not this turn's assumption.
+   *  **AND THE UNCHANGED ARM HONOURS `restore` FOR `null`, WHICH IS THE ONE PLACE THE IDEMPOTENCY WAS WRONG** (the user's
+   *  verbatim *"moving from sidebar to top zone doesn't change the formatting back to the original top/bottom zone
+   *  style"*): the shortcut exists to re-state a TARGET that is still the same one, and `null` is not a target — it is the
+   *  ABSENCE, and the caller that names it (`onEnd`'s no-destination arm, `onCancel`, a new press) is asking for the
+   *  RECORD's arrangement to stand. Answering `return` there left the preview's `move` in place with no record behind it,
+   *  so the pane stood in a zone the record did not name while its `[zone]` attribute and its whole style — both painted
+   *  from that record — still described the zone it had LEFT. The shortcut now covers only the re-statement. */
   const highlight = (
     target: PaneMoveDropTarget | null,
     point: { readonly x: number; readonly y: number } | null,
     restore: boolean = true,
   ): void => {
     if (state.drop === target) {
-      if (target === null) return
+      if (target === null) {
+        // THE ABSENCE IS NOT A TARGET TO RE-STATE: the panes go back to the record's own family whenever the caller asks.
+        if (restore) previewPlacement(null, null)
+        return
+      }
       paneMoveDropEmphasis(target.element, true)
       paneMovePreviewWrite(target.element, 'drop')
       if (state.zone !== null) paneMovePreviewWrite(state.zone, 'zone')
