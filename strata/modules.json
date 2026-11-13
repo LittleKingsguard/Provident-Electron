@@ -240,7 +240,7 @@
         "src/shared/demo-envelope.ts",
         "tests/unit/app-envelope/live-seams.test.ts"
       ],
-      "endpoints": 19
+      "endpoints": 21
     },
     {
       "name": "ipc-contract",

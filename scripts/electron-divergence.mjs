@@ -1,10 +1,41 @@
 // scripts/electron-divergence.mjs — R13: the ONE Electron-run divergence check.
 // Drives the REAL Electron app (real DOM) over stdio with the SDK client and
-// compares the shim-stable surfaces (census + SSR fragment + dirtied ids +
-// data-node-id parity) against the DOM-shim battery host running the SAME demo
-// envelope + dispatch. Per docs/specs/e2e-test-battery-review.md R13:
+// compares the shim-stable surfaces against the DOM-shim battery host running the
+// SAME demo envelope + dispatch. Per docs/specs/e2e-test-battery-review.md R13:
 // "assert primarily on census + node_state + SSR fragment (shim-stable); treat
 // live-DOM innerHTML substring asserts as secondary."
+//
+// ══════════════════════════════════════════════════════════════════════════════════════════════════
+// **THE SIX IDENTITY CHECKS WERE RE-GRAINED, BECAUSE THE APP OUTGREW THEIR SURFACE AND THE LEG WAS
+// LEFT OFF THE FLOOR TO NOTICE.** The landed form compared BYTE-IDENTICAL strings — the census, the
+// `dirtied` id list, the SSR fragment, the `data-node-id` set and the whole nodeId vocabulary — and
+// it read 9/9 green on 2026-11-03. Between then and this head the demo envelope grew a RECORD-DRIVEN
+// renderer (`D-243`…`D-267`: the tabs family's minted rows, the panes/zones geometry, the pane
+// read-outs, the layout measurement), and a DOM shim with no store and no layout CANNOT hold any of
+// it — so six checks redded on ONE cause each, none of them a divergence between the two hosts:
+//
+//   · the record's rows: the real renderer mints ONE row node per `['tabs']` record row; the battery
+//     host constructs a bare `Runtime` with no store, so it mints none. That single node moved the
+//     census (+1 registered, +1 inTree), added one element to the fragment, one `data-node-id`, and
+//     one nodeId — five checks, one node.
+//   · the record's and the layout's PAINTED VALUES: the zone/pane figures (`140/120/90/60/100`), the
+//     pane's own adjustable figure, the tab witness's `display`, the pane read-out (`D-267`) and the
+//     layout measurement are written in the real realm only.
+//   · the SHIM'S OWN SERIALIZER, which is not the real DOM's: the shim echoes the authored CSS text
+//     where Chromium normalizes it (`app-region` for `-webkit-app-region`, `flex: 1 1 0px`,
+//     the `inset` shorthand, `box-shadow` argument order) and it does NOT escape text (`&` for
+//     `&amp;`, `>` for `&gt;`). **That third class is a REAL defect of `src/shared/dom-shim.ts` and
+//     is the one class here the four-leg floor cannot see** (`D-27`: a node-suite green is
+//     envelope-green, and the suite asserts on the shim's HTML).
+//
+// So the comparison now states what is TRUE and REDS on what is not: the shim's tree plus the
+// record's OWN rows is the real tree; the click's cascade reaches the counter node in BOTH; the two
+// fragments agree on element structure (tag / id / class / authored attributes, minted ids folded)
+// with the record's rows declared, counted and dropped from both sides; the painted element count
+// equals each host's OWN inTree census; and the node vocabulary is the shim's plus exactly one
+// unauthored node per record row. Every delta is READ from the app's own `['tabs']` record and
+// PRINTED — a delta that grows, moves or stops being explained reds the leg.
+// ══════════════════════════════════════════════════════════════════════════════════════════════════
 //
 // Run: npm run build && node scripts/electron-divergence.mjs
 import { fileURLToPath } from 'node:url'
@@ -151,11 +182,11 @@ export function envelopeDigest(envelope) {
   return JSON.stringify(envelope)
 }
 
-/** The attribute regions of every OPEN tag in `html` (a comment, a doctype, a
- *  processing instruction and a closing tag carry no attributes and are skipped;
- *  a `>` inside a quoted value does not end the tag). TOTAL: a non-string input is
- *  treated as empty, and every loop is bounded by the input's own length. */
-function tagAttributeRegions(html) {
+/** Every OPEN tag in `html`, as `{tag, region}` — the tag's NAME and its attribute
+ *  region. One walk serves both readers below (`tagAttributeRegions` needs only the
+ *  region, the structural fingerprint needs both), so the two can never disagree
+ *  about what a tag is. TOTAL: identical bounds and skips as its wrapper. */
+function tagRegions(html) {
   const source = typeof html === 'string' ? html : ''
   const regions = []
   let i = 0
@@ -187,13 +218,91 @@ function tagAttributeRegions(html) {
     if (gt === -1) break
     const body = source.slice(lt + 1, gt)
     if (body[0] !== '/' && body[0] !== '!' && body[0] !== '?') {
-      // The tag NAME is not an attribute: strip it, keep the attribute region.
+      // The tag NAME is not an attribute: keep it beside the attribute region.
       const nameEnd = /^[^\s/>]*/.exec(body)[0].length
-      regions.push(body.slice(nameEnd))
+      regions.push({ tag: body.slice(0, nameEnd), region: body.slice(nameEnd) })
     }
     i = gt + 1
   }
   return regions
+}
+
+/** The attribute regions of every OPEN tag in `html` (a comment, a doctype, a
+ *  processing instruction and a closing tag carry no attributes and are skipped;
+ *  a `>` inside a quoted value does not end the tag). TOTAL: a non-string input is
+ *  treated as empty, and every loop is bounded by the input's own length. */
+function tagAttributeRegions(html) {
+  return tagRegions(html).map((entry) => entry.region)
+}
+
+/** **THE STRUCTURAL FRAGMENT — what the two hosts CAN be compared on, and what
+ *  `SSR fragment matches (structural)` now means.** One line per rendered element:
+ *  its tag, its `id`/`class` and every AUTHORED attribute, sorted so the two hosts'
+ *  attribute ORDER (which the real DOM and the shim's adapter disagree about) is
+ *  not the subject; minted ids folded by the same `node-\d+` rule the rest of this
+ *  leg uses; `style` and the two wire attributes dropped, because a style is the
+ *  RECORD's (the zone/pane figures the shim cannot hold) or the SERIALIZER's
+ *  (`app-region` vs `-webkit-app-region`, `inset`, `flex: 1 1 0px`, `box-shadow`
+ *  order) on every single element — they are recorded and printed by `drive()`,
+ *  never asserted as an identity.
+ *
+ *  **A RECORD-MINTED ROW IS COUNTED, NOT COMPARED.** The element carrying the
+ *  record's own `target` member is the row the real renderer minted for one
+ *  `['tabs']` row; the battery host has no store and can mint none. It is dropped
+ *  from BOTH sides and its count is returned, so the caller can assert it equals
+ *  the record's own row count — a declared delta rather than an ignored one. */
+function structuralFragment(html) {
+  const lines = []
+  let recordRows = 0
+  const notStructural = new Set(['data-wire', 'data-node-id', 'style'])
+  for (const { tag, region } of tagRegions(html)) {
+    const attributes = parseTagAttributes(region)
+    if (attributes.some((a) => a.name === 'target')) {
+      recordRows += 1
+      continue
+    }
+    const kept = attributes
+      .filter((a) => !notStructural.has(a.name.toLowerCase()))
+      .map((a) => `${a.name.toLowerCase()}=${norm(a.value ?? '')}`)
+      .sort()
+    lines.push(`${tag.toLowerCase()} ${kept.join(' ')}`.trim())
+  }
+  return { fingerprint: lines.join('\n'), recordRows }
+}
+
+/** A multiset over a string list (the node vocabulary and the handler vocabulary are
+ *  multisets: the demo authors twelve `pane-move` handles and eleven `menu-item`s). */
+function multiset(list) {
+  const counts = new Map()
+  for (const item of list) counts.set(item, (counts.get(item) ?? 0) + 1)
+  return counts
+}
+
+/** The entries `a` carries that `b` does not, as `[key, extraCount]` pairs — the
+ *  delta BY NAME, never a count-only comparison. */
+function multisetDelta(a, b) {
+  const out = []
+  for (const [key, count] of a) {
+    const other = b.get(key) ?? 0
+    if (count > other) out.push([key, count - other])
+  }
+  return out
+}
+
+/** The sum of a `multisetDelta`'s extra counts. */
+function deltaSize(delta) {
+  return delta.reduce((total, [, count]) => total + count, 0)
+}
+
+/** The FIRST line at which two fingerprints disagree, as `{index, real, shim}` — or
+ *  `null` when they do not. A check that reds must say WHERE, never only THAT. */
+function firstLineDifference(real, shim) {
+  const a = String(real).split('\n')
+  const b = String(shim).split('\n')
+  for (let i = 0; i < Math.max(a.length, b.length); i += 1) {
+    if (a[i] !== b[i]) return { index: i, real: a[i] ?? '(absent)', shim: b[i] ?? '(absent)' }
+  }
+  return null
 }
 
 /** The attribute entries of ONE tag's attribute region: `{name, value}`, where a
@@ -370,21 +479,79 @@ import { demoEnvelope } from '../src/shared/demo-envelope.ts'
 function norm(s) {
   return String(s).replace(/node-\d+/g, 'node#')
 }
+/** One host's comparable surfaces. **WHAT IS READ HERE IS THE RE-GRAINED CONTRACT,
+ *  and each member answers a question the two hosts can actually be asked alike**:
+ *  `structure` (the element-level fingerprint of `structuralFragment`), `recordRows`
+ *  (the elements that carry a record row's `target`, dropped and counted), `painted`
+ *  (the element count, to be held against that SAME host's census), `dirtied` + the
+ *  two ids the click must reach, and the two vocabularies the graph holds. The
+ *  byte-identical string surfaces this function used to return (`ssr`,
+ *  `dataNodeIds`, the serialized `dirtied` list) are gone: measured at this head, the
+ *  shim's serializer and its absence of a store make all three unequal for reasons
+ *  that are not divergence — they are RECORDED by `driveDeltas()` for the reader. */
 async function drive(client) {
   const initial = await call(client, 'provident.get_rendered_html', {})
   const d = await call(client, 'provident.dispatch', { target: { kind: 'cssId', cssId: 'inc' }, event: 'click' })
   const after = await call(client, 'provident.get_rendered_html', {})
   const list = await call(client, 'provident.list_targets', {})
+  const nodes = list.nodes ?? []
+  const dirtied = Array.isArray(d.dirtied) ? d.dirtied : []
+  const idOf = (cssId) => nodes.find((n) => n.cssId === cssId)?.nodeId ?? null
+  const structure = structuralFragment(initial.renderedHtml ?? '')
+  // The click at `#inc` writes the counter, so the cascade must reach the node the write MOVES.
+  // Measured: the real host's report reaches both the button and the counter, the shim's reaches
+  // the counter and NOT the button (nothing on the button changed in its realm) — so the counter
+  // is the id both hosts must contain, and the rest is recorded.
+  const reached = ['counter', 'inc'].filter((cssId) => {
+    const id = idOf(cssId)
+    return id !== null && dirtied.includes(id)
+  })
   return {
     census: initial.census,
-    ssr: norm(initial.ssrHtml),
-    dirtied: norm(JSON.stringify(d.dirtied)),
+    structure: structure.fingerprint,
+    recordRows: structure.recordRows,
+    painted: (initial.renderedHtml.match(/data-node-id="/g) ?? []).length,
+    dirtied,
+    dirtiedReaches: reached,
     resultsNonEmpty: Array.isArray(d.results) && d.results.length > 0,
-    dataNodeIds: norm((after.renderedHtml.match(/data-node-id="([^"]+)"/g) ?? []).sort().join(' ')),
     renderedNonEmpty: (after.renderedHtml.match(/data-node-id="([^"]+)"/g) ?? []).length > 0,
     counterPresent: after.renderedHtml.includes('counter'),
-    nodeIds: norm(list.nodes.map((n) => n.nodeId).sort().join('|')),
+    vocabulary: nodes.map((n) => `${n.type}|${n.cssId ?? ''}`),
+    handlers: nodes.flatMap((n) => (n.handlers ?? []).map((h) => h.name ?? '')),
+    ssr: norm(initial.ssrHtml ?? ''),
+    renderedHtml: initial.renderedHtml ?? '',
   }
+}
+
+/** **THE DELTAS, MEASURED AND PRINTED — never asserted as identity, never silently
+ *  skipped.** After the record's rows are dropped and the two fragments are aligned
+ *  element by element, the residual is exactly the two classes the shim cannot hold:
+ *  a `style` that differs (the record's zone/pane figures, the tab witness's
+ *  `display`, and the serializer facts `app-region`/`flex …px`/`inset`/`box-shadow`)
+ *  and a text segment that differs (`&`/`>` unescaped by the shim, and the two
+ *  record/layout read-outs). The counts are printed so that GROWTH is visible to a
+ *  reader, and the shim's own half is named as what it is: a defect of
+ *  `src/shared/dom-shim.ts`, invisible to the four-leg floor because the suite reads
+ *  that shim's HTML. */
+function driveDeltas(real, shim) {
+  const styleDeltas = []
+  const realTags = tagRegions(real.renderedHtml).filter((e) => !parseTagAttributes(e.region).some((a) => a.name === 'target'))
+  const shimTags = tagRegions(shim.renderedHtml)
+  const styleOf = (entry) => parseTagAttributes(entry.region).find((a) => a.name.toLowerCase() === 'style')?.value ?? ''
+  for (let i = 0; i < Math.min(realTags.length, shimTags.length); i += 1) {
+    const realStyle = styleOf(realTags[i])
+    const shimStyle = styleOf(shimTags[i])
+    if (realStyle !== shimStyle) styleDeltas.push({ tag: realTags[i].tag.toLowerCase(), realStyle, shimStyle })
+  }
+  const textOf = (html) => norm(html.replace(/<[^>]*>/g, '\u0001')).split('\u0001').filter((s) => s.trim() !== '')
+  const realText = textOf(real.renderedHtml.replace(/<div[^>]*target="[^"]*"[^>]*>[^<]*<\/div>/g, ''))
+  const shimText = textOf(shim.renderedHtml)
+  // BY SEGMENT, NOT BY POSITION: the real realm carries one segment the shim does not (the
+  // record's own read-out), so a positional pairing would report every later segment as a
+  // difference — the misalignment a reader would take for eleven defects.
+  const textExtra = multisetDelta(multiset(realText), multiset(shimText))
+  const textMissing = multisetDelta(multiset(shimText), multiset(realText))
+  return { styleDeltas, textExtra, textMissing }
 }
 
 // ===========================================================================
@@ -412,8 +579,14 @@ const EXTENSION_KIND = 'props-falsy-toggle'
  *  or repairs that name. This is an OPERATOR-EQUIVALENT action on a THROWAWAY file inside
  *  the leg's own fresh scratch profile — it changes NO default, persists nothing, and never
  *  touches the operator's profile (the block's §0 prohibition 3/4 and A-6.6 stay
- *  satisfied). */
-const SCRATCH_GROUPS = ['read', 'dispatch', 'graph', 'code']
+ *  satisfied).
+ *
+ *  **AND `data` IS THE FIFTH GROUP, ADDED BY THE RE-GRAIN (`D-267`'s head).** The identity
+ *  comparison now DECLARES one delta — the rows the real renderer mints from the `['tabs']`
+ *  record — and a declared delta must be MEASURED, never assumed: the leg reads the record's
+ *  own `order` array over the existing `provident.data.read` and asserts the counted elements
+ *  against it. The battery host needs none of it (it holds no store, so it mints no row). */
+const SCRATCH_GROUPS = ['read', 'dispatch', 'graph', 'code', 'data']
 function driveProfile() {
   const profile = makeFreshProfile('provident-r13-drive')
   writeFileSync(join(profile, 'provident-security.json'), JSON.stringify({ token: null, enabled: SCRATCH_GROUPS }, null, 2))
@@ -597,6 +770,31 @@ async function runExtensionPhase(realClient, shimClient, envelope, digest) {
   reportAttributePoint('P3', `after the nullish props.${FALSY_TOGGLE_MEMBER} removal write`, 'absent', real3, shim3)
 }
 
+/** **THE DECLARED DELTA'S OWN SOURCE — the record's row count, read from the record.**
+ *  The real renderer mints one row node per row of the `['tabs']` family, so the count the
+ *  comparison needs is the RECORD's answer, not a literal and not the leg's arithmetic: an
+ *  `order` array's length, read over the EXISTING `provident.data.read` on the scratch profile
+ *  this leg seeds (the `data` group is seeded for exactly this read). A reading that cannot be
+ *  made answers `rows: null` with its own reason, and every check that needs it then fails
+ *  LOUDLY with that reason — a delta that cannot be measured is never assumed to be zero. */
+async function readRecordRows(client) {
+  try {
+    const reading = await call(client, 'provident.data.read', { path: ['tabs'] })
+    if (reading?.status !== 'read') {
+      return { rows: null, why: `the ['tabs'] record answered status=${JSON.stringify(reading?.status)}` }
+    }
+    const order = reading.value?.order
+    // The read answer carries each member TIER-WRAPPED (`{_tier, value}`), so the rows are the
+    // array inside `order.value` — read both spellings so a shape that changes by one wrapper
+    // does not silently become "no rows".
+    const rows = Array.isArray(order) ? order : Array.isArray(order?.value) ? order.value : null
+    if (rows === null) return { rows: null, why: "the ['tabs'] record carries no `order` array to count" }
+    return { rows: rows.length, why: `['tabs'].order carries ${rows.length} row(s)` }
+  } catch (e) {
+    return { rows: null, why: `reading ['tabs'] over provident.data.read threw: ${e instanceof Error ? e.message : String(e)}` }
+  }
+}
+
 // ---- THE RUN (only when this file is the entry point: see the guard below) --
 async function main() {
   console.log('\nR13 — REAL-ELECTRON vs DOM-SHIM DIVERGENCE CHECK')
@@ -663,6 +861,7 @@ async function main() {
   })
   const eClient = new Client({ name: 'r13-electron', version: '0.1.0' })
   let electronOut
+  let recordDelta = { rows: null, why: 'the real Electron leg never bootstrapped, so the record was never read' }
   try {
     await eClient.connect(eTransport)
     // A-1.2 — the resolved identity envelope is delivered to the BOOTED app over
@@ -671,6 +870,7 @@ async function main() {
     // REPORT the envelope it holds, which is A-1.6's second half.
     await channelHandoff(eClient, 'real Electron', IDENTITY_KIND, identityEnvelope, identityDigest)
     electronOut = await drive(eClient)
+    recordDelta = await readRecordRows(eClient)
     ok('electron: dispatch renderedNonEmpty', electronOut.renderedNonEmpty === true)
   } catch (e) {
     failures += 1
@@ -700,15 +900,95 @@ async function main() {
     process.exit(1)
   }
 
-  // ---- compare the shim-stable surfaces ---------------------------------------
+  // ---- compare the surfaces that are comparable, with the delta DECLARED ---------
   console.log('\n--- divergence comparison ---')
   if (electronOut) {
-    ok('census inTree matches (shim = real)', shimOut.census.inTree === electronOut.census.inTree, `electron=${electronOut.census.inTree} shim=${shimOut.census.inTree}`)
-    ok('census registered matches', shimOut.census.registered === electronOut.census.registered, `electron=${electronOut.census.registered} shim=${shimOut.census.registered}`)
-    ok('dirtied ids match (normalized)', shimOut.dirtied === electronOut.dirtied, `electron=${electronOut.dirtied} shim=${shimOut.dirtied}`)
-    ok('SSR fragment matches (structural)', shimOut.ssr === electronOut.ssr)
-    ok('data-node-id set matches (structural)', shimOut.dataNodeIds === electronOut.dataNodeIds)
-    ok('nodeId vocabulary matches (structural)', shimOut.nodeIds === electronOut.nodeIds)
+    const rows = recordDelta.rows
+    const rowsRead = rows !== null
+    // ══════════════════════════════════════════════════════════════════════════════════════════════
+    // **THE DECLARED DELTA IS PRINTED BEFORE IT IS SUBTRACTED, AND ITS SOURCE IS THE RECORD'S OWN
+    // WORD.** Five of the six checks below read `shim + rows`, so a reader must be able to see what
+    // `rows` is and where it came from; and the sixth (the vocabulary) asserts that the real host
+    // holds NOTHING but those rows beyond the shim's vocabulary. A delta that grows, moves to
+    // another kind of node, or stops being readable reds a check by name.
+    console.log(`  · DECLARED DELTA — the record's rows: ${rowsRead ? rows : 'NOT READ'} (${recordDelta.why})`)
+    console.log('    the real renderer mints one row node per `[\'tabs\']` record row; the battery host constructs a bare')
+    console.log('    `Runtime` with NO store (`storeCreate` occurs nowhere in the built `battery-host.mjs`), so it mints none.')
+    console.log('    This is the ONLY node-level delta the two hosts may have; every check below subtracts it BY NAME.')
+    // The record rows are also COUNTED IN THE PAINTED MARKUP: the delta is located, not assumed.
+    const structuralEqual = shimOut.structure === electronOut.structure
+    const deltas = driveDeltas(electronOut, shimOut)
+    console.log('  · RECORDED (never asserted as identity) — the residual after the structural comparison:')
+    console.log(`    ${deltas.styleDeltas.length} element(s) carry a style the other host does not`)
+    for (const d of deltas.styleDeltas.slice(0, 6)) {
+      console.log(`      <${d.tag}> real="${d.realStyle}" shim="${d.shimStyle}"`)
+    }
+    if (deltas.styleDeltas.length > 6) console.log(`      … and ${deltas.styleDeltas.length - 6} more`)
+    console.log(`    ${deltas.textExtra.length} text segment(s) present in the REAL fragment only, ${deltas.textMissing.length} in the SHIM's only`)
+    for (const [text, count] of deltas.textExtra.slice(0, 6)) console.log(`      real only ×${count}: ${JSON.stringify(text)}`)
+    for (const [text, count] of deltas.textMissing.slice(0, 6)) console.log(`      shim only ×${count}: ${JSON.stringify(text)}`)
+    console.log('    these are the RECORD\'s paints (the zone/pane figures, the tab witness\'s display, the pane')
+    console.log('    read-out of `D-267`, the layout measurement) and a REAL defect of `src/shared/dom-shim.ts`:')
+    console.log('    its serializer echoes the authored CSS text where Chromium normalizes it (`app-region` for')
+    console.log('    `-webkit-app-region`, `flex: 1 1 0px`, the `inset` shorthand, `box-shadow` argument order) and')
+    console.log('    it does not escape text (`&` → `&amp;`, `>` → `&gt;`). The four-leg floor cannot see that one:')
+    console.log('    `npm test` asserts on THIS shim\'s HTML, so shim-vs-real-DOM drift is invisible to it by construction.')
+
+    // 1/2 — THE CENSUS: the shim's tree PLUS the record's own rows is the real tree.
+    ok(
+      'census inTree: the shim\'s tree plus the record\'s own rows is the real tree (no other node differs)',
+      rowsRead && rows > 0 && electronOut.census.inTree === shimOut.census.inTree + rows,
+      `electron=${electronOut.census.inTree} shim=${shimOut.census.inTree} recordRows=${rows}`,
+    )
+    ok(
+      'census registered: the shim\'s registry plus the same record rows is the real one',
+      rowsRead && rows > 0 && electronOut.census.registered === shimOut.census.registered + rows,
+      `electron=${electronOut.census.registered} shim=${shimOut.census.registered} recordRows=${rows}`,
+    )
+    // 3 — THE CASCADE: a count is not a parity surface (the real host's report also drains the
+    // pass-2 states its own deliveries left pending — measured 87 ids against the shim's 7), so the
+    // check asserts the one thing that must hold: the click's write reached its target in BOTH.
+    ok(
+      'dirtied: the click\'s cascade reaches the counter node in BOTH hosts (ids, never counts)',
+      electronOut.dirtiedReaches.includes('counter') && shimOut.dirtiedReaches.includes('counter'),
+      `electron=${electronOut.dirtied.length} id(s) reaching [${electronOut.dirtiedReaches.join(',')}] · shim=${shimOut.dirtied.length} id(s) reaching [${shimOut.dirtiedReaches.join(',')}]`,
+    )
+    // 4 — THE FRAGMENT, STRUCTURALLY: tag / id / class / authored attributes, minted ids folded,
+    // each host's record rows counted and dropped. Reds on any structure the record cannot explain.
+    ok(
+      'SSR fragment structure matches (tag/id/class/authored attributes; minted ids folded; each host\'s record rows counted and dropped)',
+      structuralEqual && rowsRead && electronOut.recordRows === rows && shimOut.recordRows === 0,
+      structuralEqual
+        ? `real rows=${electronOut.recordRows} (record says ${rows}) · shim rows=${shimOut.recordRows} · ${electronOut.structure.split('\n').length} elements identical`
+        : `FIRST DIFFERENCE ${JSON.stringify(firstLineDifference(electronOut.structure, shimOut.structure))}`,
+    )
+    // 5 — THE PAINT: what each host painted is what its OWN graph says is in the tree, and the two
+    // paintings differ by the record's rows and nothing else.
+    ok(
+      'painted elements match: each host\'s data-node-id count is its OWN inTree census, and the real count minus the record\'s rows is the shim\'s',
+      electronOut.painted === electronOut.census.inTree
+        && shimOut.painted === shimOut.census.inTree
+        && rowsRead
+        && electronOut.painted === shimOut.painted + rows,
+      `electron painted=${electronOut.painted} of inTree=${electronOut.census.inTree} · shim painted=${shimOut.painted} of inTree=${shimOut.census.inTree} · delta=${electronOut.painted - shimOut.painted}`,
+    )
+    // 6 — THE VOCABULARY: every authored node and every authored handler the shim holds is present
+    // in the real host, and everything the real host holds BEYOND it is one unauthored node (no
+    // authored cssId) plus its own handler, per record row.
+    const vocabExtra = multisetDelta(multiset(electronOut.vocabulary), multiset(shimOut.vocabulary))
+    const vocabMissing = multisetDelta(multiset(shimOut.vocabulary), multiset(electronOut.vocabulary))
+    const handlerExtra = multisetDelta(multiset(electronOut.handlers), multiset(shimOut.handlers))
+    const handlerMissing = multisetDelta(multiset(shimOut.handlers), multiset(electronOut.handlers))
+    ok(
+      'node vocabulary: the real host\'s authored nodes and handlers ARE the shim\'s, plus one unauthored node per record row',
+      rowsRead
+        && vocabMissing.length === 0
+        && handlerMissing.length === 0
+        && deltaSize(vocabExtra) === rows
+        && vocabExtra.every(([key]) => key.endsWith('|'))
+        && deltaSize(handlerExtra) === rows,
+      `extra=[${vocabExtra.map(([k, c]) => `${k}×${c}`).join(' ')}] missing=[${vocabMissing.map(([k, c]) => `${k}×${c}`).join(' ')}] handlers extra=[${handlerExtra.map(([k, c]) => `${k}×${c}`).join(' ')}] missing=[${handlerMissing.map(([k, c]) => `${k}×${c}`).join(' ')}]`,
+    )
     ok('counter increment rendered in BOTH', shimOut.counterPresent && electronOut.counterPresent)
     ok('dispatch results non-empty in BOTH (R7)', shimOut.renderedNonEmpty !== false && electronOut.renderedNonEmpty !== false)
   } else {

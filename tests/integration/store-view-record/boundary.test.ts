@@ -1453,6 +1453,37 @@ const DECLARED_SCOPE: readonly string[] = [
   //    loosened — the caret is read as a caret (`^0.x.y` pins the MINOR exactly and moves the PATCH), so a `0.5.1` dist beneath a
   //    `^0.5.2` pin reds here where the loose `minor >= 5` arm would have passed it.
   'tests/engine-pin-version.test.ts',
+  // ── THE DIVERGENCE LEG RE-GRAINED — `scripts/electron-divergence.mjs`, AND IT JOINS THIS UNION AS ITS OWN ENTRY WITH ITS OWN
+  //    REASON (`D-146`), NEVER AS THE PREFIX `scripts/` (`strata/modules.json` claims that directory on the `harness` row because
+  //    a map row claims a TREE; a boundary row may not, because a directory declaration would admit every driver a later pass
+  //    writes under it without naming it — `B-2`'s undeclared-sibling arm is what bites on one dropped unnamed). **`B-1` REPORTED
+  //    THIS PATH AS ITS ONE OFFENDER ON THIS TREE** — the leg repaired by the pass that adds this block — so the entry is added
+  //    WITH the edit that dirtied the path and never after it (`D-146`'s precedent, `D-195`'s for a re-grained instrument).
+  //    **ITS SUBJECT IS THE LEG'S FIVE CENSUS CHECKS RE-GRAINED FROM COUNTS TO A RECORD-MEASURED DELTA.** The landed form compared
+  //    BYTE-IDENTICAL strings — census `inTree`, census `registered`, the SSR fragment, the `data-node-id` set and the nodeId
+  //    vocabulary — and it read green on 2026-11-03, when the demo envelope was the whole surface. The app has since grown a
+  //    RECORD-DRIVEN renderer (`D-243`…`D-267`) that a DOM shim with no store and no layout CANNOT hold, and one cause moved all
+  //    five: **THE REAL RENDERER MINTS ONE ROW NODE PER `['tabs']` RECORD ROW WHILE THE BATTERY HOST CONSTRUCTS A BARE `Runtime`
+  //    AND MINTS NONE**, so the census moved by one node on both counts, the fragment gained one element, the id set gained one
+  //    `data-node-id` and the vocabulary one nodeId — five readings of one node, none of them a divergence between the two hosts.
+  //    **SO EACH OF THE FIVE NOW READS `shim + rows`, AND `rows` IS THE RECORD'S OWN ANSWER RATHER THAN THE LEG'S ARITHMETIC**:
+  //    `provident.data.read` at `['tabs']`, the `order` array's length, over the `data` group the leg seeds for exactly that read
+  //    (the fifth group the scratch profile gained). **THE DELTA IS PRINTED BEFORE IT IS SUBTRACTED** — a reader sees what `rows`
+  //    is and where it came from — the record read answering something other than a counted array is `rows: null` with its own
+  //    reason, and every check that needs the delta then reds LOUDLY rather than assuming a zero. **AND THE DELTA IS LOCATED,
+  //    NOT MERELY ALLOWED**: the fragment arm requires the real host's counted rows to EQUAL the record's answer and the shim's
+  //    to be zero, and the vocabulary arm requires everything the real host holds beyond the shim to be one unauthored node per
+  //    record row. The sixth check (`dirtied`) was re-grained the other way — from a normalized-`dirtied` identity to the one
+  //    fact that must hold, that the click's cascade reaches the counter node in BOTH hosts — because a count is not a parity
+  //    surface. **NO CHECK IS WEAKENED INTO A SKIP**: every arm still fails, and a delta that grows, moves to another kind of
+  //    node or stops being readable reds a check by name.
+  //    **AND IT CLAIMS NO END TO THIS LIST** (`D-146`): the reading at `D-174`'s head that called `app-envelope`'s page *"the last
+  //    entry this union is owed"* stands as that page's reading at a date and never as the list's end — the entries above it
+  //    show the union re-opening at every pass that writes a path, and this entry is one more of those rather than a
+  //    contradiction of it. **NOTHING OUTSIDE THIS ONE PATH IS DECLARED HERE**: the leg's `scripts` key does not move (it runs on
+  //    `npm run divergence`, which already existed), and `strata/modules.json` — the map row's own reading of the surface this
+  //    pass re-takes — is already declared above.
+  'scripts/electron-divergence.mjs',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without
