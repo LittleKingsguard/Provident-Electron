@@ -828,6 +828,32 @@ function paneMoveDropNodeOf (id: string, paneId: string, zone: string): Record<s
   }
 }
 
+/** **THE PANE'S DISPLAY NAME, AUTHORED ON THE GRIP AND ON NO NEW NODE — THE SIDEBAR'S HEADER ROW READS IT OFF `attr()`.**
+ *  The user's report: *"In the sidebar, move the grab handle to the top of the pane above the text (not to the side), and
+ *  render the pane name as text to the right of it."* A pane has an ID and no display name anywhere in the tree
+ *  (`['panes', 'pane-menus']` is the record's key, `#pane-menus` the node's), so the name has to be AUTHORED — and this is
+ *  the one member that costs no node: **`props.name` on the grip**, which the paint emits as the bare `name="Menus"`
+ *  attribute the page sheet's `::after { content: attr(name) }` reads.
+ *  **IT IS AUTHORED ON THE GRIP AND NOT ON THE PANE, AND THAT IS FORCED RATHER THAN CHOSEN**: `attr()` reads the attribute
+ *  of the element its pseudo-element belongs to, so the name can only be painted on the node that CARRIES it — and the
+ *  node that owns the header row is the grip (the pane's first child, `AL-1`'s order). A `props.name` on the pane itself
+ *  would have every rule it needed on a different element.
+ *  **IT SURVIVES EVERY DELIVERY AND EVERY RELOCATION**: the pane arm writes `css.style` (whole-key, `D-225`) and
+ *  `props.zone` (one member, `D-252`) and nothing else (`renderer.ts`'s `driveLayoutRegions` → `paintStyle`), so a
+ *  sibling `props` member is neither replaced nor dropped; and a relocation is the engine's `move` op, which re-parents the
+ *  node and re-authors nothing (`D-252`). **NO NEW RECORD MEMBER IS OWED, AND THAT IS WHY THIS FORM WON**: a `name` in the
+ *  `panes` family would owe the creation repair a value for every pane it mints and the placeholder a name for every pane
+ *  a cold profile derives (`shared/view-shape.ts`'s `panesMustStand`), i.e. a decision about a pane nobody has named — where
+ *  this is an authored presentational label whose absence is already spelled (`attr()` on a missing attribute is `''`).
+ *  **A `::before` NAMING THE PANE NODE WOULD HAVE NEEDED THIS ATTRIBUTE ANYWAY AND COULD NOT SIT ON THE ROW**: a column flex
+ *  container lays a `::before` out as its FIRST item, i.e. the name above the grip and in a row of its own.
+ *  **TWO GRIPS, TWO NAMES, AND NO NEW PUBLISHED NAME**: these two constants are PRIVATE (`MENUS_GRAB_ID`'s own standing,
+ *  `§7`'s *"no export joins the published surface"*), so the `19` names the map carries are unmoved and the sheet reads the
+ *  value off the ATTRIBUTE rather than off a module. Reader: `src/renderer/index.html`'s header-row rules and the rendered
+ *  markup. */
+const MENUS_PANE_NAME = 'Menus'
+const GUTTER_PANE_NAME = 'Stage'
+
 /** **ONE PANE-MOVE GRIP AND ITS FOUR DROPS — A DRAG HANDLE, FOCUSABLE, AND THE PANE'S FIRST CHILD** (`design-pane-relocation.md`
  *  rev 1 §1, §7; `app-envelope` rev 7 §10). **`props.tabindex: '0'` IS THE WHOLE REVEAL MECHANISM** (`demo-envelope.ts`'s
  *  four menus carry the same prop for the same reason): the paint writes `props.*` as attributes, so this is the bare
@@ -842,12 +868,17 @@ function paneMoveDropNodeOf (id: string, paneId: string, zone: string): Record<s
  *  top-bar's alone and BOTH panes stand outside it — one in the `top` ZONE below the bar, one in the stage's gutter
  *  card — so a `no-drag` here would guard against a region the compositor never had (the same reading
  *  `src/renderer/index.html` states for `#menus-vertical`). Reader: the sheet's `.pane-grab` rules, `renderer.ts`'s
- *  `installPaneMoveDrag`, and the rendered markup. */
-function paneMoveGripNodeOf (id: string, paneId: string, style: Record<string, string>): Record<string, unknown> {
+ *  `installPaneMoveDrag`, and the rendered markup.
+ *  **AND `props.name` IS THE PANE'S DISPLAY NAME, PAINTED ONLY IN A SIDEBAR FORM** (`MENUS_PANE_NAME` above): the sheet's
+ *  header-row rules read it with `attr(name)` and are keyed on the pane's own `zone`, so the `top`/`bottom` form — where
+ *  this grip stands beside the menus' line rather than above them — paints no name at all, and the attribute costs that
+ *  form nothing but one attribute in the markup. A grip that carried no name is an EMPTY NAME, never a missing header:
+ *  `attr()` on an absent attribute is `''` and the row is the GRIP's, which the pane owes whatever its name is. */
+function paneMoveGripNodeOf (id: string, paneId: string, name: string, style: Record<string, string>): Record<string, unknown> {
   return {
     type: 'div',
     css: { id, classes: ['pane-grab'], style },
-    props: { id, tabindex: '0' },
+    props: { id, tabindex: '0', name },
     content: '⠿',
     children: PANE_MOVE_DESTINATIONS.map((zone) => paneMoveDropNodeOf(`${id}-${zone}`, paneId, zone)),
   }
@@ -1083,7 +1114,7 @@ export function demoEnvelope() {
                       // Its `props.pane` operand is the RECORD's id, spelled as written in `shared/view-shape.ts`
                       // and NOT this node's own id (`PANE_NODE_IDS`' two-name reason, `D-194`). Reader:
                       // `renderer.ts`'s `startPaneMove` census, and the rendered markup.
-                      paneMoveGripNodeOf(MENUS_GRAB_ID, MENUS_PANE_RECORD_ID, menusGrabStyle),
+                      paneMoveGripNodeOf(MENUS_GRAB_ID, MENUS_PANE_RECORD_ID, MENUS_PANE_NAME, menusGrabStyle),
                       // (a) THE HANDLE (`MENUS_AFFORDANCE_ID`, §3 above) — THE GUTTER HANDLE'S OWN SHAPE: a
                       // real, pressable `14px` strip at the pane's LEFT EDGE, the edge its ADJUSTABLE axis
                       // (the width) can move, and it crosses no axis (`C-13`, `D-189`, `D-192`). Its shared
@@ -1369,7 +1400,7 @@ export function demoEnvelope() {
                                   // the pane's node is `#gutter-pane` and its record is `['panes','pane-a']`
                                   // (`PANE_NODE_IDS`' two-name reason, `D-194`) — the act addresses the store.
                                   // Reader: `renderer.ts`'s `startPaneMove` census, and the rendered markup.
-                                  paneMoveGripNodeOf(GUTTER_GRAB_ID, GUTTER_PANE_RECORD_ID, gutterGrabStyle),
+                                  paneMoveGripNodeOf(GUTTER_GRAB_ID, GUTTER_PANE_RECORD_ID, GUTTER_PANE_NAME, gutterGrabStyle),
                                   {
                                     // (a) THE AFFORDANCE — `§2.1` item 7(a): an authored `css.id`, an authored
                                     // `css.classes` list, an authored `css.style` carrying THE BASE `cursor`
