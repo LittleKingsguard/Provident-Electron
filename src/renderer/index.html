@@ -609,6 +609,26 @@
     #menus-grab { margin-left: -0.875rem; }
     #menus-vertical {
       float: right;
+      /* ══ **AND IT IS THE TOPMOST THING AT ITS OWN BOX — WHICH IS A RANK, AND IT HAD NONE** ══ The user's report,
+         verbatim: *"Resize handle should be over the pane contents instead of under"*. **THE STRIP WAS BEHIND THE
+         CONTENT, AND THE CAUSE IS THE FIRST OF THE TWO AND NOT `D-260`'s**: the strip IS positioned (`position: sticky`),
+         so it is painted in the positioned band — but its `z-index` was `auto`, and among positioned siblings that band's
+         order is DOCUMENT ORDER, while the four `.menus-menu` chips are `position: relative` (also `auto`) and stand
+         AFTER it in the tree. **AND THE PANE CREATES NO STACKING CONTEXT FOR ANYTHING TO BE TRAPPED IN**, measured on
+         the real window rather than reasoned: `#pane-menus` computes `position: static`, `z-index: auto`, `opacity: 1`,
+         `transform: none`, `isolation: auto`, and so does every ancestor up to `#app` (`position: fixed`) — so the strip
+         and the chips were ranked in ONE context and the later box won. **MEASURED, and this is why the picture and a
+         centre-only probe disagree**: a `9 × 5` scan of the strip's own box answered a `.menus-menu` chip at `9/45`
+         points — its ENTIRE TOP BAND, top-centre (`125,39`) included — while `elementFromPoint` at its mid-centre
+         answered the strip, so a read that took only the centre would have passed. `z-index: 1` is the RANK: a positive
+         value is above every `auto`/`0` positioned box and above all in-flow content in that context, so the strip is
+         topmost at its own box while the menus scroll UNDER it — which is the whole point of `D-246`'s pin, and a pin
+         painted under what it pins over is a control a person cannot see or press. **IT MOVES NOTHING**: the box is still
+         the authored `14px`, the pin is `D-246`'s byte for byte, and a rank is no figure the record owns. **AND THE ONE
+         BOX THAT STILL STANDS ABOVE IT IS NAMED RATHER THAN LEFT TO BE FOUND**: an OPEN menu's panel and items carry
+         `z-index: 30` (`:focus-within`), so a focused name paints over the strip's top band for as long as it holds
+         focus — the sheet's one transient overlay, closed when focus leaves (`D-260`'s reveal arm, the same trade). */
+      z-index: 1;
       position: sticky;                       /* a FLOAT can be sticky; an absolutely positioned box cannot (`D-244`'s class) */
       /* THE PIN AND THE STATIC POSITION ARE THE SAME POINT, AND THAT IS NOT REDUNDANT: `left` is what holds the strip
          still while the menus scroll, and `margin-right` is where the strip SITS once the sticky rectangle empties at the
@@ -633,6 +653,12 @@
     #inspector-vertical {
       float: right;
       position: sticky;
+      /* THE SAME RANK AS THE MENUS STRIP'S, FOR THE SAME REASON AND NOT FOR SYMMETRY: this pane's own content is `No
+         selection` (`D-259`), short enough to stop before the strip's box — measured at `45/45` self-answering points —
+         so its strip reads topmost TODAY by the LENGTH OF ITS CONTENT rather than by a rule, and a longer body (or a
+         scroll) would put a `.menus-menu`-style `position: relative` box over it exactly as `#menus-vertical`'s was
+         measured to be. One rank, both strips: nothing here is a figure of the record's and no box moves. */
+      z-index: 1;
       left: calc(100% + 1.125rem - 0.875rem);
       margin-right: -1.125rem;
       height: 100%;
@@ -941,6 +967,19 @@
       font-size: 11px;
       user-select: none;
       transition: background-color 120ms ease, box-shadow 120ms ease;
+      /* ══ **THE GRIP'S OWN RESTING RANK — THE STRIP'S DEFECT ONE CONTROL OVER, AND IT WAS MEASURED, NOT ASSUMED** ══
+         The user's report named the resize strip (*"Resize handle should be over the pane contents instead of under"*),
+         and the `⠿` grip has the same shape and had the same hole: it is `position: sticky` (a positioned box), so the
+         chips — `position: relative`, `z-index: auto`, LATER in the tree — are ranked after it and paint over it the
+         moment the menus scroll under it. **MEASURED on the real window, `9 × 5` points of the grip's own box**:
+         `#menus-grab` answered ITSELF at `45/45` unscrolled and at `1/45` at the menus pane's `scrollLeft` end (the one
+         surviving point is its own edge), and `9/45` in the sidebar arm with the pane scrolled to its `scrollTop` end —
+         so the relocation grip, the pane's only way to be moved, became unpressed-by-measurement while the pane was
+         scrolled. **THE RANK IS THE SAME ONE THE STRIPS TAKE**, so a grip and a strip are one rule's worth of boxes and
+         a future affordance of either kind inherits it; and `:focus-within`'s `4` below still outranks it, which is what
+         keeps `D-260`'s four drops — this grip's own children, trapped in this grip's context — exactly as reachable as
+         that row measured them. Nothing about the box, the glyph or the drops' closed state moves. */
+      z-index: 1;
     }
     .pane-grab:hover, .pane-grab:focus-within { background-color: #c3ccd8; box-shadow: inset 0 0 0 1px #8f9dae; }
     /* ══ THE GRIP IS LIFTED SO ITS OWN FOUR WINDOWS CAN BE HIT — THE OTHER HALF OF THIS PASS, AND THE REASON A DRAG *BACK* TO
