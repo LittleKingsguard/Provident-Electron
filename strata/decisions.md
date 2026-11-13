@@ -5854,3 +5854,20 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **THE READINGS.** `npm test` **`2,963 passed / 2 skipped` of `2,965`** over **`146`** files, **ZERO red**; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; **`npm run panes` `7`/`7`**; the demo rebuilt. **One file changed** plus its build product. **The app is live on `http://127.0.0.1:3787/mcp`.**
 
 **ITS REGISTER IS `D-71` TO `D-265`** as prose, unchanged and extended by this row only. **This row records a refuted hypothesis, an accumulation nobody would have found by reading, a table that located the third crossing, and a fix that asks the engine to re-derive rather than reaching into it.**
+## D-267 — THE CARD'S EMPTY STATE READS AS A CONSEQUENCE RATHER THAN A FAULT: its **status read-out** follows the record's own zone — and "home" closes **by design**, not as a gap
+
+**Status:** ACTIVE · **Date:** 2026-11-12 · **Source (user):** *"If the gutter card means the demo element, then no, it's just a demo."*
+
+**THE RULING CLOSES A QUESTION THE ROW BEFORE IT HAD LEFT OPEN.** **`D-264` recorded *"home is not expressible"*** as a stated non-expressibility — **the record side lawful, the tree side without a card arm** — **and named what a person was left with: a pane dragged out stays out, and the card keeps its heading and its status read-out around an EMPTY HOLE.** **The user has now said the card is DEMO FURNITURE and not a destination**, **so no fifth drop, no record member and no new destination are owed** — **and the remaining defect was never the absence of the destination, it was that the absence LOOKED LIKE A FAULT.**
+
+**THE FIX USES THE CARD'S OWN READ-OUT AND ADDS NOTHING.** **The status read-out is the one member of the card already painted from the record on every delivery**, **so it is the honest place for a fact about the record**: **a pane whose `zone` is ABSENT paints the stored figure (`100`)** — **the ordinary reading** — **and a pane whose `zone` is STATED paints *"pane-a is in the left zone"*.** **NO NODE, NO MEMBER, NO DROP, NO CENSUS TERM**: **the figure is `98` registered and `97` in tree across all three states**, **and the heading was left alone because it is authored prose with no id and would have been a new write target.**
+
+**AND THE RETURN NEEDS NO SPECIAL CASE, WHICH IS THE TEST OF THE RULE.** **Both readings are ONE FUNCTION of the same shape**, **because a pane with no `zone` IS the stage's** (`D-243`/`D-253`) — **the same turn, the same state check, the same `state-slice`, and nothing remembered** (`D-252`). **A fix that had needed a branch for the return would have been a second authority in miniature.**
+
+**MEASURED IN THREE STATES.** **Cold**: **the heading, the pane, and `100`.** **Relocated**: **the heading and *"pane-a is in the left zone"*.** **Back**: **`100` again** — **and a second boot on the same profile puts the pane back in the card**, **so the round trip survives a restart, not merely a drag.**
+
+**AND THE ROW SAYS WHAT THE RULING DID NOT DISCHARGE.** **The TREE still cannot drag a pane home** — **that is `D-252`'s named limit and it stands** — **but a person is no longer left to infer the cause of an empty box**, **which was the whole of what was left to fix.**
+
+**THE READINGS.** `npm test` **`2,963 passed / 2 skipped` of `2,965`** over **`146`** files, **ZERO red**; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; the demo re-verified `CURRENT`. **Three files changed**: the `S2` arm, the read-out's note, and its generated bundle. **The app is live on `http://127.0.0.1:3787/mcp`.**
+
+**ITS REGISTER IS `D-71` TO `D-266`** as prose, unchanged and extended by this row only. **This row records a user's one-sentence ruling closing a row's open question, a read-out used because the record already speaks through it, a return that needed no branch, and a round trip that survives a restart.**
