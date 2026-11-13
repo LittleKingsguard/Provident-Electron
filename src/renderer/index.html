@@ -507,12 +507,17 @@
     .menus-menu:focus-within > .menu-item:nth-of-type(5) { margin-top: calc(4 * var(--menu-row)); }
     .menus-menu:focus-within > .menu-item:nth-of-type(6) { margin-top: calc(5 * var(--menu-row)); }
     .menus-menu:focus-within > .menu-item:nth-of-type(7) { margin-top: calc(6 * var(--menu-row)); }
-    /* THE CLIP IS RELEASED ONLY WHILE A MENU IS OPEN — the pane and the zone it stands in both scroll their own axis
-       (`D-187`) and both would otherwise cut the drop-down off at the name strip's own height. **AND THE ZONE IS WHICHEVER
-       ONE THE PANE STANDS IN** (`D-252`): `top`/`bottom` and the two sidebars are the four places it can be, and a sidebar
-       panel opens SIDEWAYS into the stage, so `#left`/`#right` must release their own scroll for exactly as long as a name
-       holds focus — the same release, one axis over. */
-    #pane-menus:has(.menus-menu:focus-within),
+    /* THE CLIP IS RELEASED ONLY WHILE A MENU IS OPEN — the box that scrolls and the zone it stands in both scroll their own
+       axis (`D-187`) and both would otherwise cut the drop-down off at the name strip's own height. **AND THE ZONE IS
+       WHICHEVER ONE THE PANE STANDS IN** (`D-252`): `top`/`bottom` and the two sidebars are the four places it can be, and a
+       sidebar panel opens SIDEWAYS into the stage, so `#left`/`#right` must release their own scroll for exactly as long as
+       a name holds focus — the same release, one axis over.
+       **AND THE BOX THAT CLIPS IS THE PANE'S BODY, NOT THE PANE** (`D-270`): the record's `overflow` is `menus-body`'s now
+       (`renderer.ts`'s `panePaintOf` writes it there), so `#menus-body` takes the pane's place in this list — a release keyed
+       on the pane would leave the panel clipped by the box that actually scrolls, which is the defect this rule exists to
+       prevent, silently back. **THE PANE IS NOT IN THE LIST AND MUST NOT BE**: it carries no `overflow` at all any more, so
+       a rule on it would be a declaration with no subject (`D-70`). */
+    #menus-body:has(.menus-menu:focus-within),
     #top:has(.menus-menu:focus-within),
     #bottom:has(.menus-menu:focus-within),
     #left:has(.menus-menu:focus-within),
@@ -583,9 +588,11 @@
        only the PAINT is the class's; the paint costs the sibling nothing and makes both strips findable.
        **AND THE SIDEBAR'S FORM IS THE CLASS's, FOR THE OTHER REASON** (`D-253`; keyed on the inherited class since `D-265`):
        there the strip is on the pane's BOTTOM edge in whichever zone the pane STANDS in, so the rule that states it matches
-       `.pane-in-left > .gutter-handle` / `.pane-in-right > .gutter-handle` and covers every pane that consumes the zone's
-       form — the class is the one hook every pane's strip already carries, plus the position the engine resolved, and the
-       `top`/`bottom` arm keeps the id-keyed box this block is about.
+       `.pane-in-left > .pane-body > .gutter-handle` / `.pane-in-right > .pane-body > .gutter-handle` and covers every pane
+       that consumes the zone's form — the class is the one hook every pane's strip already carries, plus the position the
+       engine resolved, and the `top`/`bottom` arm keeps the id-keyed box this block is about. **ONE BOX IN SINCE `D-270`**:
+       every strip is its pane's BODY's child now, because the body is the box that scrolls and a strip must be pinned
+       against the port it resizes, not against the pane that no longer scrolls.
        **AND `-webkit-app-region` IS DELIBERATELY NOT DECLARED ON IT**: the drag region is the top-bar's alone, and this
        strip is NOT inside it — the menus pane stands in the `top` ZONE, below the bar — so a `no-drag` here would guard
        against a region the compositor never had. The click-drag this strip must keep is the pane's own resize gesture,
@@ -648,6 +655,15 @@
          focus — the sheet's one transient overlay, closed when focus leaves (`D-260`'s reveal arm, the same trade). */
       z-index: 1;
       position: sticky;                       /* a FLOAT can be sticky; an absolutely positioned box cannot (`D-244`'s class) */
+      /* ══ **AND THE PORT IT IS PINNED AGAINST IS ITS OWN PARENT'S NOW** (`D-270`) ══ The strip is a child of `menus-body`
+         rather than of the pane, because the BODY is the box that scrolls: a control pinned against a box that no longer
+         scrolls would pin nothing, and a control left in the pane would have had to be pinned against a scrollport one
+         node up — which is `D-246`'s defect with the arrow reversed. **EVERY DECLARATION BELOW IS BYTE-UNCHANGED AND NONE OF
+         THEM MOVES A FIGURE**: `100%` is still its containing block's content height (the body's, which is the pane's height
+         less the head row — the scroll area the strip actually spans), and the inset is still the pane's content width plus
+         the pane's `padding-right` lane less the strip's own thickness, because the body's content box IS the pane's content
+         box. The one thing that did NOT move is the strip's LANE: `:where(#pane-menus)`'s `padding-right: 1.125rem` stays on
+         the PANE, so the lane it buys is still outside the figure the record paints. */
       /* THE PIN AND THE STATIC POSITION ARE THE SAME POINT, AND THAT IS NOT REDUNDANT: `left` is what holds the strip
          still while the menus scroll, and `margin-right` is where the strip SITS once the sticky rectangle empties at the
          end of the scroll range — measured apart, the pin alone dropped the strip `86 → 68` at `scrollLeft 96`, and the
@@ -668,6 +684,23 @@
        figure the record owns: the widths are the GRIP's `14px` and the strips' lanes, and the pane's own width is
        `['panes', <id>, 'width']` written by the paint (`D-243`, `D-253`). */
     :where(#pane-inspector) { box-sizing: content-box; padding-left: 0; padding-right: 1.125rem; white-space: nowrap; }
+    /* ══ **THE STRIP'S LANE MOVES ONE BOX IN WITH THE STRIP, AND THE PAIR IS THE WHOLE OF IT** (`D-270`) ══ The lane above
+       is the PANE's padding, and the pane's padding box is what a scrollport one node up would be. **THE SCROLLING BOX IS
+       THE BODY NOW, AND ITS PORT IS ITS OWN PADDING BOX** — so the strip's static box (a right float whose
+       `margin-right: -1.125rem` puts its border box out where that lane is) would be 18px OUTSIDE the body's port, which is
+       scrollable overflow: **a horizontal scrollbar on a pane with nothing to scroll**, the user's second report, back in
+       the box that exists to remove it. **THE TWO DECLARATIONS ARE ONE TRADE AND NEITHER WORKS ALONE**:
+       `padding-right: 1.125rem` puts the lane INSIDE the port, and `margin-right: -1.125rem` takes the same 18px back off
+       the body's own box so its CONTENT box is still exactly the pane's content box — **the record's figure still buys the
+       menus their full line and the strip still spends none of it** (`D-256`'s rule, kept). The body's border box then ends
+       on the pane's padding edge, and the strip sits in the lane at `x = figure - 14px + 18px` exactly as it did in the pane.
+       **THE SIDEBAR FORM CANCELS BOTH**: there the strip is the body's BOTTOM item and there is no right-hand lane at all,
+       which the `.pane-in-left > .pane-body` rule below states. */
+    :where(#menus-body),
+    :where(#inspector-body) {
+      padding-right: 1.125rem;
+      margin-right: -1.125rem;
+    }
     /* **THE THIRD RULE IS DELETED WITH THE LANE IT SPELLED** (`app-envelope` rev 2 §3): `:where(#pane-inspector >
        #inspector-grab) { margin-left: -0.875rem }` put the floored grip into the pane's left padding, and the head row is
        that lane now. (The menus pane's twin rule above goes with it, in the same edit.) */
@@ -786,13 +819,64 @@
       display: flex;
       flex-direction: column;
     }
-    /* ══ **EVERY DIRECT CHILD KEEPS ITS OWN FIGURE ON THE COLUMN — `D-253`'s TWO RULES FOR THE MENUS, AS ONE** ══
-       A column of stored figures shrinks its children instead of scrolling them, so the chips, the receipt and the two
-       affordances all take `flex: 0 0 auto`; the two rules that stood here (`> .menus-menu` and `> #menus-receipt`) said
-       it for the only pane that had children to say it about, and the third pane's target gets the same treatment from
-       the same line now. No figure of the record's is stated and no box moves. */
-    .pane-in-left > *,
-    .pane-in-right > * { flex: 0 0 auto; }
+    /* ══ **EVERY DIRECT CHILD EXCEPT THE BODY KEEPS ITS OWN FIGURE ON THE COLUMN — `D-253`'s TWO RULES FOR THE MENUS, AS
+       ONE** ══ A column of stored figures shrinks its children instead of scrolling them, so the chips, the receipt and
+       the affordances all take `flex: 0 0 auto`. **THE BODY IS THE ONE EXCEPTION AND IT IS NAMED AS ONE** (`D-270`): it
+       takes `flex: 1 1 auto` (`.pane-body` above) because it is the pane's remainder and the box the record scrolls, and
+       `:not(.pane-body)` is what keeps this line from fixing it at its content's height. The chips, the receipt and the
+       strip are that body's children now, and the body is their column — see the rule below. No figure of the record's is
+       stated and no box moves. */
+    .pane-in-left > *:not(.pane-body),
+    .pane-in-right > *:not(.pane-body) { flex: 0 0 auto; }
+    /* **AND THE BODY IS THE COLUMN THEIR STACK NEEDS** (`D-253`'s clause (3), one box in — `D-270`): the pane used to be
+       the column the four chips blockified into, one row each, with the strip `order: 1` on its bottom edge. That column
+       is this node's now, because the chips and the strip are its children; the pane's own column holds the head and the
+       body and nothing else. `align-items: stretch` is not stated and is not needed: a column stretches its items. */
+    .pane-in-left > .pane-body,
+    .pane-in-right > .pane-body {
+      display: flex;
+      flex-direction: column;
+      /* AND THE STRIP'S RIGHT-HAND LANE IS CANCELLED HERE, FOR THE REASON THE `top`/`bottom` PAIR STATES ONE BLOCK UP
+         (`D-270`): a sidebar's strip is the body's BOTTOM item and spans its width (`width: auto !important` below), so
+         the lane and the negative margin that put the `top`/`bottom` strip at the pane's right edge would leave 18px of
+         body content width unaccounted for — and an unpadded port is what the bottom strip spans. */
+      padding-right: 0;
+      margin-right: 0;
+    }
+    /* ══ **THE PANE IS A FLEX COLUMN AND THE SCROLL IS ITS BODY'S — THE HEAD ROW IS OUTSIDE THE SCROLLING BOX** ══
+       The user's two reports, verbatim: *"Scrolling goes under the pane header"* and *"Also the scrollbar is present even if
+       there is enough space, probably because the header is displacing"* — **one cause, two symptoms, and the cause is that
+       `D-269` put the head row INSIDE the box `D-243` makes a scroller**: a `position: sticky` row in a scroll container
+       stays pinned only while the content passes UNDER it (and shows the content through wherever it paints no fill), and
+       it spends its own `14px` inside `scrollHeight`, so a pane whose content exactly fits still overflows by one row.
+       **ANY RESERVATION INSIDE THE SCROLLER DOES THAT — sticky, absolute or padding** — so the head cannot be an in-flow or
+       padded child of the scrolling box at all: the pane is a COLUMN, the head is its fixed first item and the BODY
+       (`src/shared/demo-envelope.ts`'s `<pane>-body`, `classes: ['pane-body']`) is its flexible second, CARRYING the record's
+       `overflow` (`renderer.ts`'s `panePaintOf` writes it there, from the same zone as the fill). The header then never
+       scrolls, needs no background to hide content, and contributes nothing to `scrollHeight`.
+       **THE KEY NAMES NO PANE AND ADDS NO AUTHORED CLASS**: `:has(> .pane-head)` is the box that heads itself, which is the
+       pane by construction — so a fourth pane authored with a head and a body inherits this with no edit here, exactly as
+       `D-265`'s inherited zone class gives it its zone's form. (This is NOT `D-264`'s deleted `:has(> .pane-grab)` guard back:
+       that one asked whether a node IS a pane and could not answer; this one states the column the head's own parent owes,
+       and the class binding still carries the zone's form.)
+       **THE FILL AND THE RECORD'S FIGURE STAY ON THE PANE** (`D-243`): the fill is a `100%` relation against the zone's
+       extent and the figure is the pane's own member, and BOTH are written on the pane node still — the one declaration this
+       pass moves from the pane to the body is the scroll. */
+    :has(> .pane-head) {
+      display: flex;
+      flex-direction: column;
+    }
+    /* **THE BODY IS THE PANE'S FLEXIBLE ITEM AND THE ONLY SCROLLER IN THE PANE.** `flex: 1 1 auto` is the pane's remaining
+       height on the axis a sidebar adjusts; `min-height: 0` and `min-width: 0` are what let a flex item shrink BELOW its
+       content's intrinsic size, which is the difference between a body that scrolls and a body that pushes the head off the
+       box; `overflow-anchor: none` would be a second opinion about the scroll position and is deliberately absent. **IT
+       AUTHORS NO FIGURE AND NO `overflow`**: the record's scroll is the paint's to write (`panePaintOf`), and where the record
+       states no zone (`C-9`'s stage pane) there is no scroll to state — so the body's box here is layout and nothing else. */
+    .pane-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      min-width: 0;
+    }
     /* ══ **THE CONTROL BAR: A HEAD ROW IN EVERY ZONE, HOLDING THE GRIP AND THE COLLAPSE CONTROL** ══════════════════
        The user's first report, verbatim: *"In the sidebar, move the grab handle to the top of the pane above the text (not
        to the side), and render the pane name as text to the right of it."* — and the second, which generalises it: the bar
@@ -804,16 +888,19 @@
              so one click on the control would arm a drag AND paint four zone windows (`travelArmed` means a click with no
              travel commits nothing, and the session is armed all the same).
          (b) **AND THE BAR CANNOT STAY THE GRIP WITH THE CONTROL BESIDE IT**, which is what actually decides the row: the
-             pane is a flex COLUMN in a sidebar (`display: flex; flex-direction: column` above), so two children of the pane
-             are laid out DOWN it — only a box of its own can lay the two controls along the ROW the user's sentence asks
-             for.
+             pane is a flex COLUMN, so two children of the pane are laid out DOWN it — only a box of its own can lay the two
+             controls along the ROW the user's sentence asks for.
        **THE ROW AUTHORS NO `css` AND THIS SHEET OWNS ITS BOX** (`src/shared/demo-envelope.ts`'s `<pane>-head` authors no
        `style` at all, so there is nothing to fight and no `!important` is owed): `display: flex; align-items: center;
-       gap: .25rem; width: auto; padding: 0 .25rem; position: sticky; top: 0; left: 0; z-index: 1` — **and BOTH sticky
-       insets, because a sidebar pane scrolls `overflow-y` and a `top`/`bottom` pane scrolls `overflow-x`** (`D-243`'s axis
-       pair, read one node over): `top: 0` holds the row in three of the four zones and `left: 0` holds it in the fourth, one
-       rule and no zone-keyed spelling, so `D-246`'s measured defect — a control travelling with the scroll it sits in —
-       cannot return on either axis.
+       gap: .25rem; width: auto; padding: 0 .25rem; position: relative; z-index: 1`.
+       **AND IT IS NOT PINNED ANY MORE, BECAUSE THE SCROLL IS NOT ITS BOX'S** (`D-270`): `D-269` gave the row
+       `position: sticky; top: 0; left: 0` — both insets, one per axis — because the pane was then the scroller on whichever
+       axis its zone adjusted. **A STICKY ROW IN A SCROLLER IS EXACTLY THE DEFECT THE USER REPORTED**: it holds only while
+       the content passes under it, it shows the content through where it paints no fill, and it adds its own `14px` to
+       `scrollHeight`. With the scroll on the body (above) the row is a flex item that no scroll can reach, so BOTH INSETS
+       ARE DELETED WITH THEIR CAUSE (`D-70`), and **NO OPAQUE HEAD BAND IS AUTHORED** — a background on this rule would be the
+       remedy for a head that overlaps content, and there is no content left for it to hide. `position: relative` STAYS: it
+       is what makes the stacking context the four drops are confined to, one node out from the grip's own rank (`D-261`).
        **THE NAME STAYS ON THE GRIP AND NOW PAINTS IN EVERY ZONE**: `props.name` (`'Menus'`, `'Inspector'`, `'Stage'`) is
        emitted as the bare `name="Menus"` attribute the grip's own `::after` reads, so the `top`/`bottom` form — where
        `D-257`'s row deliberately painted no name because there was no row — reads `⠿ Menus` exactly as the sidebar does. A
@@ -836,15 +923,11 @@
       display: flex;                       /* the two controls along ONE ROW — the whole reason this node exists (§1(b)) */
       align-items: center;
       gap: 0.25rem;                        /* between the grip and the control, and neither is a figure of the record's */
-      width: auto;                         /* a block-level box against the scrollport's content box — it cannot travel */
+      width: auto;                         /* a flex item stretched on the pane's cross axis — nothing can scroll it */
       padding: 0 0.25rem;                  /* the row's own inset, so the glyph does not sit on the pane's border */
-      position: sticky;                    /* `D-246`'s pin MOVED FROM THE GRIP TO THE ROW, and the row is not a float */
-      top: 0;                             /* …held on the axis a SIDEBAR pane scrolls (`overflow-y`, `D-243`) */
-      left: 0;                            /* …and on the axis a `top`/`bottom` pane scrolls (`overflow-x`) — BOTH INSETS, */
-                                          /* one rule and no zone-keyed spelling: three of the four zones need `top`, */
-                                          /* the fourth needs `left`, and `D-246`'s defect cannot return on either axis */
-      z-index: 1;                         /* the rank a pinned row owes (`D-261`): above the content that scrolls under it */
-      flex: 0 0 auto;                     /* in a sidebar column the row is not a thing the flex shrinks */
+      position: relative;                  /* a RANK and no longer a PIN: the stacking context the drops are confined to */
+      z-index: 1;                          /* …above the pane's position-ed content, the rank the grip's drops inherit */
+      flex: 0 0 auto;                      /* THE PANE'S FIXED ITEM: the body below it takes the remainder and the scroll */
     }
     .pane-head:focus-within { z-index: 4; } /* `D-260`'s lift, one node out: the grip inside is what opens the four drops */
     /* **THE GRIP IS THE ROW'S FLEXIBLE BODY AND ITS OWN BOX IS THE BAR** — the authored `14px` is its BASIS, and
@@ -961,8 +1044,8 @@
        `align-self: stretch !important` is the third pane's authored `align-self: flex-start` yielding — the same trade the
        grip's row makes and for the same reason — and the two `!important`s beside it are the strip's THICKNESS and cursor
        moving to the height axis over an inline `width: 14px`/`cursor: col-resize`. */
-    .pane-in-left > .gutter-handle,
-    .pane-in-right > .gutter-handle {
+    .pane-in-left > .pane-body > .gutter-handle,
+    .pane-in-right > .pane-body > .gutter-handle {
       order: 1;                            /* LAST in the column: its static position is the pane's bottom edge */
       flex: 0 0 auto;
       float: none;                         /* the pin that held it against the RIGHT edge is the height-axis lane's job now */
@@ -990,20 +1073,20 @@
     /* THE PANEL OPENS SIDEWAYS IN A SIDEBAR — keyed on the pane's `zone` and the MENU's own class, which is the content's
        hook and no pane's name: `.menus-menu` occurs only in the menus pane, so this says "in a sidebar, every panel opens
        into the stage" without naming a pane, and `right`'s arm opens LEFTWARD for the reason clause (3) states. */
-    .pane-in-left > .menus-menu:focus-within::before {
+    .pane-in-left > .pane-body > .menus-menu:focus-within::before {
       left: 100%;
       top: 0;
     }
-    .pane-in-left > .menus-menu:focus-within > .menu-item {
+    .pane-in-left > .pane-body > .menus-menu:focus-within > .menu-item {
       left: calc(100% + var(--menu-pad));
       top: 1px;
     }
-    .pane-in-right > .menus-menu:focus-within::before {
+    .pane-in-right > .pane-body > .menus-menu:focus-within::before {
       right: 100%;
       left: auto;
       top: 0;
     }
-    .pane-in-right > .menus-menu:focus-within > .menu-item {
+    .pane-in-right > .pane-body > .menus-menu:focus-within > .menu-item {
       right: calc(100% + var(--menu-pad));
       left: auto;
       top: 1px;

@@ -965,8 +965,9 @@ function paneMoveGripNodeOf (id: string, paneId: string, name: string, style: Re
  *  §3). The grip stood `float: left; position: sticky; left: -0.875rem` because it was a control INSIDE a scroller
  *  (`D-243`'s `overflow-x: auto`) and had no sibling box to stand in (the strips' `D-244` fix was refused: the pane's own
  *  `css.style` is painted WHOLE, so no `position` survives on it). **THE HEAD ROW IS THAT SIBLING BOX NOW**
- *  (`menus-head`, below): it is a row NODE the paint never writes, it is `position: sticky` with BOTH insets in the sheet,
- *  and this grip is its FIRST FLEX ITEM — so the pin, the float and the negative inset are all DELETED, and the lane the
+ *  (`menus-head`, below): it is a row NODE the paint never writes, it is the pane's fixed first item and the box that makes
+ *  the stacking context in the sheet (`position: relative; z-index: 1` — a RANK, not a pin: `D-270`), and this grip is its
+ *  FIRST FLEX ITEM — so the pin, the float and the negative inset are all DELETED, and the lane the
  *  inset bought (`#pane-menus`' `padding-left: 0.875rem` and this node's `margin-left: -0.875rem`) is returned to the
  *  content in the same edit. **WHAT STAYS IS THE AFFORDANCE'S OWN BOX**: `cursor: grab` and the `14px` thickness —
  *  `OWED-1`'s measured handle box, and no figure of the record's (`D-194`). The four drops are `position: fixed`, so
@@ -992,10 +993,12 @@ const gutterGrabStyle: Record<string, string> = {
  *  `css.style` and NO handler.** Its box is the SHEET's (`src/renderer/index.html`'s `.pane-head` block): a `position` or a
  *  `display` authored here would race the sheet for a box no record owner claims (`D-129`, `D-174`). It is the pane's
  *  **FIRST CHILD**, holding the grip and the collapse control along ONE row — which is the reason it exists at all: a pane
- *  is a flex COLUMN in a sidebar (`index.html`'s `.pane-in-left`/`.pane-in-right` block), so two siblings of the pane are
- *  laid out DOWN it and only a box of its own can lay the two controls along the row the user asked for. Reader: that
- *  sheet block, `renderer.ts`'s head arm which writes `props.status` onto it (one attribute, one writer), and `AL-1` for
- *  presence.
+ *  is a flex COLUMN (`index.html`'s `:has(> .pane-head)` block and its `.pane-in-left`/`.pane-in-right` arm), so two siblings
+ *  of the pane are laid out DOWN it and only a box of its own can lay the two controls along the row the user asked for.
+ *  **AND THE ROW IS THE PANE'S FIXED ITEM, NOT A PINNED CHILD OF A SCROLLER** (`D-270`): the pane's second child is the BODY
+ *  (`<pane>-body`), which is the box that carries the record's scroll (`flex: 1 1 auto; min-height: 0; min-width: 0`), so
+ *  this row cannot travel with the content and adds nothing to a `scrollHeight`. Reader: that sheet block, `renderer.ts`'s
+ *  head arm which writes `props.status` onto it (one attribute, one writer), and `AL-1` for presence.
  *  **THE COLLAPSE CONTROL is `<pane>-collapse`: a `div` with the class `pane-collapse`, `props.tabindex: '0'` so `Tab`
  *  reaches it, `props.pane` — THE RECORD ID ITS ACT ADDRESSES, authored HERE so the act reads it OFF THE NODE and the
  *  renderer keeps no table of record ids (`D-235`'s address-book rule, `D-177`) — NO `content` (the glyph is the sheet's
@@ -1017,6 +1020,39 @@ const GUTTER_COLLAPSE_ID = 'gutter-collapse'
  *  the class `pane-body`, `css.id` = `props.id`, the `'No selection'` placeholder `D-259` chose, and nothing else. Reader:
  *  the sheet's `[collapsed="true"] > :not(.pane-head)` rule and the rendered markup. */
 const INSPECTOR_BODY_ID = 'inspector-body'
+/** **THE OTHER TWO PANES' BODIES — THE BOX THE HEAD ROW IS NOT IN, AND THE ONE THE RECORD'S SCROLL MOVES ONTO** (`D-270`).
+ *
+ *  **THE DEFECT THIS ANSWERS, IN THE USER'S OWN WORDS**: *"Scrolling goes under the pane header"* and *"the scrollbar is
+ *  present even if there is enough space, probably because the header is displacing"*. **ONE CAUSE, TWO SYMPTOMS, AND BOTH
+ *  READ OFF THE STRUCTURE**: `D-243` writes the pane's `overflow`, so **the pane was the scroller** — and `D-269` put the
+ *  head row INSIDE it. A `position: sticky; top: 0` row inside a scroll container therefore (i) **travels with the content
+ *  it heads**, staying pinned only while the content passes UNDER it and showing through wherever it has no opaque fill,
+ *  and (ii) **contributes its own `14px` to `scrollHeight`**, so a pane whose content exactly fits still overflows — the
+ *  scrollbar in the user's screenshot on a pane with nothing to scroll. **ANY RESERVATION INSIDE THE SCROLLER DOES THAT** —
+ *  sticky, absolute or padding — so the head cannot be an in-flow or padded child of the scrolling box at all.
+ *
+ *  **SO THE PANE IS A FLEX COLUMN AND THE SCROLL IS A CHILD'S**: the head is `flex: 0 0 auto`, this node is
+ *  `flex: 1 1 auto; min-height: 0; min-width: 0` and the pane's `overflow` is THIS node's (`renderer.ts`'s `panePaintOf`
+ *  composes it here, from the same zone as the fill). The header then never scrolls, needs no background to hide the
+ *  content, and never adds to a `scrollHeight` it does not stand in. **THE RECORD'S FILL AND ITS FIGURE STAY THE PANE'S**
+ *  (`D-243`: the fill is a relation against the zone's extent, and the figure is the pane's own member) — one declaration
+ *  moves and it is the scroll.
+ *
+ *  **AND THE PANE'S AUTHORED CHILDREN MOVE IN HERE WITH IT**: the strip, the four menus and the receipt were the pane's own
+ *  children because the pane WAS the column; from this node they are this box's children, one level down. `AL-1`'s order is
+ *  untouched — the strip still stands inside `#pane-menus` and before the first `menus-menu`, now as a descendant rather than
+ *  as a child — and no node, operand, class or figure moves with them.
+ *
+ *  **A BODY IS EXPRESSIBLE FOR EVERY PANE THIS ENVELOPE AUTHORS, AND THAT IS SAID RATHER THAN ASSUMED**: each pane's content
+ *  is authored in THIS literal, beside its own head, so the box that holds it is authored in the same place. **NOTHING IS
+ *  LEFT WITH ITS HEAD INSIDE A SCROLLER** — no pane keeps its body in its own `content` either (`A-14`'s rule, which this
+ *  one generalises): `#pane-menus`'s body is `menus-body`, `#pane-inspector`'s is `inspector-body` and `#gutter-pane`'s is
+ *  `gutter-body`. **AND BECAUSE OF THAT NO OPAQUE HEAD BAND IS AUTHORED**: an opaque fill on `.pane-head` would be the
+ *  remedy for a head that overlaps content — a symptom, not a cause — and with the row outside the scroller there is
+ *  nothing for it to hide. Reader: `renderer.ts`'s `PANE_BODY_IDS` (the paint's second node per pane), the sheet's
+ *  `.pane-body` block, and the rendered markup. */
+const MENUS_BODY_ID = 'menus-body'
+const GUTTER_BODY_ID = 'gutter-body'
 const PANE_COLLAPSE_HANDLER_NAME = 'pane-collapse'
 const PANE_COLLAPSE_BODY = `function (ctx) {
   void ctx;
@@ -1034,7 +1070,8 @@ function paneCollapseNodeOf (id: string, paneId: string): Record<string, unknown
  *  panes so that this can be tested with pane rearrangement in a zone"*, so the pane that proves the arrangement must be a
  *  pane the EXISTING machinery already knows how to paint, drag, resize and relocate: in the `top` zone, at its own stored
  *  width, filling the zone's height as a RELATION and scrolling the axis it adjusts. **SO ITS AUTHORED `css` IS
- *  `menusPaneStyle`'S TWO DECLARATIONS AND NOTHING MORE** — the paint replaces the whole value on the first delivery
+ *  `menusPaneStyle`'S ONE REMAINING DECLARATION AND NOTHING MORE** — the fill, and no `overflow` since `D-270` moved the
+ *  scroll onto the body — the paint replaces the whole value on the first delivery
  *  (`D-240`, `D-243`) and states the recorded figure there, so an authored figure here would be `D-129`'s second
  *  authority. **ITS BODY IS ITS OWN PLACEHOLDER AND NEVER ITS NAME** — the user's report answered rather than worked
  *  around: *"The contained text 'Inspector' is populating above the handle."* **THE CAUSE WAS TWO SPELLINGS OF ONE WORD**:
@@ -1057,7 +1094,11 @@ function paneCollapseNodeOf (id: string, paneId: string): Record<string, unknown
  *  **NO PANE'S `content` CARRIES ITS BODY ANY MORE** — this was the one pane the class ever reached (`#pane-menus` authors
  *  no `content` at all; `#gutter-pane` authors none either, its children carrying the gutter card's own text), and from
  *  this rev the inspector's body is a node, so a state rule can close a pane to its row. */
-const inspectorPaneStyle: Record<string, string> = { height: '100%', 'overflow-x': 'auto' }
+/** **AND ITS `overflow` IS GONE WITH THE BOX THAT NOW CARRIES IT** (`D-270`): `'overflow-x': 'auto'` stood on this pane
+ *  because the pane WAS the scroller — `D-243`'s scroll was written on it — and an authored scroll on the pane would make
+ *  the pane a scroll container again on the very render before the first delivery, with the head row inside it. The scroll
+ *  is `inspector-body`'s now (`panePaintOf` composes it there), so the pane authors the FILL and nothing else. */
+const inspectorPaneStyle: Record<string, string> = { height: '100%' }
 /** **THE SECOND PANE'S MOVE GRIP LOSES ITS PIN WITH THE LANE IT BOUGHT, EXACTLY AS THE MENUS GRIP DOES** (`app-envelope` rev
  *  2 §3): `float: left` + `position: sticky` + `left: -0.875rem` stood here for `D-246`/`D-248`'s measured reason — this pane
  *  scrolls on the axis it adjusts and no positioned box survived on the painted pane — and the head row (`inspector-head`)
@@ -1077,15 +1118,18 @@ const inspectorGrabStyle: Record<string, string> = {
 const inspectorHandleStyle: Record<string, string> = { cursor: 'col-resize', width: '14px' }
 
 /** **THE MENUS PANE** (`D-187`'s invariant, `D-192`'s column, `D-191`'s wire): a COLUMN in the top zone at
- *  its own stored width — it FILLS the zone's height as a RELATION (`height: '100%'`, never a figure), it
- *  ADJUSTS its width, and it SCROLLS the axis it adjusts (`overflow-x`), so the eighteen items scroll
- *  rather than clip when the pane is narrow. **ITS WIDTH IS NOT AUTHORED**: the paint writes it from
+ *  its own stored width — it FILLS the zone's height as a RELATION (`height: '100%'`, never a figure) and it
+ *  ADJUSTS its width. **ITS WIDTH IS NOT AUTHORED**: the paint writes it from
  *  `['panes', 'pane-menus', 'width']`, the member its `zone` makes adjustable (`D-186`, `D-189`).
+ *  **AND IT NO LONGER AUTHORS ITS SCROLL** (`D-270`): `overflow-x: auto` here is what made the pane the scroll container
+ *  and the head row its child, so the axis the pane adjusts scrolls inside `menus-body` now and the pane states no
+ *  `overflow` at all. What the pane still owns is the column itself — `display: flex; flex-direction: column`, keyed on the
+ *  head row in the sheet — with the head as its fixed first item and the body as its flexible second.
  *  **AND ONE CONSEQUENCE THAT IS NOT A FIGURE**: the top zone authors no height either, so on a first
  *  boot the strip's height is its CONTENT's until the paint's first `['zones', 'top', 'size']` write fixes
  *  it. Nothing is authored to paper over it — a fallback would be right on one boot and false on the next
  *  (`D-174`). */
-const menusPaneStyle: Record<string, string> = { height: '100%', 'overflow-x': 'auto' }
+const menusPaneStyle: Record<string, string> = { height: '100%' }
 /** **THE MENUS PANE'S HANDLE AT THE PANE'S LEFT EDGE** (`C-13`, `D-189`, `D-192`): the horizontal pane's
  *  adjustable axis is its WIDTH, so its bar stands vertical at the left edge and its cursor is
  *  `col-resize`. **THE THICKNESS IS THE STRIP'S, ON THE AXIS THE STRIP SPANS — `14px`**, the demo page's
@@ -1261,15 +1305,19 @@ export function demoEnvelope() {
                     children: [
                       // (a0) **THE PANE'S HEAD ROW — THE PANE'S FIRST CHILD, HOLDING THE GRIP AND THE COLLAPSE
                       // CONTROL ALONG ONE ROW** (`app-envelope` rev 2 §2, `A-11`). **IT EXISTS BECAUSE THE TWO
-                      // CONTROLS HAVE TO STAND BESIDE EACH OTHER AND THE PANE IS A FLEX COLUMN IN A SIDEBAR**: two
-                      // siblings of the pane are laid out DOWN it, so only a box of its own can lay them along the
-                      // row — and the box must be a NODE the paint never writes, which is why it authors no `style`
-                      // (the sheet's `.pane-head` block owns the box) and why the grip's `D-246` pin moved onto it
-                      // (`D-246`'s class, with both sticky insets: this pane scrolls `overflow-x` and a sidebar pane
-                      // scrolls `overflow-y`). **THE GRIP IS ITS FIRST CHILD AND `AL-1`'S ORDER IS UNMOVED** — the
-                      // handle still stands inside `#pane-menus` and before the first `menus-menu`. Its `props.id`
+                      // CONTROLS HAVE TO STAND BESIDE EACH OTHER AND THE PANE IS A FLEX COLUMN**: two siblings of the
+                      // pane are laid out DOWN it, so only a box of its own can lay them along the row — and the box
+                      // must be a NODE the paint never writes, which is why it authors no `style` (the sheet's
+                      // `.pane-head` block owns the box). **THE GRIP IS ITS FIRST CHILD AND `AL-1`'S ORDER IS UNMOVED**
+                      // — the handle still stands inside `#pane-menus` and before the first `menus-menu`. Its `props.id`
                       // is a LITERAL on both sides (`renderer.ts`'s `PANE_HEAD_IDS` spells the same string; the
                       // equality is a row's, `D-41`, `D-188` debt 2).
+                      // **AND THE ROW IS NOT PINNED ANY MORE, BECAUSE THE SCROLL LEFT IT** (`D-270`): `D-269` made this
+                      // row `position: sticky` with both insets to hold it against the pane's own scroller — and a sticky
+                      // row inside a scroller still TRAVELS with the content it heads and still spends its `14px` inside
+                      // `scrollHeight`, which is the scrollbar the user reported on a pane with nothing to scroll. The
+                      // scroll is `menus-body`'s (the pane's SECOND child, below), so this row is a flex item that no
+                      // scroll can reach and the insets are deleted with their cause.
                       {
                         type: 'div',
                         css: { id: MENUS_HEAD_ID, classes: ['pane-head'] },
@@ -1292,152 +1340,173 @@ export function demoEnvelope() {
                           paneCollapseNodeOf(MENUS_COLLAPSE_ID, MENUS_PANE_RECORD_ID),
                         ],
                       },
-                      // (a) THE HANDLE (`MENUS_AFFORDANCE_ID`, §3 above) — THE GUTTER HANDLE'S OWN SHAPE: a
-                      // real, pressable `14px` strip at the pane's LEFT EDGE, the edge its ADJUSTABLE axis
-                      // (the width) can move, and it crosses no axis (`C-13`, `D-189`, `D-192`). Its shared
-                      // `pointerdown` body keeps the node `list_targets`-visible and
-                      // `provident.dispatch`-reachable and writes nothing; **no composition carries the
-                      // gesture** (the tree's one drag composition is bound to `DEFAULT_PANE_ID`), so no row
-                      // drives it and no row reads the edge — `AL-1` measures its PRESENCE under this id.
+                      // (b0) **THE PANE'S BODY — THE ONLY SCROLLING BOX IN THE PANE, AND THE HEAD ROW IS OUTSIDE IT**
+                      // (`MENUS_BODY_ID`): the pane is a flex COLUMN, the head is `flex: 0 0 auto` and this node carries the
+                      // scroll the record gives the axis the pane adjusts (`flex: 1 1 auto; min-height: 0; min-width: 0`). **THE
+                      // SCROLL CANNOT BE THE PANE'S ANY MORE**: a `position: sticky` head inside a scroller travels with the
+                      // content it was meant to head AND contributes its own `14px` to that scroller's `scrollHeight`, which is
+                      // a scrollbar on a pane with nothing to scroll. So every authored child the pane used to hold — the strip,
+                      // the four menus, the receipt — stands HERE, and the pane holds only the head and this box. The record's
+                      // fill and figure stay the PANE's (`D-243`); only the scroll moves. Reader: `renderer.ts`'s pane arm and
+                      // its preview, both through `panePaintOf`.
                       {
                         type: 'div',
-                        css: { id: MENUS_AFFORDANCE_ID, classes: ['gutter-handle'], style: menusHandleStyle },
-                        props: { id: MENUS_AFFORDANCE_ID, axis: MENUS_AFFORDANCE_ID },
-                        content: '',
-                        handlers: [{ name: 'menus-drag', event: 'pointerdown', body: GUTTER_DRAG_BODY }],
-                      },
-                      // (b) THE FOUR MENUS AND THEIR EIGHTEEN ITEMS (`D-180`, `D-181`, `D-188`) — a STATIC
-                      // enumeration, and a static node is exactly what makes an authored label lawful
-                      // (`D-177`). Each item carries its `props.role` so the menus turn reads the role OFF
-                      // THE NODE and never from a table of its own; **NO ITEM CARRIES `props.disabled`**: the seven
-                      // the route refuses an agent are STYLED ENABLED because they WORK for a person (`D-232`'s
-                      // trusted path), and the unbypassable guard is `main`'s admitted set (`D-181`, `D-196`).
-                      // Readers: the menus turn, `AL-6`, `AL-7`.
-                      //
-                      // **AND EACH MENU CARRIES `props.tabindex: '0'`, WHICH IS THE DROP-DOWN'S WHOLE MECHANISM.** The paint
-                      // writes `props.*` as attributes, so this is the bare `tabindex="0"` the page sheet keys on: a menu NAME
-                      // becomes focusable, `:focus-within` IS THE CLICK (a click focuses, a click elsewhere blurs), and
-                      // `src/renderer/index.html` hides `.menus-menu > .menu-item` until then. **NO STATE, NO TOGGLE AND NO NEW
-                      // RECORD** — the four names stand in a horizontal strip, a name's items drop VERTICALLY below it on a
-                      // click, and the items remain in the markup (hidden by CSS, never deleted): `provident.dispatch`,
-                      // `list_targets`, `get_rendered_html` and `get_markdown` all still see all eighteen, and `AL-6`'s count
-                      // is unmoved. It is also the honest control for a keyboard user: `Tab` reaches each name and the items
-                      // open on focus. **NOTHING HERE IS A FIGURE OR A LABEL**: the prop adds no node, no class, no content and
-                      // no handler, and every role, label and mark below is the landed text, unchanged.
-                      {
-                        type: 'div',
-                        css: { classes: ['menus-menu'] },
-                        props: { tabindex: '0' },
-                        content: 'File',
+                        css: { id: MENUS_BODY_ID, classes: ['pane-body'] },
+                        props: { id: MENUS_BODY_ID },
                         children: [
+                          // (a) THE HANDLE (`MENUS_AFFORDANCE_ID`, §3 above) — THE GUTTER HANDLE'S OWN SHAPE: a
+                          // real, pressable `14px` strip at the pane's LEFT EDGE, the edge its ADJUSTABLE axis
+                          // (the width) can move, and it crosses no axis (`C-13`, `D-189`, `D-192`). Its shared
+                          // `pointerdown` body keeps the node `list_targets`-visible and
+                          // `provident.dispatch`-reachable and writes nothing; **no composition carries the
+                          // gesture** (the tree's one drag composition is bound to `DEFAULT_PANE_ID`), so no row
+                          // drives it and no row reads the edge — `AL-1` measures its PRESENCE under this id.
+                          // **IT STANDS IN THE BODY AND NOT IN THE PANE** (`D-270`): the pane is the head row plus this
+                          // box, so the strip is one level down with the menus it flanks — still inside `#pane-menus`,
+                          // still before the first `menus-menu` (`AL-1`), and still pinned against the very scrollport it
+                          // now shares (`position: sticky` is the sheet's, relative to THIS box's content instead of the
+                          // pane's — the same relationship, one box in).
                           {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'quit' },
-                            content: 'Quit',
+                            type: 'div',
+                            css: { id: MENUS_AFFORDANCE_ID, classes: ['gutter-handle'], style: menusHandleStyle },
+                            props: { id: MENUS_AFFORDANCE_ID, axis: MENUS_AFFORDANCE_ID },
+                            content: '',
+                            handlers: [{ name: 'menus-drag', event: 'pointerdown', body: GUTTER_DRAG_BODY }],
+                          },
+                          // (b) THE FOUR MENUS AND THEIR EIGHTEEN ITEMS (`D-180`, `D-181`, `D-188`) — a STATIC
+                          // enumeration, and a static node is exactly what makes an authored label lawful
+                          // (`D-177`). Each item carries its `props.role` so the menus turn reads the role OFF
+                          // THE NODE and never from a table of its own; **NO ITEM CARRIES `props.disabled`**: the seven
+                          // the route refuses an agent are STYLED ENABLED because they WORK for a person (`D-232`'s
+                          // trusted path), and the unbypassable guard is `main`'s admitted set (`D-181`, `D-196`).
+                          // Readers: the menus turn, `AL-6`, `AL-7`.
+                          //
+                          // **AND EACH MENU CARRIES `props.tabindex: '0'`, WHICH IS THE DROP-DOWN'S WHOLE MECHANISM.** The paint
+                          // writes `props.*` as attributes, so this is the bare `tabindex="0"` the page sheet keys on: a menu NAME
+                          // becomes focusable, `:focus-within` IS THE CLICK (a click focuses, a click elsewhere blurs), and
+                          // `src/renderer/index.html` hides `.menus-menu > .menu-item` until then. **NO STATE, NO TOGGLE AND NO NEW
+                          // RECORD** — the four names stand in a horizontal strip, a name's items drop VERTICALLY below it on a
+                          // click, and the items remain in the markup (hidden by CSS, never deleted): `provident.dispatch`,
+                          // `list_targets`, `get_rendered_html` and `get_markdown` all still see all eighteen, and `AL-6`'s count
+                          // is unmoved. It is also the honest control for a keyboard user: `Tab` reaches each name and the items
+                          // open on focus. **NOTHING HERE IS A FIGURE OR A LABEL**: the prop adds no node, no class, no content and
+                          // no handler, and every role, label and mark below is the landed text, unchanged.
+                          {
+                            type: 'div',
+                            css: { classes: ['menus-menu'] },
+                            props: { tabindex: '0' },
+                            content: 'File',
+                            children: [
+                              {
+                                type: 'div', css: { classes: ['menu-item'] }, props: { role: 'quit' },
+                                content: 'Quit',
+                              },
+                            ],
+                          },
+                          {
+                            type: 'div',
+                            css: { classes: ['menus-menu'] },
+                            props: { tabindex: '0' },
+                            content: 'Edit',
+                            children: [
+                              {
+                                type: 'div', css: { classes: ['menu-item'] }, props: { role: 'undo' },
+                                content: 'Undo', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                              },
+                              {
+                                type: 'div', css: { classes: ['menu-item'] }, props: { role: 'redo' },
+                                content: 'Redo', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                              },
+                              {
+                                type: 'div', css: { classes: ['menu-item'] }, props: { role: 'cut' },
+                                content: 'Cut', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                              },
+                              {
+                                type: 'div', css: { classes: ['menu-item'] }, props: { role: 'copy' },
+                                content: 'Copy', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                              },
+                              {
+                                type: 'div', css: { classes: ['menu-item'] }, props: { role: 'paste' },
+                                content: 'Paste', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                              },
+                              {
+                                type: 'div', css: { classes: ['menu-item'] }, props: { role: 'delete' },
+                                content: 'Delete', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                              },
+                              {
+                                type: 'div', css: { classes: ['menu-item'] }, props: { role: 'selectall' },
+                                content: 'Select All', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                              },
+                            ],
+                          },
+                          {
+                            type: 'div',
+                            css: { classes: ['menus-menu'] },
+                            props: { tabindex: '0' },
+                            content: 'View',
+                            children: [
+                              {
+                                type: 'div', css: { classes: ['menu-item'] }, props: { role: 'reload' },
+                                content: 'Reload',
+                              },
+                              {
+                                type: 'div', css: { classes: ['menu-item'] }, props: { role: 'forcereload' },
+                                content: 'Force Reload',
+                              },
+                              {
+                                type: 'div', css: { classes: ['menu-item'] }, props: { role: 'toggledevtools' },
+                                content: 'Toggle Developer Tools',
+                              },
+                              {
+                                type: 'div', css: { classes: ['menu-item'] }, props: { role: 'resetzoom' },
+                                content: 'Actual Size', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                              },
+                              {
+                                type: 'div', css: { classes: ['menu-item'] }, props: { role: 'zoomin' },
+                                content: 'Zoom In', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                              },
+                              {
+                                type: 'div', css: { classes: ['menu-item'] }, props: { role: 'zoomout' },
+                                content: 'Zoom Out', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                              },
+                              {
+                                type: 'div', css: { classes: ['menu-item'] }, props: { role: 'togglefullscreen' },
+                                content: 'Toggle Full Screen', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                              },
+                            ],
+                          },
+                          {
+                            type: 'div',
+                            css: { classes: ['menus-menu'] },
+                            props: { tabindex: '0' },
+                            content: 'Window',
+                            children: [
+                              {
+                                type: 'div', css: { classes: ['menu-item'] }, props: { role: 'minimize' },
+                                content: 'Minimize',
+                              },
+                              {
+                                type: 'div', css: { classes: ['menu-item'] }, props: { role: 'zoom' },
+                                content: 'Zoom',
+                              },
+                              {
+                                type: 'div', css: { classes: ['menu-item'] }, props: { role: 'close' },
+                                content: 'Close',
+                              },
+                            ],
+                          },
+                          // (c) THE RECEIPT CARRIER (`MENUS_RECEIPT_ID`) — **NO `content`**: what stands
+                          // between a boot and the first answer is EMPTY, never a figure and never a placeholder
+                          // word (`D-129`, `D-174`). Reader: the menus turn writes the route's answer into it
+                          // (`AL-7`). **The carrier is a NODE because the write is a `state-slice` content write
+                          // on an authored id** — an authored body can reach no route, so the click path is where
+                          // the answer comes from (design §8 (iv)).
+                          {
+                            type: 'div',
+                            css: { id: MENUS_RECEIPT_ID },
+                            props: { id: MENUS_RECEIPT_ID },
                           },
                         ],
-                      },
-                      {
-                        type: 'div',
-                        css: { classes: ['menus-menu'] },
-                        props: { tabindex: '0' },
-                        content: 'Edit',
-                        children: [
-                          {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'undo' },
-                            content: 'Undo', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
-                          },
-                          {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'redo' },
-                            content: 'Redo', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
-                          },
-                          {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'cut' },
-                            content: 'Cut', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
-                          },
-                          {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'copy' },
-                            content: 'Copy', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
-                          },
-                          {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'paste' },
-                            content: 'Paste', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
-                          },
-                          {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'delete' },
-                            content: 'Delete', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
-                          },
-                          {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'selectall' },
-                            content: 'Select All', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
-                          },
-                        ],
-                      },
-                      {
-                        type: 'div',
-                        css: { classes: ['menus-menu'] },
-                        props: { tabindex: '0' },
-                        content: 'View',
-                        children: [
-                          {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'reload' },
-                            content: 'Reload',
-                          },
-                          {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'forcereload' },
-                            content: 'Force Reload',
-                          },
-                          {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'toggledevtools' },
-                            content: 'Toggle Developer Tools',
-                          },
-                          {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'resetzoom' },
-                            content: 'Actual Size', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
-                          },
-                          {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'zoomin' },
-                            content: 'Zoom In', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
-                          },
-                          {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'zoomout' },
-                            content: 'Zoom Out', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
-                          },
-                          {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'togglefullscreen' },
-                            content: 'Toggle Full Screen', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
-                          },
-                        ],
-                      },
-                      {
-                        type: 'div',
-                        css: { classes: ['menus-menu'] },
-                        props: { tabindex: '0' },
-                        content: 'Window',
-                        children: [
-                          {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'minimize' },
-                            content: 'Minimize',
-                          },
-                          {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'zoom' },
-                            content: 'Zoom',
-                          },
-                          {
-                            type: 'div', css: { classes: ['menu-item'] }, props: { role: 'close' },
-                            content: 'Close',
-                          },
-                        ],
-                      },
-                      // (c) THE RECEIPT CARRIER (`MENUS_RECEIPT_ID`) — **NO `content`**: what stands
-                      // between a boot and the first answer is EMPTY, never a figure and never a placeholder
-                      // word (`D-129`, `D-174`). Reader: the menus turn writes the route's answer into it
-                      // (`AL-7`). **The carrier is a NODE because the write is a `state-slice` content write
-                      // on an authored id** — an authored body can reach no route, so the click path is where
-                      // the answer comes from (design §8 (iv)).
-                      {
-                        type: 'div',
-                        css: { id: MENUS_RECEIPT_ID },
-                        props: { id: MENUS_RECEIPT_ID },
                       },
                     ],
                   },
@@ -1481,25 +1550,33 @@ export function demoEnvelope() {
                           paneCollapseNodeOf(INSPECTOR_COLLAPSE_ID, INSPECTOR_PANE_RECORD_ID),
                         ],
                       },
-                      // (a) **THE SECOND PANE'S RESIZE AFFORDANCE** (`INSPECTOR_AFFORDANCE_ID`): the menus strip's shape
-                      // on the same edge, because this pane's adjustable axis in a `top`/`bottom` zone is its WIDTH —
-                      // `C-13`/`D-192`'s rule, unchanged. `props.axis` is what `PS-1` censuses a handle BY, so a strip
-                      // without it is a bar the wiring may declare and the census cannot see.
-                      {
-                        type: 'div',
-                        css: { id: INSPECTOR_AFFORDANCE_ID, classes: ['gutter-handle'], style: inspectorHandleStyle },
-                        props: { id: INSPECTOR_AFFORDANCE_ID, axis: INSPECTOR_AFFORDANCE_ID },
-                        content: '',
-                        handlers: [{ name: 'inspector-drag', event: 'pointerdown', body: GUTTER_DRAG_BODY }],
-                      },
                       // (b) **THE BODY, AS A CHILD** (`INSPECTOR_BODY_ID`, `A-14`): the `'No selection'` placeholder this
                       // pane used to carry in its own `content`, now a node the collapse rule can reach. It authors no class
                       // beyond `pane-body` and no figure: the box is the flow's, and the text is `D-259`'s chosen one.
+                      // **AND IT IS THE PANE'S SCROLLING BOX** (`D-270`): the pane is a flex column, the head is its fixed
+                      // first item, and this node takes `flex: 1 1 auto; min-height: 0; min-width: 0` with the record's
+                      // `overflow` written onto IT (`panePaintOf`), so the header neither travels with the content nor
+                      // contributes to `scrollHeight`. **ITS `content` STILL RENDERS AHEAD OF ITS CHILDREN** — which is why
+                      // the strip below is a CHILD and the placeholder is not: the text is the first thing a reader
+                      // meets and the strip is the pane's edge, exactly as the pane had it one box up.
                       {
                         type: 'div',
                         css: { id: INSPECTOR_BODY_ID, classes: ['pane-body'] },
                         props: { id: INSPECTOR_BODY_ID },
                         content: 'No selection',
+                        children: [
+                          // (a) **THE SECOND PANE'S RESIZE AFFORDANCE** (`INSPECTOR_AFFORDANCE_ID`): the menus strip's shape
+                          // on the same edge, because this pane's adjustable axis in a `top`/`bottom` zone is its WIDTH —
+                          // `C-13`/`D-192`'s rule, unchanged. `props.axis` is what `PS-1` censuses a handle BY, so a strip
+                          // without it is a bar the wiring may declare and the census cannot see.
+                          {
+                            type: 'div',
+                            css: { id: INSPECTOR_AFFORDANCE_ID, classes: ['gutter-handle'], style: inspectorHandleStyle },
+                            props: { id: INSPECTOR_AFFORDANCE_ID, axis: INSPECTOR_AFFORDANCE_ID },
+                            content: '',
+                            handlers: [{ name: 'inspector-drag', event: 'pointerdown', body: GUTTER_DRAG_BODY }],
+                          },
+                        ],
                       },
                     ],
                   },
@@ -1661,47 +1738,61 @@ export function demoEnvelope() {
                                       paneCollapseNodeOf(GUTTER_COLLAPSE_ID, GUTTER_PANE_RECORD_ID),
                                     ],
                                   },
+                                  // (b0) **THE STAGE PANE'S BODY — THE SCROLLING BOX, AND THE HEAD ROW IS OUTSIDE IT** (`GUTTER_BODY_ID`):
+                                  // the pane is a flex COLUMN, the head is `flex: 0 0 auto` and this node carries the scroll (`flex: 1 1 auto;
+                                  // min-height: 0; min-width: 0`) — so the header cannot travel with the content and cannot add to a
+                                  // `scrollHeight` it does not stand in. **A STAGE PANE PAINTS NO SCROLL AT ALL** (`paneFillAxisOf` answers
+                                  // `null` for a record naming no `zone`), so this node simply has none — the box is stated anyway, because
+                                  // the pane's record may name a zone on the next drag and the arm that writes that scroll writes it HERE
+                                  // (`renderer.ts`'s `PANE_BODY_IDS`). Reader: that arm, and the sheet's `.pane-body`/.pane-head` blocks.
                                   {
-                                    // (a) THE AFFORDANCE — `§2.1` item 7(a): an authored `css.id`, an authored
-                                    // `css.classes` list, an authored `css.style` carrying THE BASE `cursor`
-                                    // DECLARATION **AND THE STRIP'S THICKNESS, AND NO GEOMETRY CLAIM**
-                                    // (`D-189`, `D-193`), an authored `props.id`, and the authored
-                                    // `pointerdown` handler. L-3's live finding was exactly this missing
-                                    // declaration: the element rendered `<div … class="gutter-handle"
-                                    // data-node-id="node-12">` with NO `cursor` and no `style` attribute at
-                                    // all, so `U-2`(a) could not be satisfied by any shipped instrument — and a
-                                    // measured `w=0, h=44` box is one no press can land on.
-                                    // **WHAT THE BOX SAYS NOW**: `handleStyle` carries the `14px` THICKNESS on
-                                    // the axis the strip spans, the `row-resize` cursor, and the TOP-RIGHT
-                                    // placement `D-189` gives a vertically-oriented pane's handle — the strip
-                                    // stands at the edge its ADJUSTABLE axis (the height) can move, and it
-                                    // crosses no axis. **THE `200px` THIS ONCE CARRIED IS GONE**: it was the old
-                                    // left strip's landing WIDTH, never a thickness, and `pane-a`'s height is
-                                    // `['panes']`'s since `D-117` (`D-129`). The declared degradation is
-                                    // unchanged (no pointer CAPTURE, `§2.6` item 4), so a drag that leaves the
-                                    // strip's box loses its reading — which is exactly why the strip has to be
-                                    // pressable at all: this composition installs NO pointer capture, so the
-                                    // session's tracking listeners are LOCAL to the element.
                                     type: 'div',
-                                    css: { id: GUTTER_AFFORDANCE_ID, classes: ['gutter-handle'], style: handleStyle },
-                                    props: { id: GUTTER_AFFORDANCE_ID, axis: GUTTER_AFFORDANCE_ID },
-                                    content: '',
-                                    handlers: [{ name: 'gutter-drag', event: 'pointerdown', body: GUTTER_DRAG_BODY }],
-                                  },
-                                  {
-                                    // (b) THE TARGET — `§2.1` item 7(b): an authored `css.id`, an authored
-                                    // `css.style` carrying a BASE SIZE DECLARATIVE, and an authored `props.id` —
-                                    // and NOTHING ELSE. The pre-drag size and the bounds pair that once stood
-                                    // on the PANE's `props` as `size`/`min`/`max` are `['panes']`'s since
-                                    // `D-117` and left the node at `F11` (`D-129`), so no seam reads a geometry
-                                    // off an element any more. An authored `props` entry still renders as a
-                                    // BARE ATTRIBUTE (the pane's `resizable`, the handle's `axis`), which is
-                                    // what the surviving seams read (L-6/ADV-GU-7: those reads used to go
-                                    // through `dataset[...]` and every one missed).
-                                    type: 'div',
-                                    css: { id: GUTTER_TARGET_ID, classes: ['gutter-target'], style: targetStyle },
-                                    props: { id: GUTTER_TARGET_ID },
-                                    content: 'resizable pane',
+                                    css: { id: GUTTER_BODY_ID, classes: ['pane-body'] },
+                                    props: { id: GUTTER_BODY_ID },
+                                    children: [
+                                      {
+                                        // (a) THE AFFORDANCE — `§2.1` item 7(a): an authored `css.id`, an authored
+                                        // `css.classes` list, an authored `css.style` carrying THE BASE `cursor`
+                                        // DECLARATION **AND THE STRIP'S THICKNESS, AND NO GEOMETRY CLAIM**
+                                        // (`D-189`, `D-193`), an authored `props.id`, and the authored
+                                        // `pointerdown` handler. L-3's live finding was exactly this missing
+                                        // declaration: the element rendered `<div … class="gutter-handle"
+                                        // data-node-id="node-12">` with NO `cursor` and no `style` attribute at
+                                        // all, so `U-2`(a) could not be satisfied by any shipped instrument — and a
+                                        // measured `w=0, h=44` box is one no press can land on.
+                                        // **WHAT THE BOX SAYS NOW**: `handleStyle` carries the `14px` THICKNESS on
+                                        // the axis the strip spans, the `row-resize` cursor, and the TOP-RIGHT
+                                        // placement `D-189` gives a vertically-oriented pane's handle — the strip
+                                        // stands at the edge its ADJUSTABLE axis (the height) can move, and it
+                                        // crosses no axis. **THE `200px` THIS ONCE CARRIED IS GONE**: it was the old
+                                        // left strip's landing WIDTH, never a thickness, and `pane-a`'s height is
+                                        // `['panes']`'s since `D-117` (`D-129`). The declared degradation is
+                                        // unchanged (no pointer CAPTURE, `§2.6` item 4), so a drag that leaves the
+                                        // strip's box loses its reading — which is exactly why the strip has to be
+                                        // pressable at all: this composition installs NO pointer capture, so the
+                                        // session's tracking listeners are LOCAL to the element.
+                                        type: 'div',
+                                        css: { id: GUTTER_AFFORDANCE_ID, classes: ['gutter-handle'], style: handleStyle },
+                                        props: { id: GUTTER_AFFORDANCE_ID, axis: GUTTER_AFFORDANCE_ID },
+                                        content: '',
+                                        handlers: [{ name: 'gutter-drag', event: 'pointerdown', body: GUTTER_DRAG_BODY }],
+                                      },
+                                      {
+                                        // (b) THE TARGET — `§2.1` item 7(b): an authored `css.id`, an authored
+                                        // `css.style` carrying a BASE SIZE DECLARATIVE, and an authored `props.id` —
+                                        // and NOTHING ELSE. The pre-drag size and the bounds pair that once stood
+                                        // on the PANE's `props` as `size`/`min`/`max` are `['panes']`'s since
+                                        // `D-117` and left the node at `F11` (`D-129`), so no seam reads a geometry
+                                        // off an element any more. An authored `props` entry still renders as a
+                                        // BARE ATTRIBUTE (the pane's `resizable`, the handle's `axis`), which is
+                                        // what the surviving seams read (L-6/ADV-GU-7: those reads used to go
+                                        // through `dataset[...]` and every one missed).
+                                        type: 'div',
+                                        css: { id: GUTTER_TARGET_ID, classes: ['gutter-target'], style: targetStyle },
+                                        props: { id: GUTTER_TARGET_ID },
+                                        content: 'resizable pane',
+                                      },
+                                    ],
                                   },
                                 ],
                               },

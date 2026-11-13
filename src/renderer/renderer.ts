@@ -3728,13 +3728,42 @@ function drivePreviewPanePaints (runtime: TabsPageRuntime, panes: readonly ViewP
     const paint = panePaintOf(record['zone'], record)
     // NOTHING STATED, NOTHING WRITTEN — the delivery's own arm, on the same reading: a pane this composition says nothing
     // about is a pane whose record states nothing to paint (`D-174`).
-    if (Object.keys(paint.style).length === 0) continue
+    if (Object.keys(paint.style).length === 0 && Object.keys(paint.body).length === 0) continue
     const published = publishedStyleOf(element)
-    if (published.known && published.declarations !== null && sameDeclarations(published.declarations, declarationSetOf(cssTextOf(paint.style)))) continue
-    if (!paintStyle(runtime, nodeId, paint.style)) {
-      console.error(`[provident-renderer] pane preview: the pane ${pane.id} (node ${nodeId}) refused its ${Object.keys(paint.style).join('/')}`)
+    const styleUnchanged = published.known && published.declarations !== null && sameDeclarations(published.declarations, declarationSetOf(cssTextOf(paint.style)))
+    if (!styleUnchanged) {
+      if (!paintStyle(runtime, nodeId, paint.style)) {
+        console.error(`[provident-renderer] pane preview: the pane ${pane.id} (node ${nodeId}) refused its ${Object.keys(paint.style).join('/')}`)
+        continue
+      }
+      painted += 1
+    }
+    // ⟶ **AND THE BODY'S SCROLL, ON THE SAME READ AND THE SAME TURN** (`D-270`): a crossing changes the axis the pane adjusts
+    //    AND therefore the axis its body scrolls, so a preview that painted only the pane would show a box whose scroll
+    //    still belonged to the source zone — and a non-committing end writes nothing, so no delivery would ever correct it
+    //    (`D-260`'s reason, one member over). The read is the same `publishedStyleOf` guard, on the second node: the same
+    //    composition states what the body's surface already says in the ordinary case, and then nothing is written.
+    if (Object.keys(paint.body).length === 0) continue
+    const bodyId = bodyIdForPane(pane.id)
+    if (bodyId === null) {
+      console.error(`[provident-renderer] pane preview: the pane ${pane.id} declares no body node, so its ${Object.keys(paint.body).join('/')} was written nowhere`)
       continue
     }
+    let bodyElement: unknown = null
+    try {
+      bodyElement = runtime.elementForNodeId(bodyId)
+    } catch {
+      bodyElement = null
+    }
+    if (bodyElement === null || bodyElement === undefined) continue
+    const bodyPublished = publishedStyleOf(bodyElement)
+    if (bodyPublished.known && bodyPublished.declarations !== null && sameDeclarations(bodyPublished.declarations, declarationSetOf(cssTextOf(paint.body)))) continue
+    if (!paintStyle(runtime, bodyId, paint.body)) {
+      console.error(`[provident-renderer] pane preview: the pane ${pane.id} (body ${bodyId}) refused its ${Object.keys(paint.body).join('/')}`)
+      continue
+    }
+    // THE COUNT IS THE PANES THIS TURN REPAINTED, AND THE BODY'S WRITE IS ONE OF THEM: it renders the same pane's subtree,
+    // which is what the gesture's re-anchor is taken after — so a body-only paint counts and a fully unchanged pane does not.
     painted += 1
   }
   return painted
@@ -4521,10 +4550,34 @@ const PANE_HEAD_IDS: readonly { readonly paneId: string; readonly headId: string
   { paneId: INSPECTOR_PANE_ID, headId: 'inspector-head' },
 ]
 
-/** The head row for one pane, or the stated `null` — never the pane's own id (`nodeIdForPane`'s rule, one node over). */
+/** **The head row for one pane, or the stated `null` — never the pane's own id (`nodeIdForPane`'s rule, one node over). */
 function headIdForPane(paneId: string): string | null {
   const held = PANE_HEAD_IDS.find((entry) => entry.paneId === paneId)
   return held === undefined ? null : held.headId
+}
+
+/** **THE PANE ↔ BODY MAP: WHICH AUTHORED BODY CARRIES ONE PANE'S SCROLL** (`D-270`; `app-envelope`'s `<pane>-body` nodes).
+ *  It is `PANE_HEAD_IDS`' own shape a second node down, and its subject is the one declaration that left the pane: **`D-243`
+ *  writes the pane's `overflow`, and while the head row stood INSIDE the box that scrolls, that row both travelled with the
+ *  content it heads and added its own `14px` to `scrollHeight`** — the user's two reports (*"Scrolling goes under the pane
+ *  header"*, *"the scrollbar is present even if there is enough space"*) read off one structure. So the pane is a flex COLUMN
+ *  (the sheet keys it on its head row), the head is `flex: 0 0 auto`, and **the scroll is THIS node's** (`flex: 1 1 auto;
+ *  min-height: 0; min-width: 0`). **THE FILL AND THE RECORD'S FIGURE STAY THE PANE'S** (`D-243`): the fill is a relation
+ *  against the zone's extent and the figure is the pane's own member, so exactly ONE of the three parts moves.
+ *  **TOTAL OVER `DECLARED_PANE_IDS`**, like the two maps above, and for the same reason: a declared pane with no body would be
+ *  a pane whose scroll has nowhere to stand — and a pane whose record names a zone would keep it on itself, with the head
+ *  inside it again. The three ids are LITERALS on both sides (`app-envelope` spells them, this map spells them, the equality
+ *  is a row's — `D-41`, `D-188` debt 2). */
+const PANE_BODY_IDS: readonly { readonly paneId: string; readonly bodyId: string }[] = [
+  { paneId: DEFAULT_PANE_ID, bodyId: 'gutter-body' },
+  { paneId: MENUS_PANE_ID, bodyId: 'menus-body' },
+  { paneId: INSPECTOR_PANE_ID, bodyId: 'inspector-body' },
+]
+
+/** The body for one pane, or the stated `null` — never the pane's own id (`headIdForPane`'s rule, one node over). */
+function bodyIdForPane(paneId: string): string | null {
+  const held = PANE_BODY_IDS.find((entry) => entry.paneId === paneId)
+  return held === undefined ? null : held.bodyId
 }
 
 /** **THE THREE COLLAPSE CONTROLS' AUTHORED IDS — one per pane, LITERALS at both ends** (`app-envelope` rev 2 §2: `menus-collapse`,
@@ -4569,14 +4622,22 @@ function paneAxisMembers(zone: unknown): readonly ('width' | 'height')[] {
  *  **EVERY PART IS DERIVED FROM THE `zone` HANDED IN** and no figure is invented: the fill is the LAYOUT's relation
  *  (`PANE_FILL`), the scroll is `LAYOUT_ZONE_AXES`' own column, and the figure is the RECORD's stored member on the axis the
  *  zone makes adjustable. **AN EMPTY STYLE IS THE STATED "NOTHING TO WRITE"** (a stage pane whose record states no figure at
- *  all): the caller keeps its own `continue`, so this composition answers and the callers decide (`D-174`). */
+ *  all): the caller keeps its own `continue`, so this composition answers and the callers decide (`D-174`).
+ *  **AND THE THREE PARTS NOW GO TO TWO NODES, WHICH IS THE ONE STRUCTURAL CHANGE `D-270` MAKES HERE**: the FILL and the
+ *  FIGURE stay the PANE's, and **the SCROLL is the pane's BODY**'s — the `<pane>-body` node the envelope authors as the pane's
+ *  second child, because the pane is a flex COLUMN whose head row is `flex: 0 0 auto` and a head INSIDE the box that scrolls
+ *  both travels with the content it heads and adds its own `14px` to `scrollHeight` (`D-270`'s cause, and the user's two
+ *  reports). Both callers write both nodes from THIS one composition, so the delivery and the drag's preview cannot describe
+ *  two boxes — the property the single function exists for, now spanning two subjects. */
 function panePaintOf (zone: unknown, record: Record<string, unknown>): {
   readonly style: Record<string, string>
+  readonly body: Record<string, string>
 } {
   // THE FILL AXIS AND THE SCROLL AXIS ARE THE LAYOUT'S, and `null` is a stage pane or an id the closed four do not name —
   // the two arms that fill nothing (`paneFillAxisOf`'s own absence, unmoved).
   const placement = paneFillAxisOf(zone)
   const style: Record<string, string> = {}
+  const body: Record<string, string> = {}
   if (placement !== null) style[placement.fill] = PANE_FILL
   // **THE COLLAPSE'S ONE BRANCH, AND THE FILL ABOVE IS UNTOUCHED BY IT** (`design-pane-collapse.md` §3): the ADJUSTABLE axis
   // becomes `auto` — *"the row's own box"*, the one declaration that means the same thing on either axis, where a `14px`
@@ -4599,12 +4660,14 @@ function panePaintOf (zone: unknown, record: Record<string, unknown>): {
       style[member] = `${String(figure)}px`
     }
   }
-  // AND THE SCROLL LAST, on the axis the pane adjusts (`D-234`'s column): the write replaces `css.style` whole, so a pane's
-  // authored `overflow` does not survive it and the pane must restate it here — which is what makes the eighteen items
-  // scroll rather than clip when the menus pane is dragged narrow. **A COLLAPSED PANE CLIPS RATHER THAN SCROLLS**: the row
-  // is the whole box, so `overflow: hidden` on that same axis is the second half of the composition.
-  if (placement !== null) style[placement.scroll] = collapsed ? 'hidden' : 'auto'
-  return { style }
+  // AND THE SCROLL LAST, on the axis the pane adjusts (`D-234`'s column) — **ON THE PANE'S BODY AND NO LONGER ON THE PANE**
+  // (`D-270`): the write replaces `css.style` whole, so whichever node carries the scroll must restate it here — and that
+  // node is now the body, because the fill and the figure above must NOT be inside the box that scrolls. What the pane
+  // keeps is the relation and the record's figure; what the body keeps is this one declaration, composed from the SAME zone
+  // as the fill so the delivery and the drag's preview cannot split one pane's box in two. **A COLLAPSED PANE CLIPS RATHER
+  // THAN SCROLLS**: the row is the whole box, so `overflow: hidden` on that same axis is the second half of the composition.
+  if (placement !== null) body[placement.scroll] = collapsed ? 'hidden' : 'auto'
+  return { style, body }
 }
 
 /** **ONE STAMP, PARSED TO AN INSTANT — OR `null`, WHICH IS "ABSENT" AND NEVER "NEWER"** (`design-pane-collapse.md` §5;
@@ -4838,18 +4901,34 @@ function driveLayoutRegions(reading: ViewClientReading | null, runtime: TabsPage
     // (`drivePreviewPanePaints` above) paints the same three members from a DESTINATION zone and the delivery paints them
     // from the record's own. The fill is the zone's fixed axis as a RELATION (`100%`, never a figure), the figure is the
     // record's stored member on the axis that zone leaves adjustable, and the scroll is `LAYOUT_ZONE_AXES`' column — the
-    // parts a CLASS cannot carry, which is why they are still written and the attribute is not.
+    // parts a CLASS cannot carry, which is why they are still written and the attribute is not. **AND THEY GO TO TWO NODES**
+    // (`D-270`): the fill and the figure to the PANE, the scroll to its BODY — the `<pane>-body` node the envelope authors as
+    // the pane's second child, because a head row inside the box that scrolls travels with the content and spends its `14px`
+    // in `scrollHeight`. **ONE COMPOSITION, TWO WRITES, AND NO SPLIT BOX**: both come from `panePaintOf` on this same record.
     const paint = panePaintOf(record['zone'], record)
     // NOTHING STATED, NOTHING WRITTEN — the one rule that makes an unstated figure silent rather than defaulted. **IT IS
     // REACHED ONLY BY A PANE THAT FILLS NOTHING** (the stage pane with no stated member): a zone-resident pane is still a
     // pane and always carries its fill and its scroll, so this `continue` never withholds them (`D-187`, `D-189`).
-    if (Object.keys(paint.style).length === 0) continue
+    if (Object.keys(paint.style).length === 0 && Object.keys(paint.body).length === 0) continue
     // **AND THE PANE'S STATE, IN THE SAME COMMAND AND THEREFORE THE SAME RENDER** (`design-pane-collapse.md` §3): the sheet's
     // `[collapsed="true"] > :not(.pane-head)` and its glyph rule both key on this ONE PAINTED ATTRIBUTE, and an expanded pane
     // passes `undefined` — the engine's removal — so ABSENCE stays the single spelling of EXPANDED. **A `css.classes` WRITE
     // WOULD BE THE ONE THING THAT MUST NOT STAND HERE** (`D-265`): it would replace the class the pane inherits from its zone.
     if (!paintStyle(runtime, nodeId, paint.style, { collapsed: record['collapsed'] === true ? 'true' : undefined })) {
       console.error(`[provident-renderer] layout paint: the pane ${pane.id} (node ${nodeId}) refused its ${Object.keys(paint.style).join('/')}`)
+    }
+    // ⟶ **AND THE SCROLL, ON THE BODY, ON THE SAME DELIVERY** (`D-270`). **A PANE THE BODY MAP DOES NOT DECLARE IS WRITTEN
+    //    NOTHING HERE AND SAID SO** — the map's `null` arm is `W2`'s: no lookup, no invented id, no fallback onto the pane,
+    //    because a scroll left on the pane is exactly the defect this pass removed. **A STAGE PANE HAS NO SCROLL TO WRITE**
+    //    (`paneFillAxisOf` answers `null` for a record naming no zone), so its body is written nothing and the `continue`
+    //    above is not reached by it: its figures still land on the pane.
+    if (Object.keys(paint.body).length > 0) {
+      const bodyId = bodyIdForPane(pane.id)
+      if (bodyId === null) {
+        console.error(`[provident-renderer] layout paint: the pane ${pane.id} declares no body node, so its ${Object.keys(paint.body).join('/')} was written nowhere`)
+      } else if (!paintStyle(runtime, bodyId, paint.body)) {
+        console.error(`[provident-renderer] layout paint: the pane ${pane.id} (body ${bodyId}) refused its ${Object.keys(paint.body).join('/')}`)
+      }
     }
   }
   // ⟶ **AND THE HEAD ROW'S ONE ATTRIBUTE, ONCE PER PANE PER DELIVERY** (`design-pane-collapse.md` §4): the indicator's word is
