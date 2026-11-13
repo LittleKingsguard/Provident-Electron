@@ -980,10 +980,32 @@
        is the whole binding: the value is the envelope's, not this sheet's, and a grip that carries no name paints ''.
        **IT IS KEYED ON THE HEAD ROW AND ON NOTHING A ZONE DECIDES**: until this rev the rule was `.pane-in-left`/
        `.pane-in-right`'s and the `top`/`bottom` form painted no name at all — the user's *"title/control bar"* is the
-       reason that scoping is gone. */
+       reason that scoping is gone.
+       **AND ITS INK IS EQUIDISTANT FROM THE TWO CONTROLS THAT FLANK IT, WHICH IS THE ONE THING `gap` COULD NOT BUY** (the
+       user, verbatim: ***"Still needs padding when closed, balance the spacing so that the title has similar space on both
+       sides as it currently does between the handle and the left side of the text"*** — with a screenshot of a collapsed
+       pane's head reading `⠿ Inspector ▸`). **BOTH DECLARED GAPS ALREADY AGREED — `0.25rem` in the grip and `0.25rem` in
+       the row — AND THE TITLE'S TWO VISIBLE GAPS STILL DIFFERED, BECAUSE A GAP IS MEASURED BETWEEN BOXES AND THE EYE
+       MEASURES BETWEEN INKS**: the grip's `⠿` carries a `1.95px` trailing bearing *inside* its `7.7px` advance and the name
+       a `0.30px` leading one, so `⠿`-to-title reads `6.25px`, while the name's own `0.84px` trailing bearing SHRINKS the
+       title-to-control side to `4.84px`. **MEASURED ON A LIVE RENDERER, IN FIVE STATES**: collapsed-in-`top` `6.25 / 4.84`,
+       the `sideways-lr` lane `6.75 / 4.75`, and the grown-grip states (`28.5`, `30.75`, `10.75`) where the free space is
+       the pill's and not this rule's. **SO THE COMPENSATION CANNOT LIVE IN `gap`**: a symmetric addition to either gap — or
+       to both — leaves the difference exactly where it was, and the head cannot change a glyph's metrics at all. **IT LIVES
+       WHERE THE IMBALANCE IS MEASURED, ON THE TITLE'S OWN CARRIER, AND IT IS THE ONE-SIDED QUANTITY THAT CLOSES THE TWO
+       INKS**: `0.13em` is `1.43px` at this rule's `11px` and it is FONT-RELATIVE **because bearings are** — a fork that
+       resizes the title's type resizes the compensation with it, which no `px` figure tuned to this font would do. **AND IT
+       IS `margin-inline-end`, THE LOGICAL SIDE**, so the lane gets it along its own axis with no second declaration: under
+       `sideways-lr` the same margin spaces the title from the control ABOVE it, and `padding-block`, `padding-inline` and
+       the lane's `14px` cross extent are all untouched. **IT DOES NOT MOVE THE CONTROL, THE `⠿`, OR EITHER END'S `4px`
+       INSET** — the pill's fill simply ends `2.3px` past the title's ink instead of `0.84px` past it, and in every state
+       whose grip has free space to grow into that space shrinks by the same `1.43px` while no box on the row moves. */
     .pane-head > .pane-grab::after {
       content: attr(name);
       flex: 0 0 auto;
+      margin-inline-end: 0.13em;           /* THE TITLE'S OWN BREATHING ROOM, ON THE SIDE THE GLYPH'S BEARING TOOK IT — see
+                                              the note above: `1.43px` at `11px`, font-relative because a bearing is, and
+                                              logical so the lane inherits it along its axis */
       font-size: 11px;
       font-weight: 700;
       line-height: 14px;
@@ -1155,6 +1177,11 @@
        same reason, as the gutter strip's own `!important`s above. **AND THE ORDER IS THE GRIP FIRST, THE NAME BETWEEN, THE
        CONTROL LAST ALONG THE LANE**, which bottom-to-top puts the grip at the lane's FOOT (its `⠿` measures `[3,265,15,8]`
        inside a grip spanning `222…273`) and the control at its HEAD.
+       **AND THE TITLE'S OWN INLINE MARGIN IS THE ONE SPACING DECLARATION THIS BLOCK DOES NOT RESTATE** (the note on
+       `.pane-head > .pane-grab::after` above): it is `margin-inline-end`, so under `sideways-lr` it spaces the title from
+       the control ABOVE it in the lane's own axis with no line here — measured before it, the lane read `6.75px` of
+       `⠿`-to-title against `4.75px` of title-to-control, and the cross extent stays the bar's `14px` because no
+       `padding-block` stands on any box in this lane.
 
        **AND NOTHING PRESSABLE TURNS**: `sideways-lr` is a `writing-mode` and NOT a transform, so no rotation is inherited by
        anything — nothing here carries one at all (`transform` computes `none` on the head, on the grip and on the control,
