@@ -6274,3 +6274,33 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **THE READINGS.** `npm test` **`2,969 passed / 2 skipped` of `2,971`** over **`147`** files, **ZERO red**; `typecheck` **0**; `typecheck:tests` **0**; `build` **0** (**`dist/renderer/index.html` equals source**); **one file, `src/renderer/index.html`, CSS only** (**`+61/−9`**); **no node, class, channel, bridge member, census, record, pane, zone or theme change.** **The app is live on `http://127.0.0.1:3787/mcp`.**
 
 **ITS REGISTER IS `D-71` TO `D-283`** as prose, unchanged and extended by this row only. **This row records a cap chosen over a share, a negative calc refused before it shipped, two mechanisms collapsed into one, and a paint that shrank while its affordance stayed by design.**
+## D-285 — THE DIVIDER LINE IS BACK AND THE PILL IS **QUIETER THAN THE LINE IT SITS ON** — "less distinct" as three named subtractions and two measured ratios
+
+**Status:** ACTIVE · **Date:** 2026-11-12 · **Source (user, verbatim):** ***"Keep the divider lines, and make the pill outline/background less visually distinct. Pill size is fine."***
+
+**TWO LAYERS ON A STRIP WHOSE ELEMENT STILL PAINTS NOTHING**, **so `D-278`'s invariant holds and the paint stays independent of the box**: **`::before` is THE DIVIDER** — **full length, `1px`, `#c9d2dc` light at `1.41:1` and `#3a4654` dark at `1.89:1`**, **down the lane's centre and `980px` on a horizontal strip** — **and `::after` is `D-284`'s PILL, UNCHANGED IN SIZE at `7×48`.**
+
+**"LESS VISUALLY DISTINCT" IS THREE NAMED SUBTRACTIONS RATHER THAN A VIBE.**
+
+| | before | after |
+|---|---|---|
+| light | fill `#dfe5ec` **`1.17:1`**, dots `#6f7d90`, stroke `#c9d2dc` | fill `#e8edf4` **`1.09:1`** — ink gone, stroke gone |
+| dark | fill `#2c3642` **`1.48:1`**, dots `#7d8a9b`, stroke `#3a4654` | fill `#1b222b` **`1.13:1`** — ink gone, stroke gone |
+
+**The three**: **the dot ink is gone**; **the stroke is gone BECAUSE IT BECAME THE DIVIDER** (**the same colour, moved one layer down and given the whole length**); **and the fill steps one notch toward the surface.** **SO THE PILL NOW SITS QUIETER THAN THE LINE BENEATH IT** — **`1.09` against `1.41`, `1.13` against `1.89`** — **which is what makes the pair read as a DIVIDER WITH A GRIP rather than a control shouting over a line.** **The relationship is the finding**: **the user asked for a quieter pill and the arithmetic says it is now quieter than its own background, which is the only sense in which "less distinct" is a measurement.**
+
+**TRANSLUCENCY WAS REFUSED, AND THE REASON IS THE MEASUREMENT IT WOULD HAVE DESTROYED.** **An alpha fill makes THE PILL'S COLOUR A FUNCTION OF WHAT IT COVERS** — **two numbers per theme, and a colour nobody can name or diff.** **The stated cost**: **THE HAIRLINE IS INTERRUPTED ACROSS THE PILL'S `48px`** — **`408` of a `456px` lane keeps line on each side.** **A row that had taken translucency for "softer" would have made the next contrast question unanswerable.**
+
+**STACKING IS TREE ORDER AND NOTHING ELSE.** **Both pseudos are `position: absolute` at `z-index: auto`**, **so `::before` paints first and `::after` last** — **the pill on top, WITH NO `z-index` AND NO `transform` SPENT.** **`D-284` had refused a transform for what it would cost the drops; this row needs neither.**
+
+**AND THE LINE IS PROVEN PRESENT BESIDE THE PILL, BY PIXEL READ ALONG THE LANE**: **light `#C9D2DC`×`46` | pill `#E8EDF4`×`46` | `#C9D2DC`×`46`**; **dark `#3A4654`×`46` | `#1B222B`×`46` | `#3A4654`×`46`**; **horizontal `36 | 48 | 36`.** **A row that only read the pill would not have seen whether the line survived.**
+
+**THE HOVER STEP STILL LIGHTS FROM ANYWHERE IN THE LANE** — **read at a point in the `14px` lane OUTSIDE the pill**, **which turns it `#c3ccd8` while the line stays `#C9D2DC`** — **so THE STROKE IS NOT IN THE HOVER STATE and the full-lane target is untouched** (`D-284`'s gain kept).
+
+**AND THE TWO EDGE CASES STILL HOLD.** **Short gutter**: **`44 → 44px` and `20 → 20px`** — **the pill is the lane, never gone**, **and in both columns only the pill shows because the line is capped with it.** **Hidden arm**: **both layers `visibility: hidden`**, **five points answering the surface behind**, **and the pixel read carrying no line and no pill** — **`D-282` intact for a paint that now has two parts rather than one.**
+
+**INVARIANTS, EACH MEASURED.** **Every strip box and `flex` BYTE-IDENTICAL** (`[104,36,14,140]`, `[222,36,14,140]`, `[62,525.88,100,14]`, `[0,176,980,14]`, `[0,692,980,14]`, `[14,190,14,502]`, `[952,190,14,502]`) **and every `#app`/zone/pane/stage box identical.** **The five-point scan `5/5` before and after on ALL FOUR VISIBLE STRIPS** (`D-261`). **The pill `7×48` in every form**, **including the sidebar relocation** (`[0,156,105,14]`, pill `48×7`).
+
+**THE READINGS.** `npm test` **`2,969 passed / 2 skipped` of `2,971`** over **`147`** files, **ZERO red**; `typecheck` **0**; `typecheck:tests` **0**; `build` **0** (**`dist/renderer/index.html` equals source**); **one file, `src/renderer/index.html`, CSS only** (**`+133/−62`**). **The app is live on `http://127.0.0.1:3787/mcp`.**
+
+**ITS REGISTER IS `D-71` TO `D-284`** as prose, unchanged and extended by this row only. **This row records a stroke promoted to a divider rather than deleted, a quieter pill measured as quieter than its own line, an alpha fill refused for the numbers it would blur, and a hover target kept at full length while the paint shrank to 48.**
