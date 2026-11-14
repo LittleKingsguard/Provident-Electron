@@ -1243,12 +1243,34 @@
        the pane less the strip's `18px` lane (measured `118 → 100` above) less the head's own `4px` inline padding, and its
        control is `14px` at THAT edge — so the widest pane's control ends at `980 − 18 − 4 = 958`, `8px` clear of the
        arrow's `966`. The lane that keeps a strip from being a scrollbar is also what keeps two controls from sharing a box.
-       **THE `left`/`right` ARM STAYS IN ITS OWN LANE AND TAKES THE LANE'S FOOT** (`align-self: flex-end` + `height: 14px`):
-       a sidebar's row is a flex ROW, so its cross axis is the vertical one and the foot is one declaration away — **and it
-       is NOT taken out of the flow, for a measured reason**: the pane's resize strip stands on the pane's BOTTOM edge in
-       this form (`.pane-in-left > .pane-body > .gutter-handle`, `D-246`), so an arrow overlapping that band would be a
-       control covering another control's own box, and `D-261`'s scans would report it. The lane keeps its `14px` width, its
-       height shrinks to the square, and the strip keeps the `14px` beside it.
+       **THE `left`/`right` ARM LEAVES THE FLOW AND OVERLAYS THE ZONE'S FOOT, BECAUSE THE LANE IT HELD WAS ITSELF THE
+       DEFECT** — the user, verbatim: ***"The 'collapse zone' button is creating unnecessary whitespace between the panes and
+       the gutter"***. This arm used to be `align-self: flex-end` + `height: 14px`, IN FLOW: the arrangement row kept a
+       `14px` column beside the strip so the arrow could paint its foot there, and **the rest of that column was BLANK**.
+       **MEASURED, `left` on a `980×720` window before this rule**: the zone `[0,190,120,481]`, its one pane
+       `[0,190,120,100]`, the arrow `[120,657,14,14]`, the gutter strip `[134,190,14,481]` — **the lane `14` wide, and
+       `467` of its `481` tall box empty, standing between the pane column and the strip.** **AND NOTHING COULD GROW INTO
+       IT**: it is the ZONE's sibling, so its width is the row's and not the panes' (`D-244`'s sibling shape, which is what
+       keeps the strip uncoverable), and the panes could not have taken it in any case — their figures are the record's and
+       the zone's own empty foot is a different band, `381` tall in that same reading (`671 − 290`) and there **with or
+       without this control**.
+       So the arrow is out of the flow again, with **the same two declarations the `top`/`bottom` arm states**, only
+       `inset-block-end: anchor(bottom)` in place of `anchor(top)`: the lane closes, the strip moves `14px` in toward the
+       pane column (in `right` the ZONE moves the `14px` out to the window's edge, its strip standing on the stage side),
+       the stage takes the width the row frees, and the arrow stands at the zone's own foot — the user's own *"at the bottom
+       of the sidebars"* (`D-278`).
+       **AND NO GUTTER STRIP CAN BE COVERED, STRUCTURALLY RATHER THAN BY ARITHMETIC** (`D-244`): every strip is its ZONE's
+       SIBLING and stands outside the zone's border box in this row, while this arrow's box ends at the zone's own
+       `anchor(right)` edge — measured after, the arrow `[106,657,14,14]` against the strip `[120,190,14,481]` in `left` and
+       `[966,657,14,14]` against `[876,64,14,607]` in `right`: adjacent at the zone's edge in the first and `76px` clear in
+       the second, and in neither does one box intersect the other.
+       **THE ONE COST THIS SHAPE OWES, NAMED RATHER THAN LEFT TO THE NEXT PASS**: a sidebar pane whose foot reaches its
+       ZONE's foot puts that pane's own resize strip (`D-246`'s bottom-edge form) into the band this arrow now stands in, and
+       the arrow's square lies over the strip's last `14px` — measured with `['panes','pane-menus','height'] = 607` against a
+       `607`-tall `right` zone: strip `[890,657,90,14]` under an arrow at `[966,657,14,14]`, and that strip's scan answers
+       its own id at `3` of its `5` points, the two RIGHT corners answering the arrow. It is reachable by a RECORD WRITE
+       (`D-280`'s own case (a)) and not by a drag (a sidebar pane's ceiling is `200` against a taller arrangement), and the
+       shape that removes it is the lane, which is the defect the user reported.
        **THE ONE THING THE ARROW OWES THE CORPUS IS THE SCAN, AND IT ANSWERS ITS OWN ID AT FIVE POINTS IN ALL FOUR ARMS**:
        a press that lands on a pane's own head instead would ARM A PANE DRAG (`D-269` §1(a)'s measured bubbling), so the
        press is read, not assumed. */
@@ -1260,7 +1282,9 @@
     .zone-collapse[zone="bottom"] { position-anchor: --zone-bottom; }
     .zone-collapse[zone="left"] { position-anchor: --zone-left; }
     .zone-collapse[zone="right"] { position-anchor: --zone-right; }
-    /* the arrow, in the two shapes the two containers allow */
+    /* the arrow, at the zone's own foot — the inline end on the heads' line for `top`/`bottom`, the block END for the
+       sidebars (the user's *"at the bottom of the sidebars"*), and OUT OF THE FLOW in both so no `14px` lane stands beside
+       the strip in the arrangement row (`D-278`; the note above carries the measurement that made the second one leave) */
     :not([collapsed="true"]) + .zone-collapse[zone="top"],
     :not([collapsed="true"]) + .zone-collapse[zone="bottom"] {
       position: absolute;
@@ -1272,8 +1296,12 @@
     }
     :not([collapsed="true"]) + .zone-collapse[zone="left"],
     :not([collapsed="true"]) + .zone-collapse[zone="right"] {
-      align-self: flex-end;
+      position: absolute;
+      z-index: 2;
+      width: 14px;
       height: 14px;
+      inset-block-end: anchor(bottom);
+      inset-inline-end: anchor(right);
     }
 
     /* ══ **A COLLAPSED SIDEBAR'S HEAD LANE IS ROTATED, IT READS BOTTOM-TO-TOP, AND THE ALTERNATIVES LOSE FOR A MEASURED
