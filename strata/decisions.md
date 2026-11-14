@@ -6246,3 +6246,31 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **THE READINGS.** `npm test` **`2,969 passed / 2 skipped` of `2,971`** over **`147`** files, **ZERO failed** (**one transient `DB-1`/`DB-2` pair, *stale build product*, cleared by regenerating the demo bundle**); `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; **`strata-marks check` exit 0**; **census unmoved** (`147` test files, `52` src TS files, `21` map rows). **AND ONE THING IS OWED UPWARD**: **`docs/L3/app-envelope/design.md:35` still states the opener is the root's last authored control** — **its owner's revision, not this seat's.** **The app is live on `http://127.0.0.1:3787/mcp`.**
 
 **ITS REGISTER IS `D-71` TO `D-282`** as prose, unchanged and extended by this row only. **This row records an opener moved inward while the constraint about its neighbour held, a role-less item whose event semantics were measured, a count that gained a position assertion rather than an integer, and a count-authored ladder that mis-served the entry appended after it.**
+## D-284 — THE GUTTER HANDLES ARE A SHORT CENTRED PILL — `min(48px, 100%)`, and **both rejected geometries are the ones a careless row would have shipped**
+
+**Status:** ACTIVE · **Date:** 2026-11-12 · **Source (user, with a reference visual):** ***"Trim the gutter handles down to a less obstructive indicator."*** — **the example being a short rounded pill in the middle of a gutter with the rest visually clear.**
+
+**THE GEOMETRY IS `min(48px, 100%)` ON THE LONG AXIS — A FIXED FIGURE CAPPED BY THE BOX — AND BOTH ALTERNATIVES ARE ARGUED BECAUSE EACH IS THE ONE A CARELESS ROW WOULD HAVE SHIPPED.**
+- **A SHARE** (`50%`, `40%`) **makes THE SAME CONTROL a `980px` bar in the root column and a `6px` dot in a narrow lane** — **a proportional answer to an absolute question: a handle is equally grabbable at every length, so its indicator should not scale with the thing it resizes.**
+- **`calc(100% - n)` RESOLVES NEGATIVE** — **a used value of `0`** — **and gives A PILL THAT VANISHES** in a gutter shorter than `n`, **which is the failure that is hardest to notice because it looks like a styling gap rather than a bug.**
+
+**THE THIN AXIS STAYS `7` (`3.5` a side) AND THE RADIUS GOES TO `3.5` — half the thin axis — so the caps are FULL ROUNDS** rather than a rounded rectangle. **And it is CENTRED BY AUTO MARGINS on the long axis**, **because `top: 50%` CANNOT HONOUR THE CAP**: **auto margins spend whatever free space `min()` resolved to**, **so the centring and the cap are one mechanism rather than two that can disagree.**
+
+**TWO DECLARATIONS SERVE BOTH AXES**, **and the sidebar form RE-STATES them because there the `axis` attribute names the STRIP and not the way it lies** — **the same trap `D-282` found in the DOM order, in a different dimension.**
+
+**MEASURED IN A SHORT GUTTER, MADE BY A REAL DRAG** (`#zone-top-horizontal` `140 → 44 → 20`): **at `44` the pill is `44`; at `20` it is `20` — THE PILL IS THE LANE, NEVER LONGER AND NEVER GONE** — **and at `140` it is `48` with `46` CLEAR AT EACH END.** **So the cap and the floor are the same mechanism, demonstrated at both ends of the range.**
+
+**AND THE INVARIANTS HELD WHERE EVERY RECENT ROW HAS SPENT ITSELF.**
+- **THE BOX IS BYTE-IDENTICAL**: `[104,36,14,140]` and `[0,176,980,14]` **before and after**, **with the pill moving from full length to `[107.5,82,7,48]` and `[466,179.5,48,7]`.**
+- **THE FIVE-POINT SCAN IS `5/5` BEFORE AND AFTER** **on both a vertical and a horizontal handle** — **`D-261`'s defect is the one that turns a cosmetic trim into an input bug, and it did not.**
+- **EVERY STRIP'S `flex: 0 0 14px` AND EVERY `#app`/ZONE/PANE/STAGE BOX COMPARES IDENTICAL ACROSS ALL EIGHT MEASURED STAGES** — **`D-281` and `D-282` had pinned those, and a trim that moved one would have undone two rows.**
+
+**THE COLOUR IS THE SHEET'S EXISTING PAIR IN BOTH THEMES, LEGIBLE AS PIXELS**: **light fill `223,229,236` against dots `111,125,144`; dark fill `44,54,66` against `125,138,155`.**
+
+**AND NO HOVER THICKENING WAS ADDED, DELIBERATELY.** **The existing colour step now lights the pill FROM ANYWHERE IN THE LANE, because THE HOVER TARGET IS STILL THE `14px` BOX** — **so the gain costs nothing.** **A thickening would OVERRIDE THE `7`-IN-`14` FIGURE `D-278` PINS**, **and a `:focus` arm would be DEAD because these strips carry no `tabindex`** — **an interaction added for reassurance would have been the third correction fighting the first two.**
+
+**WHAT A PERSON GAINS AND LOSES.** **Gains a gutter that reads as a short indicator with the lane clear** (**pixel line: `244,246,248` outside the pill, pill ink inside**) **instead of a rail of dots the full length.** **Loses findability** — **a `48px` target in a `456px` lane** — **which is exactly why the FULL-LANE HOVER TARGET and the colour step stay: the paint shrank and the affordance did not.**
+
+**THE READINGS.** `npm test` **`2,969 passed / 2 skipped` of `2,971`** over **`147`** files, **ZERO red**; `typecheck` **0**; `typecheck:tests` **0**; `build` **0** (**`dist/renderer/index.html` equals source**); **one file, `src/renderer/index.html`, CSS only** (**`+61/−9`**); **no node, class, channel, bridge member, census, record, pane, zone or theme change.** **The app is live on `http://127.0.0.1:3787/mcp`.**
+
+**ITS REGISTER IS `D-71` TO `D-283`** as prose, unchanged and extended by this row only. **This row records a cap chosen over a share, a negative calc refused before it shipped, two mechanisms collapsed into one, and a paint that shrank while its affordance stayed by design.**
