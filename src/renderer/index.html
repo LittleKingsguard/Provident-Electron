@@ -597,24 +597,32 @@
        strip is NOT inside it — the menus pane stands in the `top` ZONE, below the bar — so a `no-drag` here would guard
        against a region the compositor never had. The click-drag this strip must keep is the pane's own resize gesture,
        which no `drag` region above it can steal. */
-    /* **`position` IS DELIBERATELY ABSENT**: it stood here only to be the containing block of the absolutely placed
-       grip, and the strip is a PINNED FLOAT now (see the block above) — a declaration whose reason has gone is a claim
-       nothing keeps. Nothing else in this pane is positioned against it: each `.menus-menu` is `position: relative` for
-       its own drop-down.
+    /* **`position` WAS DELIBERATELY ABSENT, AND IT COMES BACK WITH A DIFFERENT SUBJECT** (the headstone below, spent by
+       measurement): it once stood here only to be the containing block of the absolutely placed GRIP, and it went with the
+       grip; the strip was a PINNED FLOAT and needed none. **THE STRIP IS THE ABSOLUTELY PLACED BOX NOW AND ITS CONTAINING
+       BLOCK IS THIS PANE** — see the next block. Nothing else in this pane is positioned against it: each `.menus-menu` is
+       `position: relative` for its own drop-down, and the four drops are `position: fixed` (a `relative` ancestor does not
+       capture a fixed box, so the gesture those overlays carry is untouched).
        **AND THE FIGURE NOW DESCRIBES THE PANE'S CONTENT BOX, WITH BOTH HANDLES STANDING OUTSIDE IT.** The defect, measured
        on a real window at the pane's own MAXIMUM width (`DEFAULT_PANE_BOUNDS`' `max`, `200`): the node painted
        `width: 200px` and served `clientWidth 200` against `scrollWidth 210` — a HORIZONTAL SCROLLBAR AT THE WIDEST THE
        PANE CAN BE — because under `border-box` the strip's `1.125rem` lane and the move grip's own `14px` lane were spent
-       out of the figure, so the menus got `184px` of content for a line that needs `210`. `D-246` had to PIN the strip
-       because the pane scrolls, and this must not undo that: the pin is untouched (`float: right; position: sticky` with an
-       inset built from the pane's content width), and the grip's own `float: left` pin went with the grip's move into the
-       HEAD ROW (`app-envelope` rev 2 §3) — so `padding-right` below is the ONE lane this padding keeps, and the grip's
+       out of the figure, so the menus got `184px` of content for a line that needs `210`. **THAT LANE IS THE STRIP'S AND
+       IT STAYS WHERE `D-253` PUT IT** — in the padding, outside the figure — and what changes is only where the strip
+       STANDS inside it (the `top`/`bottom` form's own block below: an absolute box of the pane, not a pinned float), so
+       the record's own figure still buys the menus their full width and the scrollbar is still gone at `200`.
+       The grip's own `float: left` pin went with the grip's move into the HEAD ROW (`app-envelope` rev 2 §3) and its
        `0.875rem` left lane is RETURNED (`padding-left: 0`), because a grip that heads the pane no longer stands beside the
-       content. What moves is only WHICH BOX the lane is cut from — the padding, outside the figure, instead of the content
-       inside it — so the record's own figure buys the menus their full width and the scrollbar is gone at `200`.
+       content.
        NOTHING OF THE RECORD'S IS RESTATED: the painted `width` is still `['panes','pane-menus','width']` and the drag still
        writes it; `box-sizing` spends no figure and states no preference. */
-    :where(#pane-menus) { box-sizing: content-box; padding-left: 0; padding-right: 1.125rem; white-space: nowrap; }
+    /* **AND THE PANE IS THE STRIP'S CONTAINING BLOCK AGAIN, WITH A SUBJECT WHERE `D-246` DELETED ONE** (`D-70` reversed by
+       measurement and never by taste): the `position` that stood here was the absolutely placed GRIP's, and it went with the
+       grip. **WHAT NEEDS A CONTAINING BLOCK NOW IS THE STRIP**, and the whole of the fix is that the block is the PANE —
+       a box that does NOT scroll — so the strip's box can stand in this rule's `padding-right` lane, which is OUTSIDE the
+       body's scrollport (the strip's own block below states the order outward). `position: relative` with NO `z-index`, so
+       the pane creates no stacking context and the ranks `D-261`/`D-260` measured are untouched. */
+    :where(#pane-menus) { box-sizing: content-box; padding-left: 0; padding-right: 1.125rem; white-space: nowrap; position: relative; }
     /* ══ **EVERY `top`/`bottom` RULE IN THIS PANE'S BLOCK DECLARES NO SPECIFICITY, BECAUSE THE PANE'S FORM IS KEYED ON ITS
        PUBLISHED `zone` AND NEVER ON ITS ID** ══ The box model above is `:where()`'d for that reason, and so is the grip's
        lane and the strip's pin below: a rule that names an ID outranks any `.pane-in-left`/`.pane-in-right` selector on the
@@ -633,90 +641,112 @@
        deletes the pin (`padding-left: 0` on both zone-resident panes below, and no negative margin on either grip). **THE
        STRIP'S LANE STAYS**: `padding-right: 1.125rem` is the resize strip's (`D-253`, `D-261`), not the grip's. */
     :where(#menus-vertical) {
-      float: right;
+      /* **`float: right` IS DELETED WITH THE LINE IT LEFT AND SO IS THE IN-FLOW `height`** (the block at the end of this
+         rule states it): an absolutely positioned box is out of the flow by construction, so the float's whole job —
+         keeping the strip out of the menus' line — is the position's now, and `flex: 0 0 auto` (inert in this form since
+         the body is a block) goes with them. */
       /* ══ **AND IT IS THE TOPMOST THING AT ITS OWN BOX — WHICH IS A RANK, AND IT HAD NONE** ══ The user's report,
          verbatim: *"Resize handle should be over the pane contents instead of under"*. **THE STRIP WAS BEHIND THE
-         CONTENT, AND THE CAUSE IS THE FIRST OF THE TWO AND NOT `D-260`'s**: the strip IS positioned (`position: sticky`),
+         CONTENT, AND THE CAUSE IS THE FIRST OF THE TWO AND NOT `D-260`'s**: the strip IS positioned (a float pinned
+         `sticky` when that reading was taken, an absolute box of the pane now — positioned either way),
          so it is painted in the positioned band — but its `z-index` was `auto`, and among positioned siblings that band's
          order is DOCUMENT ORDER, while the four `.menus-menu` chips are `position: relative` (also `auto`) and stand
          AFTER it in the tree. **AND THE PANE CREATES NO STACKING CONTEXT FOR ANYTHING TO BE TRAPPED IN**, measured on
-         the real window rather than reasoned: `#pane-menus` computes `position: static`, `z-index: auto`, `opacity: 1`,
-         `transform: none`, `isolation: auto`, and so does every ancestor up to `#app` (`position: fixed`) — so the strip
+         the real window rather than reasoned: `#pane-menus` computes `z-index: auto`, `opacity: 1`,
+         `transform: none`, `isolation: auto` (`position` read `static` then and reads `relative` now — a `relative` box
+         with `z-index: auto` is still NO stacking context), and so does every ancestor up to `#app` (`position: fixed`) —
+         so the strip
          and the chips were ranked in ONE context and the later box won. **MEASURED, and this is why the picture and a
          centre-only probe disagree**: a `9 × 5` scan of the strip's own box answered a `.menus-menu` chip at `9/45`
          points — its ENTIRE TOP BAND, top-centre (`125,39`) included — while `elementFromPoint` at its mid-centre
          answered the strip, so a read that took only the centre would have passed. `z-index: 1` is the RANK: a positive
          value is above every `auto`/`0` positioned box and above all in-flow content in that context, so the strip is
-         topmost at its own box while the menus scroll UNDER it — which is the whole point of `D-246`'s pin, and a pin
-         painted under what it pins over is a control a person cannot see or press. **IT MOVES NOTHING**: the box is still
-         the authored `14px`, the pin is `D-246`'s byte for byte, and a rank is no figure the record owns. **AND THE ONE
+         topmost at its own box. **WHAT IT PINS OVER IS NOTHING NOW** — it stands outside the scrollport (the block at the
+         end of this rule), so the content cannot reach it at all — and the rank is KEPT rather than dropped with its
+         occasion, because a rank is what makes a control findable whatever box a later pass adds, and the accident it once
+         relied on is exactly what this sheet declines to rely on. **IT MOVES NOTHING**: the box is still the authored
+         `14px`, no figure of the record's is stated, and a rank is no figure at all. **AND THE ONE
          BOX THAT STILL STANDS ABOVE IT IS NAMED RATHER THAN LEFT TO BE FOUND**: an OPEN menu's panel and items carry
          `z-index: 30` (`:focus-within`), so a focused name paints over the strip's top band for as long as it holds
          focus — the sheet's one transient overlay, closed when focus leaves (`D-260`'s reveal arm, the same trade). */
       z-index: 1;
-      position: sticky;                       /* a FLOAT can be sticky; an absolutely positioned box cannot (`D-244`'s class) */
-      /* ══ **AND THE PORT IT IS PINNED AGAINST IS ITS OWN PARENT'S NOW** (`D-270`) ══ The strip is a child of `menus-body`
-         rather than of the pane, because the BODY is the box that scrolls: a control pinned against a box that no longer
-         scrolls would pin nothing, and a control left in the pane would have had to be pinned against a scrollport one
-         node up — which is `D-246`'s defect with the arrow reversed. **EVERY DECLARATION BELOW IS BYTE-UNCHANGED AND NONE OF
-         THEM MOVES A FIGURE**: `100%` is still its containing block's content height (the body's, which is the pane's height
-         less the head row — the scroll area the strip actually spans), and the inset is still the pane's content width plus
-         the pane's `padding-right` lane less the strip's own thickness, because the body's content box IS the pane's content
-         box. The one thing that did NOT move is the strip's LANE: `:where(#pane-menus)`'s `padding-right: 1.125rem` stays on
-         the PANE, so the lane it buys is still outside the figure the record paints. */
-      /* THE PIN AND THE STATIC POSITION ARE THE SAME POINT, AND THAT IS NOT REDUNDANT: `left` is what holds the strip
-         still while the menus scroll, and `margin-right` is where the strip SITS once the sticky rectangle empties at the
-         end of the scroll range — measured apart, the pin alone dropped the strip `86 → 68` at `scrollLeft 96`, and the
-         two read `[86,36,14,125]` at EVERY position (`0`, `10`, `48`, `80`, `96`) together. */
-      left: calc(100% + 1.125rem - 0.875rem); /* the pane's content width + its padding lane, less the strip's own thickness */
-      margin-right: -1.125rem;                /* …and the lane is where its static box lands: the pane's padding edge */
-      height: 100%;
-      flex: 0 0 auto;
+      /* ══ **AND IT IS OUTSIDE THE SCROLLPORT NOW — THE USER'S OWN SENTENCE, AND IT COST NO NODE** ══ The report, verbatim:
+         ***"Put the handle outside of the scrollbar"***, with a picture of this pane's scrollbar on the pane's right edge and
+         the strip's dotted band in the same lane. **MEASURED BEFORE, AND THE DIRECTION IS THE DIAGNOSIS**: a body's scrollbar
+         is the outer `15` of its BORDER box (`offsetWidth − clientWidth`), and the `padding-right: 1.125rem;
+         margin-right: -1.125rem` pair that `D-270` put on the two bodies ended that border box ON THE PANE'S PADDING EDGE —
+         so the scrollbar was drawn there, and the strip's inset, a percentage of the body's CONTENT box (which the
+         scrollbar shrinks), landed immediately INBOARD of it: `#inspector-body` at `60` wide read `offsetWidth 78 /
+         clientWidth 63`, the strip `[127,72,14,111]` and the vertical lane `[141,50,15,126]` — and the strip stood OVER the
+         horizontal lane at `[127,161,14,15]`. **Two lanes sharing one edge are not two lanes**, and the one on the outside
+         was the one nobody could press.
+         **SO THE STRIP'S CONTAINING BLOCK IS THE PANE** (`:where(#pane-menus)`, above): a box that does not scroll, so
+         `position: absolute` puts the strip in the PANE's own `padding-right` lane, which is OUTSIDE the body's port, and the
+         two bodies' lane pair is DELETED (below) so their ports end on the pane's CONTENT edge. The order outward is now
+         CONTENT | SCROLLBAR | `4px` | STRIP: the handle on the pane's painted edge — the edge the width moves, which is
+         `D-246`'s clause and is now structural rather than pinned — and the scrollbar whole, visible and usable inside it.
+         **THE OTHER TWO SHAPES WERE REFUSED ON MEASURED GROUNDS, NOT ON TASTE.** A SIBLING beside the body is a NEW
+         AUTHORED NODE (`theme-control`'s census is `109`) and `AL-1` requires this handle's markup inside the pane before the
+         first `menus-menu` — both closed by rows. And a GUTTER on the body (`scrollbar-gutter`, `padding-inline-end`, a
+         margin) moves the space a scrollbar RESERVES, never its EDGE: a scrollbar is drawn at the inline end of the
+         scrollport whatever the padding, so from inside the body the two lanes cannot be separated at all.
+         **AND THE PIN GOES WITH THE CLASS IT BELONGED TO** (`D-70`): `D-246`'s `sticky`/`left`/`margin-right` existed because
+         a descendant of a scroll container is translated by its `scrollLeft`. A box whose containing block is the PANE cannot
+         be — so the pin is not weakened here, it is UNNECESSARY, and its load-bearing margin goes with it. **THE HAZARD
+         `D-270` NAMED IS ANSWERED THE SAME WAY**: the strip is outside the port, so no part of it is scrollable overflow and
+         a pane with nothing to scroll still shows no scrollbar.
+         **AND IT SPANS THE PANE, NOT THE BODY'S CONTENT BOX**: `inset-block: 0` is the pane's padding box — the edge whole,
+         which is the box `D-246` measured at `[86,36,14,125]`, and it states NO figure of the head row's. The `height: 100%`
+         it replaces was a percentage of the body's content box, and in a pane whose body opens with TEXT it started BELOW
+         that line and overflowed the port by its own remainder (measured: `[127,72,14,111]`, `3/5` hit points) — an artifact
+         of the flow and never a statement. */
+      position: absolute;                     /* against the PANE — the one box in the pane that does not scroll (`D-246`'s class) */
+      inset-block: 0;                          /* the pane's padding box, whole: the edge this strip adjusts */
+      inset-inline-end: 0;                     /* …and its own `padding-right` lane, whose outer `14px` is this strip's box */
     }
     /* ══ THE SECOND PANE SHARES THE FIRST ONE'S LANES, BECAUSE THE LANES ARE THE GRIP'S AND THE STRIP'S AND NOT A PANE'S ══
        The user's second change: *"Add additional demo panes so that this can be tested with pane rearrangement in a zone"*.
        `src/shared/demo-envelope.ts` authors `#pane-inspector` as the `top` zone's SECOND pane, and it carries THE SAME TWO
        AFFORDANCES in the same order — a `.pane-grab` grip and a `14px` resize strip — so it owes the same three rules: the
-       content-box figure with the strip's lane in the padding, and the strip's float-and-pin. **THE SELECTORS NAME BOTH
+       content-box figure with the strip's lane in the padding, the same CONTAINING BLOCK on the pane (the strip's own
+       block above), and the same absolute box in that lane instead of the float-and-pin. **THE SELECTORS NAME BOTH
        PANES RATHER THAN REPEATING THE NUMBER**, so the `1.125rem` above has ONE spelling in this sheet and a third pane
        would join the same list. **THE GRIP'S LANE AND ITS NEGATIVE INSET ARE GONE FROM BOTH** (`app-envelope` rev 2 §3):
        each grip heads its pane in a HEAD ROW now. Nothing here states a
        figure the record owns: the widths are the GRIP's `14px` and the strips' lanes, and the pane's own width is
        `['panes', <id>, 'width']` written by the paint (`D-243`, `D-253`). */
-    :where(#pane-inspector) { box-sizing: content-box; padding-left: 0; padding-right: 1.125rem; white-space: nowrap; }
-    /* ══ **THE STRIP'S LANE MOVES ONE BOX IN WITH THE STRIP, AND THE PAIR IS THE WHOLE OF IT** (`D-270`) ══ The lane above
-       is the PANE's padding, and the pane's padding box is what a scrollport one node up would be. **THE SCROLLING BOX IS
-       THE BODY NOW, AND ITS PORT IS ITS OWN PADDING BOX** — so the strip's static box (a right float whose
-       `margin-right: -1.125rem` puts its border box out where that lane is) would be 18px OUTSIDE the body's port, which is
-       scrollable overflow: **a horizontal scrollbar on a pane with nothing to scroll**, the user's second report, back in
-       the box that exists to remove it. **THE TWO DECLARATIONS ARE ONE TRADE AND NEITHER WORKS ALONE**:
-       `padding-right: 1.125rem` puts the lane INSIDE the port, and `margin-right: -1.125rem` takes the same 18px back off
-       the body's own box so its CONTENT box is still exactly the pane's content box — **the record's figure still buys the
-       menus their full line and the strip still spends none of it** (`D-256`'s rule, kept). The body's border box then ends
-       on the pane's padding edge, and the strip sits in the lane at `x = figure - 14px + 18px` exactly as it did in the pane.
-       **THE SIDEBAR FORM CANCELS BOTH**: there the strip is the body's BOTTOM item and there is no right-hand lane at all,
-       which the `.pane-in-left > .pane-body` rule below states. */
-    :where(#menus-body),
-    :where(#inspector-body) {
-      padding-right: 1.125rem;
-      margin-right: -1.125rem;
-    }
+    /* **THE SAME CONTAINING BLOCK FOR THE SAME REASON, AND IT IS ONE DECLARATION FOR BOTH PANES** (the block above):
+       a second pane's strip needs the same box outside the scrollport, so it needs the same block. */
+    :where(#pane-inspector) { box-sizing: content-box; padding-left: 0; padding-right: 1.125rem; white-space: nowrap; position: relative; }
+    /* ══ **THE BODIES' LANE PAIR IS DELETED, AND ITS REASON IS THE STRIP'S NEW CONTAINING BLOCK** (the `top`/`bottom`
+       strip's block above; `D-270`'s pair, spent) ══ `padding-right: 1.125rem; margin-right: -1.125rem` put the lane INSIDE
+       the body's port and took the same `18px` back off its box, so the port reached the PANE's padding edge and the strip's
+       float could stand in it without being scrollable overflow. **WITH THE STRIP AN ABSOLUTE BOX OF THE PANE IT NEEDS NO
+       PORT AT ALL** — and the port it had is exactly the defect the user reported: the scrollbar is drawn in the outer `15px`
+       of the port's box, so a port ending on the pane's padding edge drew the scrollbar where the strip stood. **THE PORT IS
+       THE PANE'S CONTENT BOX NOW** (no padding, no negative margin), whose outer `15px` is the scrollbar's and whose every
+       pixel is INSIDE the strip's lane's inner edge — two lanes, and the record's figure still buys the menus their full line
+       (`D-253`, kept: the body's content box was and is the pane's content box). */
     /* **THE THIRD RULE IS DELETED WITH THE LANE IT SPELLED** (`app-envelope` rev 2 §3): `:where(#pane-inspector >
        #inspector-grab) { margin-left: -0.875rem }` put the floored grip into the pane's left padding, and the head row is
        that lane now. (The menus pane's twin rule above goes with it, in the same edit.) */
     :where(#inspector-vertical) {
-      float: right;
-      position: sticky;
       /* THE SAME RANK AS THE MENUS STRIP'S, FOR THE SAME REASON AND NOT FOR SYMMETRY: this pane's own content is `No
          selection` (`D-259`), short enough to stop before the strip's box — measured at `45/45` self-answering points —
          so its strip reads topmost TODAY by the LENGTH OF ITS CONTENT rather than by a rule, and a longer body (or a
          scroll) would put a `.menus-menu`-style `position: relative` box over it exactly as `#menus-vertical`'s was
          measured to be. One rank, both strips: nothing here is a figure of the record's and no box moves. */
       z-index: 1;
-      left: calc(100% + 1.125rem - 0.875rem);
-      margin-right: -1.125rem;
-      height: 100%;
-      flex: 0 0 auto;
+      /* **AND THE SAME BOX, OUTSIDE THE SCROLLPORT, FOR THE SAME REASON — AND THIS IS THE PANE THAT MEASURED IT** (the
+         `:where(#menus-vertical)` block above carries the whole diagnosis and the two refused shapes): narrowed to `60`
+         this pane's body read `offsetWidth 78 / clientWidth 63`, its strip landed INBOARD of the `15px` scrollbar that the
+         body's deleted lane pair had put on the pane's own padding edge, and it stood OVER the horizontal lane at
+         `[127,161,14,15]` as well. **`position: absolute` against the PANE puts it in the pane's `padding-right` lane, and
+         the body's port ends on the pane's content edge** — CONTENT | SCROLLBAR | `4px` | STRIP, the order the user asked
+         for in one sentence. It states no figure of the pane's and none of the record's. */
+      position: absolute;
+      inset-block: 0;
+      inset-inline-end: 0;
     }
     /* ══ **"REARRANGEMENT IN A ZONE", DEFINED — AND IT IS A PROVISIONAL ANSWER, WHICH IS SAID HERE RATHER THAN IMPLIED** ══
        The design corpus has NEVER defined what two panes in one zone do (no row, no page and no charter sentence states an
@@ -836,12 +866,10 @@
     .pane-in-right > .pane-body {
       display: flex;
       flex-direction: column;
-      /* AND THE STRIP'S RIGHT-HAND LANE IS CANCELLED HERE, FOR THE REASON THE `top`/`bottom` PAIR STATES ONE BLOCK UP
-         (`D-270`): a sidebar's strip is the body's BOTTOM item and spans its width (`width: auto !important` below), so
-         the lane and the negative margin that put the `top`/`bottom` strip at the pane's right edge would leave 18px of
-         body content width unaccounted for — and an unpadded port is what the bottom strip spans. */
-      padding-right: 0;
-      margin-right: 0;
+      /* **AND THIS FORM OWES NO LANE ON EITHER AXIS, WHICH IS NOW TRUE OF BOTH FORMS** (the deleted lane pair above): a
+         sidebar's strip is the body's BOTTOM item and spans its width (`width: auto !important` below), so no right-hand
+         lane exists here to cancel — `D-270`'s `padding-right: 0; margin-right: 0` were the cancellation of a pair the
+         `top`/`bottom` form carried, and that pair is gone, so the two declarations went with it (`D-70`). */
     }
     /* ══ **THE PANE IS A FLEX COLUMN AND THE SCROLL IS ITS BODY'S — THE HEAD ROW IS OUTSIDE THE SCROLLING BOX** ══
        The user's two reports, verbatim: *"Scrolling goes under the pane header"* and *"Also the scrollbar is present even if
@@ -1366,6 +1394,16 @@
       position: sticky;
       bottom: 0;                           /* `D-246`'s remedy, on the axis this pane scrolls */
       left: auto;
+      /* **AND THE `top`/`bottom` FORM'S BOX IS UNSPELLED HERE, ON BOTH OF ITS INSETS** (the strip's own blocks above): its
+         containing block is the PANE and its box the pane's `padding-right` lane, keyed on an ID in a `:where()` rule — so
+         those declarations LOSE to this selector's `sticky` and would have survived as TWO STRAY INSETS in a form that has
+         no right-hand lane at all. **MEASURED AS A HAZARD BEFORE IT WAS WRITTEN, IN THE OTHER DIRECTION**: a sticky box with
+         both `inset-block-start` and `bottom` set is OVER-CONSTRAINED and resolves in the block direction's start, which is
+         exactly the pin `D-246` measured away from (`bottom: 0`, the edge the height moves); `inset-inline-end` beside
+         `left: auto` would pin it horizontally. So both are `auto` here — this form's static position and its one pin are
+         the auto margin and the `bottom` above, and nothing else. */
+      inset-block-start: auto;
+      inset-inline-end: auto;
       /* THE STATIC POSITION AND THE PIN ARE THE SAME EDGE, WHICH IS `D-246`'s OWN TWO-PART SHAPE: `margin-top: auto`
          spends the free space ABOVE the strip when the content is shorter than the pane, so it stands on the bottom edge
          with nothing to scroll, and against an overflowing column the auto margin is `0` and the `bottom: 0` pin is what
