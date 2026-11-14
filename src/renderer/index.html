@@ -363,16 +363,17 @@
     #tab-row { display: none; }
 
     /* THE FOUR MENUS ARE DROP-DOWNS, AND THE WHOLE MECHANISM IS `:focus-within` — NO STATE, NO TOGGLE, NO JS.
-       `src/shared/demo-envelope.ts` authors four `.menus-menu` nodes holding eighteen `.menu-item` nodes, and each menu
+       `src/shared/demo-envelope.ts` authors four `.menus-menu` nodes holding NINETEEN `.menu-item` nodes — `D-180`'s eighteen
+       roles plus the overlay's opener, which the user moved under `View` — and each menu
        node now carries `props.tabindex: '0'` — the paint writes `props.*` as attributes, so the served markup carries
        `tabindex="0"` on the four names. THAT IS THE "CLICK": a click focuses a menu, a click elsewhere blurs it, and
        `:focus-within` reports exactly that, so only the four NAMES show until one is clicked and only one menu can be open
        at a time (focus is single). `Tab` reaches the same four boxes, so a keyboard user gets the drop-down too — a `div`
        with `tabindex="0"` is the honest control here; there is no authored element to hand a `<button>` role to, and
        `AGENTS.md`'s UI-authority rule forbids this sheet conjuring one.
-       **THE HIDING IS CSS AND NEVER DELETION**: `.menus-menu > .menu-item { display: none }` keeps all eighteen items in
+       **THE HIDING IS CSS AND NEVER DELETION**: `.menus-menu > .menu-item { display: none }` keeps all nineteen items in
        the rendered markup at every moment — `provident.dispatch`, `list_targets`, `get_rendered_html` and `get_markdown`
-       see the same eighteen nodes they always did (`AL-6`, `AL-7`), and nothing about a role, a label or a refusal moves.
+       see the same nineteen nodes they always did (`AL-6`, `AL-7`), and nothing about a role, a label or a refusal moves.
        **THE ITEMS DROP VERTICALLY AND OUT OF THE FLOW**: an open menu's items are `position: absolute` below their own
        name, so they OVERLAY the content beneath instead of pushing the layout — the pane stands in the `top` zone, and a
        strip that grew by seven rows would move the stage. The stack is placed with NO measurement: each row owns one fixed
@@ -438,12 +439,12 @@
        (`AGENTS.md` § "UI authority": a pseudo-element renders no node and no DOM), and it is the ONE box the stack is
        painted behind — background, border, radius, shadow, padding and stacking are declared ONCE here and never
        per item. **A SINGLE PANEL WRAPPER IS NOT EXPRESSIBLE WITH THE NODES THAT EXIST**: the four menus and their
-       eighteen items are authored provident data (`src/shared/demo-envelope.ts`) and this sheet adds no markup, so the
+       nineteen items are authored provident data (`src/shared/demo-envelope.ts`) and this sheet adds no markup, so the
        only enclosing node is the menu itself, whose box is the name.
        **SO THE PANEL'S HEIGHT IS THE STACK'S, AUTHORED FROM THE ITEM COUNT** — `n * --menu-row` plus the panel's two
        paddings — which is the same trade the six offset rules below already make for each ROW: the count is a figure
        this sheet states, and a menu that gains or loses an item must move both. The `:has()` ladder beneath the panel
-       names every count from `2` to `7` in ascending order (the LAST matching rule wins), so every count the offset
+       names every count from `2` to `8` in ascending order (the LAST matching rule wins), so every count the offset
        ladder can stack is also sized exactly; a menu of one item falls through to the base value.
        **AND ITS `z-index` IS WHAT PUTS IT OVER THE STAGE, WHICH IS THE SECOND HALF OF THE DEFECT**: the stage is a LATER
        sibling with no stacking of its own, so an in-flow or z-index-less box would be painted UNDER it. The focused
@@ -483,6 +484,12 @@
     .menus-menu:focus-within:has(> .menu-item:nth-child(5)) { --menu-rows: 5; }
     .menus-menu:focus-within:has(> .menu-item:nth-child(6)) { --menu-rows: 6; }
     .menus-menu:focus-within:has(> .menu-item:nth-child(7)) { --menu-rows: 7; }
+    /* **THE EIGHTH RUNG, AND IT IS THE `View` MENU'S** — the seven Electron roles PLUS this app's own overlay opener,
+       which the user moved under `View` (*"Make the 'Security & settings' button an element under the View menu
+       instead"*). Without it the menu's eighth lane would paint BELOW the panel's box, and the offset ladder below
+       would leave that lane unstaked at the FIRST row's place — two labels in one lane. The count is still a figure
+       this sheet states, in the ladder's own idiom, one rung further. */
+    .menus-menu:focus-within:has(> .menu-item:nth-child(8)) { --menu-rows: 8; }
     /* OPEN: the focused menu's items, one fixed row each, dropped straight below the name and taken OUT of the flow.
        **THE ROW IS A LANE INSIDE THE PANEL AND NOT A BOX OF ITS OWN**: `background` is left undeclared here, so the
        panel's box shows through every row and only a hover or a refusal paints a row's own colour — the look a person
@@ -507,6 +514,7 @@
     .menus-menu:focus-within > .menu-item:nth-of-type(5) { margin-top: calc(4 * var(--menu-row)); }
     .menus-menu:focus-within > .menu-item:nth-of-type(6) { margin-top: calc(5 * var(--menu-row)); }
     .menus-menu:focus-within > .menu-item:nth-of-type(7) { margin-top: calc(6 * var(--menu-row)); }
+    .menus-menu:focus-within > .menu-item:nth-of-type(8) { margin-top: calc(7 * var(--menu-row)); }
     /* THE CLIP IS RELEASED ONLY WHILE A MENU IS OPEN — the box that scrolls and the zone it stands in both scroll their own
        axis (`D-187`) and both would otherwise cut the drop-down off at the name strip's own height. **AND THE ZONE IS
        WHICHEVER ONE THE PANE STANDS IN** (`D-252`): `top`/`bottom` and the two sidebars are the four places it can be, and a
@@ -1715,7 +1723,7 @@
     body:has([theme="dark"]) .menus-menu { background: #1b222b; border-color: #2c3642; }
     /* THE PANEL HAS ITS OWN DARK LINE, and the rows keep none: their background is the panel's (see the OPEN rule
        above), so the pair moves the PANEL's fill and border and paints a row only where a row has a colour of its own —
-       the hover. A row rule here would repaint all eighteen rows over the panel and leave the panel's edge light. */
+       the hover. A row rule here would repaint all nineteen rows over the panel and leave the panel's edge light. */
     body:has([theme="dark"]) .menus-menu:focus-within::before {
       background: #1b222b;
       border-color: #2c3642;

@@ -1346,7 +1346,7 @@ function tabsRecord(second: { active: boolean; label?: string; error?: string })
 // ══════════════════════════════════════════════════════════════════════════════
 describe('app-layout — the skeleton, the tabs row, the zones, the stage and the menus pane (D-176…D-192)', () => {
   // ── group `skeleton`: AL-1, AL-2, AL-6 — three read-only rows, one boot ──────
-  it('AL-1 — the skeleton is the design\'s: the bar\'s NAME is a NODE and its first child, then the tabs row and the `+`, four zones and a stage, two handles, and the opener last', async () => {
+  it('AL-1 — the skeleton is the design\'s: the bar\'s NAME is a NODE and its first child, then the tabs row and the `+`, four zones and a stage, two handles, and the root\'s LAST node the `bottom` control (the opener now stands in the `View` menu)', async () => {
     const { booted } = await shared('skeleton')
     const surface = await renderedHtml(booted.client)
     expect(
@@ -1490,7 +1490,19 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
         `this is the strip its adjustable axis moves (\`D-192\`, \`C-13\`).`,
     ).toBe(true)
 
-    // ── the app root's LAST authored control, and the layer that follows it ──
+    // ── the overlay's opener: STILL INSIDE the root, and NO LONGER its last node ──
+    // **`D-178` §3's PIN IS SUPERSEDED HERE, AND THIS IS THE ROW THAT SAYS SO.** That row kept the opener the app root's
+    // LAST child because the overlay LAYER is the root's FOLLOWING SIBLING, "and moving either would put the modal's own
+    // controls inside the subtree `inert` is written to". **THE LAYER DID NOT MOVE, SO THAT REASON STILL HOLDS** — what
+    // moved is the OPENER, on the user's ruling *"Make the 'Security & settings' button an element under the View menu
+    // instead"*, and the `View` menu is a DESCENDANT of the same root: the item's whole ancestor chain still stands
+    // inside `#app-surface`, so `inert` still covers it and the modal's three nodes are still outside it. **SO THIS ROW
+    // ASSERTS TWO THINGS, AND THE SECOND REPLACES THE OLD READING RATHER THAN WEAKENING IT**: the opener still renders
+    // INSIDE the root's subtree (the scoping, unmoved), and the root's LAST node is now the `bottom` zone's collapse
+    // control — the node the root's column ends on with the opener gone. The old assertion (`last node === opener`) is
+    // GONE WITH THE POSITION: it would now red on the product the user asked for. An opener that came BACK to the root's
+    // end, or a node that arrived after the bottom control, reds here by name; and because this row would pass on an
+    // opener that had merely been DELETED, `AL-6` reads the node itself as the `View` menu's role-less nineteenth item.
     const slice = appSurfaceSlice(html)
     expect(
       slice === null ? '(no app-surface subtree)' : 'present',
@@ -1501,16 +1513,19 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
     const openerAt = slice === null ? -1 : (slice ?? '').indexOf(`id="${OVERLAY_OPEN_ID}"`)
     expect(
       slice !== null && openerAt >= 0,
-      `AL-1 — the overlay's opener must render as the app root's LAST authored control; it was ` +
+      `AL-1 — the overlay's opener must STILL RENDER INSIDE the app root's subtree, wherever within it the item now ` +
+        `stands: \`inert\` is written to that subtree and to nothing else, so an opener outside it is a control the open ` +
+        `modal does not disable — the scoping \`C-5\` exists for. It was ` +
         `${slice === null ? 'in a root that did not render' : `at byte ${String(openerAt)} of the root's subtree`}.`,
     ).toBe(true)
     const lastNodeId = surfaceNodes.length === 0 ? null : attrOf(surfaceNodes[surfaceNodes.length - 1] ?? '', 'id')
     expect(
       lastNodeId,
-      `AL-1 — nothing may follow the opener inside the root, so the LAST node of the root's subtree must BE the opener: ` +
-        `it reads \`${String(lastNodeId)}\` where an opener displaced from last is the declared failure mode "the opener ` +
-        `displaced (the modal's scoping lost)" (\`C-5\`, \`D-178\` §3). Subtree nodes: ${String(surfaceNodes.length)}.`,
-    ).toBe(OVERLAY_OPEN_ID)
+      `AL-1 — the root's LAST authored node must now be the \`bottom\` zone's COLLAPSE CONTROL, because the opener left ` +
+        `that slot for the \`View\` menu's item list (the user's ruling, superseding \`D-178\` §3's pin). It reads ` +
+        `\`${String(lastNodeId)}\`: \`${OVERLAY_OPEN_ID}\` here is an opener back at the root's end, and anything else ` +
+        `is a node that appeared after the bottom control. Subtree nodes: ${String(surfaceNodes.length)}.`,
+    ).toBe('bottom-collapse')
   }, ROW_MS)
 
   it('AL-2 — the row is N and reads the record: one row per `order` entry, each with its own label, one active marker', async () => {
@@ -1566,7 +1581,11 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
     ).toEqual(activeIds.map((tabId) => str(memberOf(memberOf(record, tabId), 'target')) ?? ''))
   }, ROW_MS)
 
-  it('AL-6 — the pane is the menu it claims: four menus, eighteen labelled items, and the route\'s own answer to each', async () => {
+  // **THIS ROW'S COUNT IS NINETEEN LANES AND EIGHTEEN ROLES, AND THAT IS THE ONE THING THE USER'S RULING MOVED IN IT**
+  // (*"Make the 'Security & settings' button an element under the View menu instead"*): the overlay's opener is the
+  // `View` menu's eighth `.menu-item` and carries NO `role`, so the class census is nineteen while the ROLE census, the
+  // route's two sets and the eighteen-dispatch sweep below are exactly what they were.
+  it('AL-6 — the pane is the menu it claims: four menus, nineteen lanes (eighteen role-carrying) plus the overlay\'s opener, and the route\'s own answer to each role', async () => {
     const { booted } = await shared('skeleton')
     const surface = await renderedHtml(booted.client)
     expect(
@@ -1595,14 +1614,71 @@ describe('app-layout — the skeleton, the tabs row, the zones, the stage and th
     const items = renderedItems(html)
     expect(
       items.length,
-      `AL-6 — the pane must render EIGHTEEN items (the static enumeration \`1 + 7 + 7 + 3\`, \`D-180\`, \`D-188\`); the ` +
-        `surface carried ${String(items.length)}: ${textOf(items.map((item) => item.role))}. A count that is not eighteen ` +
-        `is the declared failure mode.`,
+      `AL-6 — the pane must render EIGHTEEN ROLE-CARRYING items (the static enumeration \`1 + 7 + 7 + 3\`, \`D-180\`, ` +
+        `\`D-188\`); the surface carried ${String(items.length)}: ${textOf(items.map((item) => item.role))}. A count that ` +
+        `is not eighteen is the declared failure mode. **THE PANE CARRIES NINETEEN \`.menu-item\` NODES** — the count below ` +
+        `— because the overlay's opener is the \`View\` menu's eighth item and carries NO role; this list is the ROLE ` +
+        `census and stays eighteen, which is what keeps the route's two sets at eleven and seven.`,
     ).toBe(18)
     expect(
       items.filter((item) => item.label.length === 0).map((item) => item.role),
       `AL-6 — every item must be LABELLED (the label is the authored content string, \`D-177\`); these carried none.`,
     ).toEqual([])
+    // ══ THE NINETEENTH ITEM — THE OVERLAY'S OPENER, AND THE COUNT THIS ROW NOW RE-GRAINS ═══════════════════════════
+    // **THE SHAPE HALF ABOVE IS UNMOVED AND THIS IS THE ONE THING ADDED TO IT.** The user's ruling moved the opener
+    // (*"Make the 'Security & settings' button an element under the View menu instead"*), so the pane's item count is
+    // NINETEEN where it was eighteen — and the reading is taken on the CLASS, because `renderedItems` is keyed on the
+    // role and the opener deliberately has none. **THE COUNT ALONE WOULD BE A WEAK READING** (a nineteenth item
+    // anywhere would satisfy it), so the node is named and placed: its id is `overlay-open`, it is the LAST lane of the
+    // `View` menu — markup-positioned between the `View` name and the `Window` name — it carries no `role` attribute,
+    // and it is labelled. **WHAT THIS ROW CAN STILL SEE FAILING**: an item dropped outright (18 lanes), a twentieth lane
+    // (20), the opener moved out of `View` (the position arm), the opener DELETED (the id arm), the opener given a role
+    // (the role census above would then read nineteen distinct roles and red there), and an opener rendered with no
+    // label. **WHAT IT CANNOT SEE**: whether a press opens the modal — that is the overlay's own rows and the `ui`
+    // leg's (`OV-1`), and this row would red if it tried, because a press here closes the MCP transport this boot is
+    // speaking on (`D-123`). **THE SHEET'S LADDERS ARE THE OTHER HALF OF THE COUNT** (`src/renderer/index.html`): an
+    // eight-lane menu needs the eighth rung of the `:has()` height ladder and the eighth `nth-of-type` offset, or the
+    // lane paints outside the panel over the first row — and that is a layout fact no row here can read.
+    const itemTags = tagsOf(html).filter((tag) => tagHasClass(tag, 'menu-item'))
+    expect(
+      itemTags.length,
+      `AL-6 — the pane must render NINETEEN \`.menu-item\` lanes: \`D-180\`'s eighteen roles PLUS the overlay's opener, ` +
+        `which the user moved under the \`View\` menu. The surface carried ${String(itemTags.length)} ` +
+        `(${String(items.length)} with a role and ${String(itemTags.length - items.length)} without). Eighteen is the ` +
+        `pre-ruling product; twenty is a lane nobody authored.`,
+    ).toBe(19)
+    const openerTag = tagById(html, OVERLAY_OPEN_ID)
+    const viewMenu = menus.find((tag) => ownTextOf(html, tag) === 'View')
+    const windowMenu = menus.find((tag) => ownTextOf(html, tag) === 'Window')
+    const viewAt = viewMenu === undefined ? -1 : html.indexOf(viewMenu)
+    const nextMenuAt = windowMenu === undefined ? -1 : html.indexOf(windowMenu)
+    const openerTagAt = openerTag === null ? -1 : html.indexOf(openerTag)
+    expect(
+      openerTag !== null && tagHasClass(openerTag, 'menu-item') ? 'present' : `(absent: ${String(openerTag)})`,
+      `AL-6 — the nineteenth lane must be a \`menu-item\` node carrying \`id="${OVERLAY_OPEN_ID}"\`: that id is the ` +
+        `address every other route to this control uses (\`provident.dispatch\`'s \`cssId\`, the wiring's ` +
+        `\`elementForNodeId\`, the \`ui\` leg's own dispatch, \`OV-7\`'s repeated-press row), so an opener that rendered ` +
+        `under any other address would be a control those routes could not reach (the user's ruling moved it, and ` +
+        `nothing about its identity).`,
+    ).toBe('present')
+    expect(
+      openerTag === null ? 'present' : (attrOf(openerTag, 'role') ?? 'none'),
+      `AL-6 — and it must carry NO \`role\` attribute: the eighteen roles are the Electron template's (\`D-180\`) and a ` +
+        `nineteenth would have to be admitted or refused by \`main\`'s set (\`D-181\`, \`D-196\`), would enter this row's ` +
+        `role census above, and would put an overlay act on the agent's menu surface. The opener is this app's own act ` +
+        `and its own authored \`overlay-open\` body.`,
+    ).toBe('none')
+    expect(
+      openerTag !== null && viewAt >= 0 && openerTagAt > viewAt && (nextMenuAt < 0 || openerTagAt < nextMenuAt),
+      `AL-6 — and its lane must stand INSIDE the \`View\` menu's own subtree: it reads byte ${String(openerTagAt)} ` +
+        `against \`View\` at ${String(viewAt)} and \`Window\` at ${String(nextMenuAt)}, so a lane that left \`View\` for ` +
+        `another menu, or one that floated loose between the four, reds here — and that is the user's sentence itself.`,
+    ).toBe(true)
+    expect(
+      openerTag === null ? '(absent)' : ownTextOf(html, openerTag) ?? '(no label)',
+      `AL-6 — and the nineteenth lane must be LABELLED like the eighteen beside it: an unlabelled lane is a press with ` +
+        `nothing to read, and the label is the authored content string (\`D-177\`).`,
+    ).not.toBe('')
     // ══ THE SHAPE HALF ABOVE IS UNMOVED. THE REFUSAL HALF BELOW IS NO LONGER THE PAINTING'S. ════════════════════
     // **WHAT THIS ROW USED TO ASSERT, AND WHY THAT WAS WEAKER THAN IT LOOKED**: `items.filter(item => item.disabled)`
     // read the seven off the served markup — so the row measured the PAINT and AGREED WITH IT whatever it said, and a

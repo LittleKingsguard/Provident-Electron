@@ -445,11 +445,14 @@ export function gutterSeamExample(): {
 
 /** **THE AUTHORED APP ROOT'S ID** — the node the consumer's inert declaration is written to. It is the app's
  *  general surface: the counter, the gutter, the echo, the appearance card, the record's two terminal pages and
- *  the overlay's own opener, and nothing that belongs to the modal. */
+ *  — through the menus pane — the overlay's own opener, and nothing that belongs to the modal. */
 export const APP_ROOT_ID = 'app-surface'
-/** THE OVERLAY LAYER'S FIVE AUTHORED IDS — the scrim, the dialog, its close control, the app root's opener and
- *  the state carrier. All DATA, all dispatched the way any authored element is (`list_targets`-visible,
- *  `provident.dispatch`-reachable). */
+/** THE OVERLAY LAYER'S FIVE AUTHORED IDS — the scrim, the dialog, its close control, the opener and the state
+ *  carrier. All DATA, all dispatched the way any authored element is (`list_targets`-visible,
+ *  `provident.dispatch`-reachable). **FOUR OF THE FIVE STAND IN THE LAYER; THE OPENER DOES NOT** — on the user's
+ *  ruling it is the `View` menu's eighth item, a `div.menu-item` with NO `props.role` (there is no such menu role),
+ *  keeping this id, its label, its `overlay-open` handler and that handler's body whole, and reached by every route
+ *  that ever reached it. */
 export const OVERLAY_SCRIM_ID = 'overlay-scrim'
 export const OVERLAY_DIALOG_ID = 'overlay-dialog'
 export const OVERLAY_CLOSE_ID = 'overlay-close'
@@ -476,7 +479,9 @@ const OVERLAY_VERB_ESCAPE = 'escape'
 /** **THE AUTHORED STYLES — data, as every `css.style` object in this file is.** `appRootStyle` and `overlayPaneStyle` are
  *  flow declarations and claim nothing else — **and `appRootStyle`'s `display` moved at `S-2`**: it stood at
  *  `{display: 'block'}` and is now the ARRANGEMENT's own COLUMN, because the authored app root holds the
- *  top-bar, the four zones' arrangement and the opener in that order (`D-176`, `D-185`, `C-5`). It states no
+ *  top-bar, the four zones' arrangement and the `bottom` zone's collapse control in that order (`D-176`, `D-185`,
+ *  `C-5`; the overlay's opener stood at that column's end and now stands in the `View` menu — the user's ruling).
+ *  It states no
  *  dimension of its own: the zones' fixed axes are the RECORD's and arrive through the paint (`D-129`).
  *  THE TWO OVERLAY-LAYER STYLES BELOW ARE THE GEOMETRY (`D-120`), and they
  *  are the surface's HOME FOR POSITION because these are AUTHORED provident nodes: a scrim's backdrop and a dialog's
@@ -1238,10 +1243,13 @@ export function demoEnvelope() {
           // EVERY node of the app's own surface stands INSIDE this node, and this node is what the overlay's
           // inert declaration is written to — which is why `S-2`'s skeleton is authored HERE and never beside
           // the root: the top-bar, the zones, the arrangement and the cards all go inert under the modal
-          // (`C-5`, `D-178` §3). The opener is its LAST child on purpose and the overlay LAYER its FOLLOWING
-          // SIBLING below: while the overlay is closed the root is not inert and the button is pressable;
-          // while it is open the root IS inert and the button is not — the modal's own controls live in that
-          // sibling, outside this subtree, where `inert` cannot reach them.
+          // (`C-5`, `D-178` §3). The overlay LAYER is this node's FOLLOWING SIBLING below, and THAT is what keeps
+          // the modal operable: while it is open this root IS inert and the modal's own controls stand outside the
+          // subtree `inert` covers. **THE OPENER IS NO LONGER THE ROOT'S LAST CHILD** (the user's ruling — *"Make
+          // the 'Security & settings' button an element under the View menu instead"*): it stands in the `View`
+          // menu's `children`, one descendant level deeper but STILL INSIDE THIS SUBTREE, so the scoping argument
+          // `D-178` §3 states is untouched and only the position moved. The root's last child is now the `bottom`
+          // zone's collapse control.
           {
             type: 'div',
             css: { id: APP_ROOT_ID, classes: ['app-surface'], style: appRootStyle },
@@ -1430,6 +1438,12 @@ export function demoEnvelope() {
                           // the route refuses an agent are STYLED ENABLED because they WORK for a person (`D-232`'s
                           // trusted path), and the unbypassable guard is `main`'s admitted set (`D-181`, `D-196`).
                           // Readers: the menus turn, `AL-6`, `AL-7`.
+                          // **AND THE MENUS CARRY NINETEEN `.menu-item` NODES — THE EIGHTEEN ROLES AND THE OVERLAY'S
+                          // OPENER** (the user's ruling; `(b-1)` below). The EIGHTEEN are the route's and are unmoved;
+                          // the NINETEENTH is this app's own act and carries NO role, which is what keeps the route's
+                          // two sets at eighteen and leaves the menus turn's per-item read answering `no role` there
+                          // instead of inventing one. `AL-6`'s count is therefore NINETEEN and its ROLE census is
+                          // still eighteen — a re-grain of the row, not of the menus.
                           //
                           // **AND EACH MENU CARRIES `props.tabindex: '0'`, WHICH IS THE DROP-DOWN'S WHOLE MECHANISM.** The paint
                           // writes `props.*` as attributes, so this is the bare `tabindex="0"` the page sheet keys on: a menu NAME
@@ -1437,8 +1451,8 @@ export function demoEnvelope() {
                           // `src/renderer/index.html` hides `.menus-menu > .menu-item` until then. **NO STATE, NO TOGGLE AND NO NEW
                           // RECORD** — the four names stand in a horizontal strip, a name's items drop VERTICALLY below it on a
                           // click, and the items remain in the markup (hidden by CSS, never deleted): `provident.dispatch`,
-                          // `list_targets`, `get_rendered_html` and `get_markdown` all still see all eighteen, and `AL-6`'s count
-                          // is unmoved. It is also the honest control for a keyboard user: `Tab` reaches each name and the items
+                          // `list_targets`, `get_rendered_html` and `get_markdown` all still see all nineteen, the opener
+                          // included. It is also the honest control for a keyboard user: `Tab` reaches each name and the items
                           // open on focus. **NOTHING HERE IS A FIGURE OR A LABEL**: the prop adds no node, no class, no content and
                           // no handler, and every role, label and mark below is the landed text, unchanged.
                           {
@@ -1522,6 +1536,46 @@ export function demoEnvelope() {
                               {
                                 type: 'div', css: { classes: ['menu-item'] }, props: { role: 'togglefullscreen' },
                                 content: 'Toggle Full Screen', handlers: [{ name: 'menu-item', event: 'click', body: MENUS_ITEM_BODY }],
+                              },
+                              // ---- (b-1) **THE OVERLAY'S OPENER, ON THE USER'S RULING** — *"Make the 'Security &
+                              // settings' button an element under the View menu instead"* — and it is the view's
+                              // EIGHTH item, LAST, because the user's sentence puts it UNDER the menu and a menu's
+                              // existing order is not this change's to move.
+                              // **IT IS A `.menu-item` WITH NO `props.role`, AND THAT ABSENCE IS DELIBERATE RATHER
+                              // THAN AN OMISSION.** The eighteen items' roles are the Electron template's own words
+                              // (`D-180`, `D-181`) and there is no role word for "open this app's modal": a role here
+                              // would be a nineteenth entry in the route's two sets, would have to be admitted or
+                              // refused by `main`, and would put an overlay act on the agent's menu surface. The
+                              // opener is NOT a menu role — it is this app's own act, carried by its own authored
+                              // `overlay-open` body, exactly as it was when it stood at the root's end.
+                              // **WHAT THE MENUS TURN DOES WITH AN ITEM THAT HAS NO ROLE, SAID PLAINLY**: the turn's
+                              // census keys on the CLASS (`renderer.ts`'s `menuItemNodeIds`, `D-181`/`D-209`), so this
+                              // node IS given the wiring-installed `menu-item`/`click` body — and that body reads
+                              // `props.role` OFF THE NODE at click time (`D-129`'s no-captured-role rule), finds none,
+                              // and answers `menu-item: no role` having written nothing to the receipt carrier and
+                              // asked the route nothing. **THE INSTALL IS APPEND-WITH-OVERRIDE PER `(name, event)`**
+                              // (`node.js`'s pass-1 merge, measured), and this node's authored pair is
+                              // `('overlay-open', 'click')` — a DIFFERENT name — so the authored body SURVIVES beside
+                              // it and BOTH run on a click: the menus body no-ops, the overlay body opens the modal.
+                              // That is why the shape is safe; a `props.role` would be the unsafe one.
+                              // **IT IS A `div` AND NOT THE `button` IT WAS**: the sheet hides and places the menu's
+                              // lanes on `.menu-item` (`.menus-menu > .menu-item { display: none }` until the menu is
+                              // `:focus-within`, then one fixed row each), and a `<button>` would take Chromium's own
+                              // UA box — border, font, background — into a lane authored for a `div`, beside seven
+                              // siblings that are `div`s. **ITS `overlay-open` CLASS IS KEPT AS THE PRESS HOOK AND NOT
+                              // AS A LOOK**: `.btn` is deliberately NOT on this node, a menu lane not being a button.
+                              // **AND ITS VISIBILITY IS THE DROP-DOWN'S** (`D-232` §3): it is in the markup at every
+                              // moment — `list_targets`, `provident.dispatch`, `get_rendered_html` and `get_markdown`
+                              // all see it — and the sheet shows it only while the `View` menu holds focus. That is
+                              // exactly what the user asked for, and it is also the one thing a person loses: a
+                              // press that used to be ONE click on an always-visible control is now TWO (open `View`,
+                              // then pick the item), and nothing on the surface advertises the modal behind a menu.
+                              {
+                                type: 'div',
+                                css: { id: OVERLAY_OPEN_ID, classes: ['menu-item', 'overlay-open'] },
+                                props: { id: OVERLAY_OPEN_ID },
+                                content: 'Security & settings…',
+                                handlers: [{ name: 'overlay-open', event: 'click', body: overlayToggleBody() }],
                               },
                             ],
                           },
@@ -2043,18 +2097,21 @@ export function demoEnvelope() {
               // own `14px` box, and the glyph the sheet paints from the attribute the paint writes on the ZONE beside it.
               zoneCollapseNodeOf(ZONE_BOTTOM_COLLAPSE_ID, 'bottom'),
 
-              // THE OPENER — an authored `button` with an authored `click` body, so it is `list_targets`-visible and
-              // `provident.dispatch`-reachable exactly as every other control in this file is. **IT STAYS THE APP
-              // ROOT'S LAST CHILD** across this pass's re-parent (`A-5`, `D-178` §3): the overlay LAYER below is its
-              // FOLLOWING SIBLING, and moving either would put the modal's own controls inside the subtree that
-              // `inert` is written to.
-              {
-                type: 'button',
-                css: { id: OVERLAY_OPEN_ID, classes: ['btn', 'overlay-open'] },
-                props: { id: OVERLAY_OPEN_ID },
-                content: 'Security & settings…',
-                handlers: [{ name: 'overlay-open', event: 'click', body: overlayToggleBody() }],
-              },
+              // **THE OPENER IS NO LONGER HERE, AND THE POSITION IT HELD IS SUPERSEDED RATHER THAN ABANDONED**
+              // (`D-178` §3's pin, superseded on the user's ruling — *"Make the 'Security & settings' button an
+              // element under the View menu instead"*). `D-178` §3 kept it the root's LAST child because the overlay
+              // LAYER below is the root's FOLLOWING SIBLING, and THAT reason still holds: the layer must stay a
+              // sibling of the root. What that row protected was the SCOPING — the modal's own controls outside the
+              // subtree `inert` is written to — and it is untouched by the move, because **the View menu is a
+              // descendant of this root and not of the layer**: `inert` on `#app-surface` still covers the opener
+              // (measured, not reasoned: the item's own ancestor walk reaches `#app-surface`, and the modal's scrim,
+              // dialog and close control are still its siblings outside it). What MOVED is one node's PARENT, from
+              // this root's `children` into `#pane-menus` → `#menus-body` → the `View` menu's `children` — so the
+              // root's LAST child is now the `bottom` zone's collapse control, and the overlay LAYER still follows
+              // this whole subtree. THE NODE ITSELF KEEPS ITS ID, ITS LABEL, ITS `overlay-open` HANDLER AND THAT
+              // HANDLER'S BODY WHOLE, so every route that reaches it (its `css.id` in `provident.dispatch`, its
+              // `data-node-id` from a rendered read, `list_targets`, the wiring's `elementForNodeId`, the `ui` leg's
+              // own `cssId` dispatch) reaches the same node it always did.
             ],
           },
           // ---- THE OVERLAY LAYER (`D-113`) ------------------------------------------------

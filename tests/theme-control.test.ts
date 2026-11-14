@@ -698,7 +698,15 @@ const ZONE_COLLAPSE_NODES: ReadonlyArray<{ id: string; zone: string }> = [
  *  `#zone-top-horizontal` and the arrangement container moved `children[3] → [4]`; the arrangement row's own order is
  *  `#left`, `#left-collapse`, `#zone-left-vertical`, the stage, `#zone-right-vertical`, `#right`, `#right-collapse`, so the stage
  *  moved `children[2] → [3]`. **THE ARRANGEMENT AUTHORS NO ID** (`design.md` rev 5 §2: no reader can be written for it), so its
- *  slot reads `null` and the reading is the ORDER, not a name list. */
+ *  slot reads `null` and the reading is the ORDER, not a name list.
+ *
+ *  **AND THE LIST IS EIGHT LONG WHERE IT WAS NINE, WHICH IS THE ONE POSITIONAL CHANGE THE USER'S RULING MAKES**
+ *  (*"Make the 'Security & settings' button an element under the View menu instead"*): `overlay-open` was this root's
+ *  LAST child and is now the `View` menu's eighth `.menu-item`, so `'bottom-collapse'` — the `bottom` zone's own collapse
+ *  control — is the column's end. **THE NODE COUNT DOES NOT MOVE** (`109`, the authored-object census `X-1` reads): one
+ *  node's PARENT changed and the tree holds the same number of nodes. The overlay LAYER is the root's FOLLOWING SIBLING
+ *  and is outside this list either way, which is what keeps `D-178` §3's scoping — the modal's controls never stand in
+ *  the subtree `inert` is written to — standing after the move. */
 const APP_SURFACE_NODE_ID = 'app-surface'
 const APP_SURFACE_CHILD_ORDER: ReadonlyArray<string | null> = [
   null, // the top bar — authored with a class and no id (`D-177`)
@@ -709,7 +717,6 @@ const APP_SURFACE_CHILD_ORDER: ReadonlyArray<string | null> = [
   'zone-bottom-horizontal',
   'bottom',
   'bottom-collapse',
-  'overlay-open',
 ]
 const ARRANGEMENT_CHILD_ORDER: ReadonlyArray<string | null> = ['left', 'left-collapse', 'zone-left-vertical', null, 'zone-right-vertical', 'right', 'right-collapse']
 const ZONE_COLLAPSE_HANDLER_NAME = 'zone-collapse'
