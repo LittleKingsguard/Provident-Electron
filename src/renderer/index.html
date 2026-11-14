@@ -1546,6 +1546,40 @@
     .gutter-handle[axis$="-vertical"]::before { inset-block: 0; inset-inline: 3.5px; }
     .gutter-handle[axis$="-horizontal"]::before { inset-block: 3.5px; inset-inline: 0; }
     .gutter-handle:hover::before { background-color: #c3ccd8; box-shadow: inset 0 0 0 1px #8f9dae; }
+    /* ══ **A COLLAPSED ZONE OFFERS NO RESIZE STRIP: THE HANDLE IS HIDDEN WITH THE ZONE IT CANNOT MOVE** ══
+       The user, verbatim: ***"Resize gutters are visible when zone is hidden"*** — with a screenshot of a COLLAPSED zone
+       still showing its dotted strip. **THE CAUSE IS STRUCTURAL AND IT IS `D-244`'s OWN RULE SEEN FROM ITS COST SIDE**:
+       the four strips are their zone's **SIBLINGS**, so `collapsed="true"` on the zone reaches nothing of theirs — and
+       `D-271`'s extent (`auto` on the fixed axis, `hidden` on the arrangement axis) shrinks the ZONE while the handle
+       stands beside it at its own authored `flex: 0 0 14px`, painting and hit-testing exactly as it did when expanded.
+       **A COLLAPSED ZONE'S `size` IS NOT ITS EXTENT, SO THE HANDLE IS A CONTROL WITH NOTHING TO MOVE**: a gesture on it
+       writes `['zones', <id>, 'size']` and the zone goes on presenting `auto` until something expands it.
+       **THE KEY IS THE ZONE'S PAINTED ATTRIBUTE AND THE MECHANISM IS `:has()` ON THE CONTAINER — ONE FORM FOR ALL FOUR**,
+       because **THE DOM ORDER IS NOT UNIFORM AND WAS READ RATHER THAN ASSUMED** (`app-envelope` §11): `#top` then
+       `#top-collapse` then `#zone-top-horizontal` and `#left` then `#left-collapse` then `#zone-left-vertical` — the strip
+       FOLLOWS its zone — while `#zone-right-vertical` PRECEDES `#right` and `#zone-bottom-horizontal` PRECEDES `#bottom`
+       (the pointer's sign is that one negation, `D-238`). So a sibling combinator would need `~` for two arms and
+       `:has(+ …)` for the other two, while `:has(> <zone>[collapsed])` on the box that HOLDS both reads the same fact the
+       same way in all four — **and it names no new node, no new class and nothing the paint has to write** (`D-129`: the
+       attribute is the ONE spelling of the state, already read by two rules above and by nothing else in this sheet).
+       **IT IS `visibility: hidden` AND NOT `display: none`, AND THE LANE IS WHY**: the strip's box IS the `14px` column
+       (a `width` in the arrangement row, a `height` in the root column), so removing it would move the strip's own lane
+       back into the stage — every measured figure `D-278` and `D-281` pin would move with it, and the collapsed rail's
+       cross extent would stop being the zone's. `visibility` inherits into the `::before` band, so the dotted paint goes
+       with it, and a `hidden` box is not hit-tested — **so the strip is neither seen nor pressed, and the two are the same
+       declaration rather than a paint with a live target behind it** (`D-261`'s whole lesson). **THE EXPANDED ARM IS
+       UNTOUCHED BY CONSTRUCTION**: the selectors are `[collapsed="true"]` only, and absence is the one spelling of
+       EXPANDED (`D-253`), so the expanded strip keeps its `14px` box, its `7px` band (`D-278`) and its five-point answer.
+       **AND THE HIDING IS CSS AND NEVER DELETION**, the discipline `D-249` set for the drops: all four strips stay in the
+       markup for `provident.dispatch`, `list_targets`, `get_rendered_html` and `get_markdown`, and the census is unmoved.
+       **ONE COST, STATED**: while a pane is DRAGGED over a collapsed zone's drop the zone paints its remembered extent
+       (`D-271` §4's preview) while the attribute still reads collapsed — so the strip stays hidden for the gesture and
+       returns with the release's own delivery, which is the honest reading of a preview: no resize is lawfully possible
+       mid-drag. */
+    :has(> #top[collapsed="true"]) > #zone-top-horizontal,
+    :has(> #bottom[collapsed="true"]) > #zone-bottom-horizontal,
+    :has(> #left[collapsed="true"]) > #zone-left-vertical,
+    :has(> #right[collapsed="true"]) > #zone-right-vertical { visibility: hidden; }
 
     /* THE PANE-MOVE GRIP AND ITS FOUR ZONE OVERLAYS — THE MENUS' REVEAL, AND THE DRAG'S TARGETS
        (`docs/L3/renderer-wiring/design-pane-relocation.md` rev 1 §1; `D-244`'s affordance class; the gesture the user
