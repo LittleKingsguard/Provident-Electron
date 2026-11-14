@@ -7,7 +7,7 @@
 // and the suite's DB-1 row red.
 // @generated-by demo/pane-drag-demo/build.mjs
 // @source-count 39
-// @body-sha256 89227030d1cc290915abbf1c782e26f5c1c81bed13904763328ccdb352ae5c50
+// @body-sha256 7f8471201f5f5ad9f37696b14b69e669f15be253db5dfc9732900e197f204956
 // @source b9d0892225756daaaef6b40b5cf27eb1aa69c19e3b96252aa57d085797204324 demo/pane-drag-demo/build.mjs
 // @source b6d243f4ee16061a333055125d803a4b5ceef5c116a9c6a71d17e3849dff8aa5 demo/pane-drag-demo/demo.ts
 // @source e7f3564e5831beabef16930462d25d124e30ba710b9a34d1d81e4a8d5bdc5c9c demo/pane-drag-demo/stub-view.ts
@@ -35,7 +35,7 @@
 // @source bb13de7bf36aee1ce3774654851711d4890a1b696a06f4c92440c06d21b75189 node_modules/provident-ssr/dist/core/validation.js
 // @source 51d0de26c97b41b0976c3c011c8c74b51b7e674107124e46b6d70560e408e57b node_modules/provident-ssr/dist/index.js
 // @source eabf4c62fe382ad327e362872700106e460c15ebda1608142104025366069be8 src/renderer/module-client.ts
-// @source 086cd3d202c10e012eaa163a047c361be18df61580c1457eae650e9f5fd644cb src/renderer/renderer.ts
+// @source bc0562579fb2e4decc22709eea8e88b91b150aa4c76f025a6edbad496f07d877 src/renderer/renderer.ts
 // @source 16b81f089b74436b4eafa4d4d9394d8256c202bcc6af9d27722b0c863181c4a9 src/renderer/runtime.ts
 // @source 917e7ac67ad1e3d63f9d9e833cab57febf79bdec751a2bd0b6680de26dc62198 src/renderer/secure-panels.ts
 // @source bbdfae90fd2190eb71c9f3b5b909b401f36be67872f88bd42820b1753608c8a4 src/renderer/security-client.ts
@@ -1260,6 +1260,15 @@ function createPaneDrag(backing, source2) {
   const backingRecord = backing ?? null;
   const view = backingRecord?.view ?? null;
   const ghostTarget = backingRecord?.ghostTarget ?? null;
+  const headElementOf = (paneId) => {
+    const resolve = backingRecord?.headElementOf;
+    if (typeof resolve !== "function") return null;
+    try {
+      return resolve.call(null, paneId);
+    } catch {
+      return null;
+    }
+  };
   const addressing = Array.isArray(backingRecord?.addressing) ? backingRecord.addressing.filter((entry) => {
     if (entry === null || typeof entry !== "object") return false;
     const held = entry;
@@ -1346,17 +1355,70 @@ function createPaneDrag(backing, source2) {
       return measured;
     }
   };
+  const headExtentOf = (paneId) => {
+    const member = paneMemberOf(paneId);
+    const head = headElementOf(paneId);
+    if (head === null || head === void 0) return null;
+    const holder = head;
+    const style = holder.style;
+    const rect = holder.getBoundingClientRect;
+    if (style === null || style === void 0) return null;
+    if (typeof rect !== "function") return null;
+    const set = style.setProperty;
+    const remove = style.removeProperty;
+    if (typeof set !== "function" || typeof remove !== "function") return null;
+    const write2 = set;
+    const erase = remove;
+    let prior = "";
+    try {
+      const read = style.getPropertyValue;
+      if (typeof read === "function") {
+        const held = read.call(style, member);
+        if (typeof held === "string") prior = held;
+      }
+      write2.call(style, member, "min-content");
+      const box = rect.call(head);
+      if (box === null || typeof box !== "object") return null;
+      const figure = box[member];
+      if (typeof figure !== "number" || !Number.isFinite(figure) || figure <= 0) return null;
+      return Math.ceil(figure);
+    } catch {
+      return null;
+    } finally {
+      try {
+        if (prior === "") erase.call(style, member);
+        else write2.call(style, member, prior);
+      } catch {
+      }
+    }
+  };
+  const withHeadFloor = (pair, floor) => {
+    if (floor === null) return pair;
+    const holder = pair;
+    let low;
+    let high;
+    try {
+      low = holder === null || holder === void 0 ? void 0 : holder.min;
+      high = holder === null || holder === void 0 ? void 0 : holder.max;
+    } catch {
+      return pair;
+    }
+    if (typeof low !== "number" || !Number.isFinite(low)) return pair;
+    if (low >= floor) return pair;
+    return { min: floor, max: high };
+  };
   const readPaneBounds = (element, token) => {
     const id = paneIdOf(element, token);
     const measured = defaultPaneGeometry(id).bounds ?? DEFAULT_PANE_BOUNDS;
     const fallback = { min: measured.min, max: measured.max };
-    if (view === null) return fallback;
+    const floor = headExtentOf(id);
+    if (view === null) return withHeadFloor(fallback, floor);
     try {
       const stored = view.paneBoundsOf(id);
-      if (stored === void 0) return { min: fallback.min, max: fallback.max };
-      return stored;
+      if (stored === void 0) return withHeadFloor({ min: fallback.min, max: fallback.max }, floor);
+      return withHeadFloor(stored, floor);
     } catch {
-      return { min: fallback.min, max: fallback.max };
+      return withHeadFloor({ min: fallback.min, max: fallback.max }, floor);
     }
   };
   const release = (gestureId, final, sink) => {

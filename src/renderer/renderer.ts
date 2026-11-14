@@ -757,8 +757,39 @@ export function startGutterAffordance (runtime: Runtime): {
    *  every handle — the gesture key each seat carries names the pane that seat writes, and the element each read is
    *  handed names its pane the same way, so no second composition, no second route and no second read derivation
    *  exists. A backing that supplies none of it behaves exactly as it did before the list (the composition's
-   *  `DEFAULT_PANE_ID`), which is what the node batteries and the demo construct. */
-  const drag = createPaneDrag({ view: getViewClient(), ghostTarget: target, addressing: PANE_DRAG_HANDLES }, source)
+   *  `DEFAULT_PANE_ID`), which is what the node batteries and the demo construct.
+   *  **AND IT IS HANDED THE HEAD-ROW RESOLVER, BECAUSE THE CLAMP'S FLOOR IS A MEASUREMENT** (this pass; the user: *"block the
+   *  user from making the pane small enough to cause them to overflow"*). `headExtentOf` needs a HEAD ELEMENT, and the graph
+   *  read that resolves one is `runtime.elementForNodeId` — the same read `PS-1` censuses, through the same map the paint and
+   *  the indicator use (`headIdForPane`/`PANE_HEAD_IDS`), and **NEVER A SELECTOR** (`D-194`'s rule). It travels as a THUNK
+   *  rather than as three resolved elements for `D-244`'s reason: the resolver is called per read, so a head row that moved
+   *  or was re-emitted is resolved again and no stale node is held (`D-252`: something read on every delivery and never
+   *  cached). **WHAT THIS BUYS IS A DRAG'S BOUND AND NOT A LAYOUT, AND THE THREE ARMS IT CANNOT REACH ARE STATED RATHER THAN
+   *  IMPLIED**: (i) a plain `data.write ['panes', <id>, 'width']` with a small number still arrives past the floor — a record
+   *  write is the record's, and this composition is nobody's author; (ii) a ZONE smaller than the heads it holds still clips
+   *  them, because a pane in a `top`/`bottom` zone fills the zone's FIXED axis with `100%` (`D-243`) whatever its own figure
+   *  says; (iii) a WINDOW narrower than its zone still clips the zone, which is `D-240`'s honest limit. Each is measured on a
+   *  live window by this pass's own row rather than argued. */
+  const drag = createPaneDrag(
+    {
+      view: getViewClient(),
+      ghostTarget: target,
+      addressing: PANE_DRAG_HANDLES,
+      // THE HEAD ROW ONE PANE RECORD'S ID OWNS — the graph read, lazily and totally (`headIdForPane` answers `null` for a
+      // pane the map does not declare, and a head the graph cannot resolve is that same absence).
+      headElementOf: (paneId: string): unknown => {
+        const headId = headIdForPane(paneId)
+        if (headId === null) return null
+        try {
+          return runtime.elementForNodeId(headId)
+        } catch {
+          // A HOSTILE RUNTIME IS THE STATED ABSENCE — the composition's own `null` arm, and no write.
+          return null
+        }
+      },
+    },
+    source,
+  )
   const session = createGestureSession({
     source: source as never,
     // (i) THE NON-FORWARDING RECORDER: the session's own channel records and writes nothing, so
@@ -7213,7 +7244,12 @@ function adjustableFigureOf(pane: ViewPaneGeometry): number {
  *  source binding at all, and the parameter stands because `backing, source` is the signature both callers (the wiring's
  *  ONE construction, the demo's) are written against, and `domEventSource()` carries no `layout` member to read anyway. */
 export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurface {
-  const backingRecord = (backing ?? null) as { readonly view?: unknown; readonly ghostTarget?: unknown; readonly addressing?: unknown } | null
+  const backingRecord = (backing ?? null) as {
+    readonly view?: unknown
+    readonly ghostTarget?: unknown
+    readonly addressing?: unknown
+    readonly headElementOf?: unknown
+  } | null
   /** THE SHAPE, where the caller supplied one. `null` is a realm with no crossing: the reads answer the measured default
    *  and every write is the client's `absent` statement, which is the declared degradation and never a throw. */
   const view = (backingRecord?.view ?? null) as ViewClient | null
@@ -7221,6 +7257,24 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
    *  shape at the ONE construction site. STRUCTURAL and never inspected at construction — the ghost turn reads the two
    *  members it needs, per call, and a target carrying neither paints nothing. */
   const ghostTarget = backingRecord?.ghostTarget ?? null
+  /** **THE HEAD-ROW RESOLVER — A THUNK AND NEVER AN ELEMENT, so the ONE caller that has the graph read is the one that
+   *  supplies it** (this pass). The wiring hands `runtime.elementForNodeId(headIdForPane(<pane>))`, the same graph read
+   *  `PS-1` censuses and the same map the paint and the indicator use — resolved PER CALL, because a pane's head row is
+   *  whatever the current tree answers and this composition must not hold a stale node (`D-238`'s "a fix that had to be
+   *  found rather than assumed", one subject over). **ABSENT, UNREADABLE OR THROWING IS THE STATED ABSENCE AND NEVER A
+   *  THROW** (`D-95`, `D-127`): the node suite's wiring and the demo construct a backing with no such member at all, so
+   *  every landed reading of this surface stands byte-unchanged — the head floor below is a MEASUREMENT and an absent
+   *  measurer is no floor, which is exactly what those realms had. */
+  const headElementOf = (paneId: string): unknown => {
+    const resolve = backingRecord?.headElementOf
+    if (typeof resolve !== 'function') return null
+    try {
+      return (resolve as (paneId: string) => unknown).call(null, paneId)
+    } catch {
+      // A HOSTILE RESOLVER ANSWERS ABSENCE — the arm an absent one takes, and no write.
+      return null
+    }
+  }
   /** **THE GESTURE'S ADDRESSES, READ STRUCTURALLY — AN ABSENT OR UNREADABLE LIST IS EMPTY, NEVER A THROW** (`D-95`'s
    *  total-read discipline applied to a list): an entry that is not a record with a non-empty `handleId` and `paneId` is
    *  SKIPPED rather than judged, so a hostile list can only ever degrade to the `DEFAULT_PANE_ID` arm below. */
@@ -7440,7 +7494,127 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
     }
   }
 
-  /** §2.1 A's bounds read, also the shape's: the pair AS STORED, never a policy clamped here, and the measured default pair
+  /** **THE HEAD ROW'S `min-content` EXTENT ON THE PANE'S ADJUSTABLE AXIS, AND IT IS THE CLAMP'S FLOOR** (this pass; the user,
+   *  verbatim: ***"Header and minimize buttons are breaking pane boundary, either put them in the scrolling container or
+   *  block the user from making the pane small enough to cause them to overflow"***).
+   *
+   *  **THE DEFECT THIS READ EXISTS FOR, AND ITS KNOWN CAUSE.** `D-269` gave `.pane-head > .pane-grab` **`min-width:
+   *  max-content`** so the name could never leave its box and the collapse control could never be covered — **and that
+   *  floor makes the HEAD UNSHRINKABLE** — while the drag's clamp minimum was **`0`** (the `bounds` pair this file reads,
+   *  `D-238`), **so a person could drag a pane narrower than the head it must contain**: measured on a live window, a
+   *  trusted drag on `#menus-vertical` took `['panes','pane-menus','width']` to **`0`**, left the pane's box `18` wide and
+   *  painted `#menus-collapse` at `x 65.84` — **47.84px OUTSIDE the pane it belongs to**. `D-270` took the head OUT of the
+   *  scroller for its own measured reasons, so the user's FIRST option is refused and this is their SECOND: **the pane is
+   *  not made smaller than its head.** **NOTHING IN THE SHEET MOVES** — `min-width: max-content` is what keeps the control
+   *  uncovered and it stays.
+   *
+   *  **THE READ IS THE LAYOUT'S OWN ANSWER, TAKEN AS A `min-content` MEASUREMENT, AND IT IS THE ONLY ONE THAT IS EXACT.**
+   *  A stretched box's own rect answers its BOX and never its intrinsic extent (the head is a flex item stretched to the
+   *  pane's content width, so `getBoundingClientRect`/`width`/`clientWidth` all answer the PANE's width while the head
+   *  fits), and `head.scrollWidth` answers the content extent ONLY once the head already overflows — i.e. exactly when the
+   *  pane is already broken. So the extent is obtained the one way a layout will state it: **the head's `style` is given
+   *  `min-content` on that axis for the duration of one read and put back exactly as it was found**, and the rect taken in
+   *  between IS the min-content border box — the extent the head needs. **THAT IS ALSO THE PANE'S OWN FIGURE'S BOX**
+   *  (`D-253`'s `content-box`), so the measured extent compares to the record's figure with no conversion. **IT IS ONE
+   *  WRITE AND IT IS A MEASUREMENT, NOT A PRESENTATION**: it is made and reverted inside this call, before the realm
+   *  paints, so no frame ever shows it; it lands on the node the envelope authors NO `css` for (`D-270`: the head row
+   *  authors no `style` at all), so it can collide with no other writer; and the `finally` restores the property by name
+   *  (absence restored as absence, a prior text restored verbatim) so a probe that fails half-way leaves nothing behind.
+   *
+   *  **AND IT IS THE ONLY ARM THAT FOLLOWS THE SHEET RATHER THAN RESTATING IT.** The extent is a function of the grip's
+   *  `max-content` floor, the name's `em` insets (`D-277`), the control's `14px`, the row's two insets and its `gap`, the
+   *  rotated lane (`D-272`), the theme's font — and of `D-269`'s optional `[status]` INDICATOR, which is a third child
+   *  painted as a pseudo exactly when a pane states a word. A sum of those terms computed here would be a SECOND SPELLING
+   *  of the sheet (`D-129`, `D-188` debt 2) and would be silently wrong for every pane that carries a status; the squeeze
+   *  asks the layout and cannot go stale. **THE CEILING IS `Math.ceil`**: the record admits any finite non-negative
+   *  figure, and rounding UP is the direction that cannot leave a fractional deficit the head would overflow by.
+   *
+   *  **THE AXIS IS `paneMemberOf`'s — `D-243`'s RULE AND NOT A SECOND TABLE**: `width` for a `top`/`bottom` pane, `height`
+   *  for a `left`/`right` one, and `height` where the record names no zone (the stage). That is the member the preview
+   *  writes and the release commits, so the floor and the figure are one answer and cannot disagree.
+   *
+   *  **THE DEGRADATION IS THE STATED ABSENCE, NEVER A `NaN`** (`D-238`'s inert-handle lesson: a handle wired but clamped to
+   *  `NaN` is inert **and looks wired**). `null` is answered — and the pair then stands exactly as it stood before this read
+   *  existed — where: the backing supplies no resolver (the node suite's wiring, the demo, every unit row); the pane has no
+   *  head row in the map; the element the graph answered carries no `style`, no `getBoundingClientRect` or no
+   *  `removeProperty` (the LAYOUT-LESS DOM SHIM, where every one of the node suite's `boundsOf` rows runs — `D-27`,
+   *  `D-250`); the rect is not an object; or the figure is not a finite positive number. **A zero extent is the absence and
+   *  not a floor**: a head that measured nothing is a realm that laid nothing out, and a `0` floor would be a fabricated
+   *  bound that is right once and false after (`D-174`). */
+  const headExtentOf = (paneId: string): number | null => {
+    const member = paneMemberOf(paneId)
+    const head = headElementOf(paneId)
+    if (head === null || head === undefined) return null
+    const holder = head as {
+      readonly style?: { readonly setProperty?: unknown; readonly removeProperty?: unknown; readonly getPropertyValue?: unknown } | null
+      readonly getBoundingClientRect?: unknown
+    }
+    const style = holder.style
+    const rect = holder.getBoundingClientRect
+    if (style === null || style === undefined) return null
+    if (typeof rect !== 'function') return null
+    const set = style.setProperty
+    const remove = style.removeProperty
+    // THE PROBE NEEDS BOTH HALVES: a style object that can be written and cannot be reverted is not one this read may touch.
+    if (typeof set !== 'function' || typeof remove !== 'function') return null
+    const write = set as (name: string, value: string) => void
+    const erase = remove as (name: string) => void
+    let prior = ''
+    try {
+      const read = style.getPropertyValue
+      if (typeof read === 'function') {
+        const held = (read as (name: string) => unknown).call(style, member)
+        if (typeof held === 'string') prior = held
+      }
+      write.call(style, member, 'min-content')
+      const box = (rect as () => unknown).call(head)
+      if (box === null || typeof box !== 'object') return null
+      const figure = (box as Record<string, unknown>)[member]
+      if (typeof figure !== 'number' || !Number.isFinite(figure) || figure <= 0) return null
+      return Math.ceil(figure)
+    } catch {
+      // A REALM THAT CANNOT MEASURE IS THE STATED ABSENCE — no floor, no `NaN`, and nothing written (`D-238`, `D-250`).
+      return null
+    } finally {
+      // THE HEAD GOES BACK EXACTLY AS IT WAS FOUND: absence restored as absence, and a prior declaration verbatim.
+      try {
+        if (prior === '') erase.call(style, member)
+        else write.call(style, member, prior)
+      } catch {
+        // a style object that cannot be reverted is the realm's own; the read above has already answered
+      }
+    }
+  }
+
+  /** **THE PAIR WITH ITS MINIMUM FLOORED AT THE HEAD'S EXTENT — THE MINIMUM ONLY, AND NEVER THE MAXIMUM** (this pass).
+   *  The clamp is `clampToBounds`'s (`{min, max}` in, one clamped number out), so the pair is the ONE lever a drag has and
+   *  the record's own stricter figure still wins: a pair whose `min` is already at or above the floor is handed back
+   *  **AS THE SAME VALUE**, and a pair whose members are not numbers is handed back UNTOUCHED, because that arm is
+   *  `clampToBounds`'s `NaN` and therefore the INVALID move (`§3.2 F-8`) — not this read's to repair.
+   *  **THE CEILING DOES NOT MOVE WITH THE FLOOR, AND THAT IS DELIBERATE**: the floor is the LAYOUT's answer and the ceiling
+   *  is the RECORD's (`{min: 0, max: 200}` where a zone-resident pane stores none, `D-238`/`D-243`), so a fork whose head
+   *  needs more than its record's ceiling gets `min > max` — and `clampToBounds`'s own `Math.max(low, …)` then answers the
+   *  floor, which is the right verdict (the head is contained) and still a finite number. Widening the ceiling here would
+   *  be inventing a bound the record did not state. */
+  const withHeadFloor = (pair: unknown, floor: number | null): unknown => {
+    if (floor === null) return pair
+    const holder = pair as { readonly min?: unknown; readonly max?: unknown } | null | undefined
+    let low: unknown
+    let high: unknown
+    try {
+      low = holder === null || holder === undefined ? undefined : holder.min
+      high = holder === null || holder === undefined ? undefined : holder.max
+    } catch {
+      // A HOSTILE PAIR IS HANDED BACK AS IT WAS — the arm `clampToBounds` turns into its own `NaN`.
+      return pair
+    }
+    if (typeof low !== 'number' || !Number.isFinite(low)) return pair
+    if (low >= floor) return pair
+    return { min: floor, max: high }
+  }
+
+  /** §2.1 A's bounds read, also the shape's: the pair AS STORED, with its MINIMUM floored at the head row's measured
+   *  `min-content` extent (`withHeadFloor` above, this pass), and the measured default pair
    *  (`{min: 0, max: 200}`, the authored pane's `props.min`/`props.max`) where the family names no such pane. A pair whose
    *  members are not numbers is what `clampToBounds` turns into `NaN`, so the move is INVALID (§3.2 F-8) — that arm now
    *  needs a shape the crossing's own admission refused, which is the boundary's business and not this read's.
@@ -7452,22 +7626,32 @@ export function createPaneDrag(backing: unknown, source: unknown): PaneDragSurfa
    *  INVALID (`§3.2 F-8`) and the handle INERT with the mechanism reporting nothing. The declared pair this read already
    *  computes for its other two degradation arms is the arm that serves this one, so the three arms of one read answer ONE
    *  figure (the measured `{min: 0, max: 200}`) and the menus pane's width is clamped into it. **NOTHING IS INVENTED AND THE
-   *  RECORD IS NOT OVERRIDDEN**: a pane that DOES store a pair still answers the record's, verbatim. */
+   *  RECORD IS NOT OVERRIDDEN**: a pane that DOES store a pair still answers the record's, and the ONE member this read now
+   *  raises is the MINIMUM, into the head's own measured extent — **because a pane's clamp minimum of `0` is what let a
+   *  person drag a pane narrower than the head it must contain** (this pass; the user: *"block the user from making the pane
+   *  small enough to cause them to overflow"*). **THE `M-3` GRAIN SURVIVES IN THE REALM IT WAS WRITTEN FOR**: `M-3` drives
+   *  this read under the LAYOUT-LESS shim, which answers no rect, so no floor exists there and the stored pair comes back
+   *  member-for-member as stored — the floor is a MEASUREMENT and an absent measurer is no bound, not a re-policy. **WHAT
+   *  THIS READ GUARANTEES IS A DRAG'S BOUND AND NEVER A LAYOUT**: a record write, a zone too small for its panes' heads and
+   *  a window narrower than its zone each still arrive past this floor (see the note on the wiring's own construction site), and
+   *  nothing here claims otherwise. */
   const readPaneBounds = (element: unknown, token: unknown): unknown => {
     const id = paneIdOf(element, token)
     // `bounds` IS OPTIONAL ON THE ADMITTED RECORD (`D-186`, `D-129`); the measured pair is this read's declared degradation,
     // so it is taken from the ONE shared declaration and COPIED, and the caller's pair is never a constant of that module.
     const measured = defaultPaneGeometry(id).bounds ?? DEFAULT_PANE_BOUNDS
     const fallback = { min: measured.min, max: measured.max }
-    if (view === null) return fallback
+    // THE LAYOUT'S OWN ANSWER FOR THIS PANE'S HEAD, read ONCE per call and `null` in a realm that cannot measure (`D-250`).
+    const floor = headExtentOf(id)
+    if (view === null) return withHeadFloor(fallback, floor)
     try {
       const stored = view.paneBoundsOf(id)
       // THE LAWFUL ABSENCE AND THE THROWING SHAPE ANSWER ONE PAIR — the declared degradation, never a `NaN`-making `undefined`.
-      if (stored === undefined) return { min: fallback.min, max: fallback.max }
-      return stored
+      if (stored === undefined) return withHeadFloor({ min: fallback.min, max: fallback.max }, floor)
+      return withHeadFloor(stored, floor)
     } catch {
       // A HOSTILE SHAPE MUST NEVER THROW OUT OF THE BOUNDS READ — the absent member's own pair, and no write.
-      return { min: fallback.min, max: fallback.max }
+      return withHeadFloor({ min: fallback.min, max: fallback.max }, floor)
     }
   }
 
