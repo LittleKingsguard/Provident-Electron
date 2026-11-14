@@ -1180,6 +1180,74 @@
     .zone-collapse:hover { background-color: #c3ccd8; box-shadow: inset 0 0 0 1px #8f9dae; }
     [collapsed="true"] + .zone-collapse::before { content: '\25B8'; }            /* ▸ — collapsed */
 
+    /* ══ **THE EXPANDED ZONE'S HIDE AFFORDANCE IS AN ARROW IN THE HEAD ROW'S LINE, AND THE BAND IS WHAT IT REPLACED** ══
+       The user, verbatim: ***"Make the zone hide button an arrow inline with the title row (for top/bottom) or at the
+       bottom of the sidebars, instead of the current full-width bar. Expand can stay as-is."*** — **SO THE CONTROL HAS TWO
+       PRESENTATIONS AND THE STATE PICKS BETWEEN THEM, WHICH IS WHY THE ATTRIBUTE IS THE KEY AND NOT A SECOND CLASS**: the
+       ZONE beside this control carries `collapsed` exactly while it presents collapsed (`design-zone-collapse.md` §2: the
+       removal is the ONE spelling of EXPANDED), so `:not([collapsed="true"]) + .zone-collapse` is the EXPANDED arm and the
+       base rule above is the COLLAPSED one, byte-for-byte what it was — **"expand can stay as-is" is a SELECTOR, not a
+       promise**: the collapsed zone's control keeps its `flex: 0 0 14px` band, its fill, its glyph and its place.
+       **MEASURED BEFORE THIS RULE, AND IT IS WHAT "FULL-WIDTH BAR" MEANS IN THE FOUR ARMS**: on a `980×720` window the
+       `top` control read `[0,176,980,14]` and the `bottom` one `[0,685,980,14]` — a `980px` band across the root column, at
+       the zone's FOLLOWING edge; the `left` one read `[120,204,14,407]` and the `right` one `[966,204,14,407]` — a `14px`
+       lane the height of the arrangement, on the side facing the stage, because that is what `flex: 0 0 14px` means in the
+       container each zone stands in (`D-244`'s sibling shape).
+       **THE ROW'S LINE IS REACHED WITHOUT RE-PARENTING, AND THAT IS THE WHOLE OF THE MECHANISM.** The head row is a flex
+       row INSIDE each pane (`D-269`, `D-270`) and this control is the ZONE's SIBLING, never the heads' — `D-244` made that
+       structural for three measured reasons (a replaced `css.style`, a lawful `size: 0`, and the arrangement turn) — so it
+       cannot be a flex item of that row. **What it CAN do is leave the flow and stand at the ZONE's own edges**: CSS anchor
+       positioning, keyed on the authored zone id (the id the paint addresses) and on the control's own authored `props.zone`
+       — no new node, no new class and nothing written by the paint. **THE BOX IS `14×14`, the thickness the strip's lane,
+       the grips and the pane's own control already pay, and it is the HIT area as well** (`D-261`: the visual and the hit
+       box must not disagree). **AND THE RANK IS `2` BECAUSE THE DROPS ARE `4`**: above the head row's own `z-index: 1`
+       (`D-269` §3, where the row's rank is what keeps it over the pane's content) and BELOW `:focus-within`'s `4`, so a
+       grip's four zone windows still paint over this arrow while a drag is armed — the arrow must never be an overlay the
+       pointer cannot reach through.
+       **THE `top`/`bottom` ARM IS THE HEAD ROW'S LINE AT THE ZONE'S INLINE END**: the zone's BLOCK-START edge is where its
+       heads stand (a pane is a flex column whose first child is its head, `D-270`), so `inset-block-start: anchor(top)` puts
+       the arrow on exactly the line the heads are on, and `inset-inline-end: anchor(right)` puts it at that line's end.
+       **WHERE THE HEADS STOP SHORT OF THE ZONE'S END THE ARROW STANDS ALONE ON THEIR LINE** — measured, the demo's two `top`
+       panes end at `x=236` while the arrow stands at `x=966` — because the alternative, a flex item of the head row, is the
+       re-parent `D-244` refuses for three measured reasons.
+       **AND NO PANE'S OWN CONTROL CAN EVER REACH IT, WHICH IS ARITHMETIC RATHER THAN HOPE.** A pane in a `top`/`bottom` zone
+       is clamped to the window's extent (`zoneExtentOf`), so the widest lawful pane is the zone's own `980px`; its head is
+       the pane less the strip's `18px` lane (measured `118 → 100` above) less the head's own `4px` inline padding, and its
+       control is `14px` at THAT edge — so the widest pane's control ends at `980 − 18 − 4 = 958`, `8px` clear of the
+       arrow's `966`. The lane that keeps a strip from being a scrollbar is also what keeps two controls from sharing a box.
+       **THE `left`/`right` ARM STAYS IN ITS OWN LANE AND TAKES THE LANE'S FOOT** (`align-self: flex-end` + `height: 14px`):
+       a sidebar's row is a flex ROW, so its cross axis is the vertical one and the foot is one declaration away — **and it
+       is NOT taken out of the flow, for a measured reason**: the pane's resize strip stands on the pane's BOTTOM edge in
+       this form (`.pane-in-left > .pane-body > .gutter-handle`, `D-246`), so an arrow overlapping that band would be a
+       control covering another control's own box, and `D-261`'s scans would report it. The lane keeps its `14px` width, its
+       height shrinks to the square, and the strip keeps the `14px` beside it.
+       **THE ONE THING THE ARROW OWES THE CORPUS IS THE SCAN, AND IT ANSWERS ITS OWN ID AT FIVE POINTS IN ALL FOUR ARMS**:
+       a press that lands on a pane's own head instead would ARM A PANE DRAG (`D-269` §1(a)'s measured bubbling), so the
+       press is read, not assumed. */
+    #top { anchor-name: --zone-top; }
+    #bottom { anchor-name: --zone-bottom; }
+    #left { anchor-name: --zone-left; }
+    #right { anchor-name: --zone-right; }
+    .zone-collapse[zone="top"] { position-anchor: --zone-top; }
+    .zone-collapse[zone="bottom"] { position-anchor: --zone-bottom; }
+    .zone-collapse[zone="left"] { position-anchor: --zone-left; }
+    .zone-collapse[zone="right"] { position-anchor: --zone-right; }
+    /* the arrow, in the two shapes the two containers allow */
+    :not([collapsed="true"]) + .zone-collapse[zone="top"],
+    :not([collapsed="true"]) + .zone-collapse[zone="bottom"] {
+      position: absolute;
+      z-index: 2;
+      width: 14px;
+      height: 14px;
+      inset-block-start: anchor(top);
+      inset-inline-end: anchor(right);
+    }
+    :not([collapsed="true"]) + .zone-collapse[zone="left"],
+    :not([collapsed="true"]) + .zone-collapse[zone="right"] {
+      align-self: flex-end;
+      height: 14px;
+    }
+
     /* ══ **A COLLAPSED SIDEBAR'S HEAD LANE IS ROTATED, IT READS BOTTOM-TO-TOP, AND THE ALTERNATIVES LOSE FOR A MEASURED
        REASON** ══ A `top`/`bottom` collapsed zone stacks its heads ALONG the arrangement axis already (a row), so each head
        keeps its natural `14px` thickness and costs nothing. A `left`/`right` zone fixes the WIDTH and arranges along the
@@ -1316,6 +1384,13 @@
       align-self: stretch !important;      /* …and span it does, even where the node authored `flex-start` for the card */
       cursor: row-resize !important;        /* …and the cursor follows the axis it spans (the authored one is `col-resize`) */
     }
+    /* **AND THE THIN AXIS MOVES WITH THE STRIP** (the thinner-presentation rule above): in this form the `14px` is the
+       HEIGHT, so the `7px` band is inset on the BLOCK axis and not on the inline one — **the same node, the same `14px`
+       box, and the one declaration that cannot be written once for both forms** (`#menus-vertical` is `14px` wide in a
+       `top`/`bottom` pane and `14px` tall here). The selector is this block's own, so a fourth pane's strip joins the
+       line it joins and the pair cannot drift. */
+    .pane-in-left > .pane-body > .gutter-handle::before,
+    .pane-in-right > .pane-body > .gutter-handle::before { inset-block: 3.5px; inset-inline: 0; }
     /* THE PANEL OPENS SIDEWAYS IN A SIDEBAR — keyed on the pane's `zone` and the MENU's own class, which is the content's
        hook and no pane's name: `.menus-menu` occurs only in the menus pane, so this says "in a sidebar, every panel opens
        into the stage" without naming a pane, and `right`'s arm opens LEFTWARD for the reason clause (3) states. */
@@ -1347,8 +1422,51 @@
        and for the same reasons. **NOTHING IS LOST AND NOTHING IS RE-SPELLED**: that pane's `D-253`/`D-256`/`D-257`
        readings are the generic rules' readings now. */
 
+    /* ══ **THE STRIP NOW PRESENTS THINNER AND ITS BOX DID NOT MOVE: THE PAINT IS A `::before` BAND INSIDE A BOX THAT
+       KEEPS ITS `14px`** ══ The user, verbatim: ***"Also shrink the gutter handle presentation width so they occupy less
+       visual space"***. **THE INVARIANT THAT DECIDES THE MECHANISM IS `D-261`'s**: that row measured a control which
+       answered NINE OF FORTY-FIVE points while its CENTRE read `self` — so a strip that looks thin and IS thin to the
+       pointer is the exact defect the five-point scan exists for. **SO THE PAINT SHRINKS AND THE BOX DOES NOT**: a narrower
+       VISUAL strip may never become a narrower HIT area, and the mechanism is the element's own box untouched at `14px`
+       (`flex: 0 0 14px` on the four zone strips, the authored `width: 14px` on the three pane strips) with the fill, the
+       dot pattern, the hairline and the radius moving onto a generated box inset inside it — **`3.5px` on each of the two
+       sides of the THIN axis, so the band is `7px` where it presented `14px`**, measured rather than assumed below.
+       **AND THE BAND NEEDS NO NEW NODE, NO NEW CLASS AND NO AUTHORED FIGURE**: a `::before` hit-tests as its ORIGINATING
+       element (`D-269` §3 measured exactly that, from the other side — an overflowed pseudo answering the grip's own id), so
+       the element's border box is the hit area whatever the generated box paints. **AND THE RADIUS MOVED WITH THE PAINT, SO
+       THE INVARIANT MOVED THE OTHER WAY AND THAT IS MEASURED RATHER THAN ASSUMED**: a `border-radius` trims an element's hit
+       area exactly as it trims its fill, so `#gutter-horizontal` answered `3/5` at its own five points before this rule
+       (its two bottom corners read `#gutter-target`, `D-277`'s corner class) and `5/5` after — a box whose radius belongs
+       to the paint it clips is a box the pointer meets whole.
+       **THE THIN AXIS IS NOT ONE AXIS IN THIS SHEET, WHICH IS WHY THE KEY IS THE AUTHORED `axis` ATTRIBUTE AND NOT AN ID**:
+       `#menus-vertical` is `14px` WIDE in a `top`/`bottom` pane and `14px` TALL in a sidebar (`.pane-in-left > .pane-body >
+       .gutter-handle` below, `D-246`'s bottom edge), so the same node needs both insets and no id-keyed rule could say so
+       once. The two `axis$=` arms are the envelope's own tokens (`MENUS_AFFORDANCE_ID`'s triple spelling, `D-192`) read as
+       the bare attribute the affordance's seam already reads — a declaration's key from the data, never a second table.
+       **THE FIVE STATIC STRIPS NEED A CONTAINING BLOCK AND GET ONE BY ID, WHICH IS THE ONLY ID LIST HERE**: the two pane
+       strips are ALREADY positioned (`position: sticky`, the pins `D-246`/`D-270` measured), so a `position` on
+       `.gutter-handle` would OUT-RANK `:where(#menus-vertical)`'s `sticky` — a zero-specificity declaration — and DROP THE
+       PIN. The five that are static are named instead, and the pair of classes is stated so the next strip joins one line.
+       **NO FIGURE HERE IS THE RECORD'S**: the thickness was `OWED-1`'s `14px` and the band is the sheet's own presentation,
+       exactly as the head's `14px` is (`D-273`, `D-274`). */
+    #gutter-horizontal,
+    #zone-top-horizontal,
+    #zone-bottom-horizontal,
+    #zone-left-vertical,
+    #zone-right-vertical { position: relative; }
+
     .gutter-handle {
       color: #6f7d90;
+      /* THE BOX PAINTS NOTHING: every member of the old rule that drew a pixel is on the `::before` below, so the element
+         is the HIT AREA and the generated box is the presentation. `color` stays here because the dot pattern is
+         `currentColor` and a pseudo inherits its originating element's ink — so the dark pair below needs no second copy. */
+      background-color: transparent;
+      background-image: none;
+      box-shadow: none;
+    }
+    .gutter-handle::before {
+      content: '';
+      position: absolute;
       border-radius: 3px;
       background-color: #dfe5ec;
       background-image: radial-gradient(circle at center, currentColor 0.8px, transparent 1px);
@@ -1358,7 +1476,10 @@
       box-shadow: inset 0 0 0 1px #c9d2dc;
       transition: background-color 120ms ease, box-shadow 120ms ease;
     }
-    .gutter-handle:hover { background-color: #c3ccd8; box-shadow: inset 0 0 0 1px #8f9dae; }
+    /* the two arms of the thin axis: a `14px` band becomes `7px`, at `3.5px` a side, and the long axis is untouched */
+    .gutter-handle[axis$="-vertical"]::before { inset-block: 0; inset-inline: 3.5px; }
+    .gutter-handle[axis$="-horizontal"]::before { inset-block: 3.5px; inset-inline: 0; }
+    .gutter-handle:hover::before { background-color: #c3ccd8; box-shadow: inset 0 0 0 1px #8f9dae; }
 
     /* THE PANE-MOVE GRIP AND ITS FOUR ZONE OVERLAYS — THE MENUS' REVEAL, AND THE DRAG'S TARGETS
        (`docs/L3/renderer-wiring/design-pane-relocation.md` rev 1 §1; `D-244`'s affordance class; the gesture the user
@@ -1524,9 +1645,17 @@
        grip with no dark hover arm would compute its RESTING colour while hovered. The light hover arm also states a
        `box-shadow` (`#8f9dae`) that would otherwise leak into the dark arm, so the dark hover states both members and
        moves the FILL one step (`#2c3642` → `#3a4654`), exactly as the `gutter-handle` arm always has. */
+    /* **AND THE STRIP'S HALF OF THE PAIR IS ON ITS `::before` NOW, BECAUSE THAT IS WHERE ITS FILL IS** (the
+       thinner-presentation rule above moved every painted member off the element and onto the generated band): the
+       `gutter-handle` selector keeps the same place in this pair and only gains the pseudo, so the pair is still stated ONCE
+       and both classes are still named in it. **THE `color` ARM STAYS ON THE ELEMENT AND IS NOT COPIED**: the dot pattern is
+       `currentColor` and a pseudo inherits its originating element's ink, so one declaration still inks both. The GRIP's
+       half is untouched — it paints its own box, and its `14px` is the head row's thickness (`D-269`, `D-273`). */
     body:has([theme="dark"]) .gutter-handle,
-    body:has([theme="dark"]) .pane-grab { background-color: #2c3642; color: #7d8a9b; box-shadow: inset 0 0 0 1px #3a4654; }
-    body:has([theme="dark"]) .gutter-handle:hover,
+    body:has([theme="dark"]) .pane-grab { color: #7d8a9b; }
+    body:has([theme="dark"]) .gutter-handle::before,
+    body:has([theme="dark"]) .pane-grab { background-color: #2c3642; box-shadow: inset 0 0 0 1px #3a4654; }
+    body:has([theme="dark"]) .gutter-handle:hover::before,
     body:has([theme="dark"]) .pane-grab:hover,
     body:has([theme="dark"]) .pane-grab:focus-within { background-color: #3a4654; box-shadow: inset 0 0 0 1px #3a4654; }
     body:has([theme="dark"]) #status,
