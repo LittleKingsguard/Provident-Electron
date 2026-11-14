@@ -1549,6 +1549,63 @@ const DECLARED_SCOPE: readonly string[] = [
   //    reading would be the DIRECTORY. **ITS `strata/modules.json` PATH CLAIM IS THE MAP'S, NOT THIS ROW'S** (`D-3`, `D-41`):
   //    `renderer-wiring`'s row gains it in the same pass that files the unit, and this union takes no map edit to say so.
   'tests/unit/renderer-wiring/zone-collapse.test.ts',
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── THE FORK GUIDE — `docs/guides/forking.md`, AND IT JOINS THIS UNION AS ITS OWN ENTRY WITH ITS OWN REASON (`D-146`),
+  //    NEVER AS THE PREFIX `docs/guides/`. **`docs/guides/` IS NEVER A PREFIX HERE AND IS NOT DECLARED AS ONE NOW**: the
+  //    directory carries no other member of this union, and a prefix is a DIFFERENT CLAIM — it would admit every guide a
+  //    later pass drops beside this one without naming it, which is the directory declaration this header refuses at every
+  //    turn (`B-2`'s undeclared-sibling arm is what bites on the first one dropped). A file is declared; a directory measures
+  //    nothing. **`B-1` NAMED EXACTLY ONE OFFENDER ON THIS TREE AND THIS IS IT** — `git status --porcelain
+  //    --untracked-files=all` over the whole repository answered this path and no other, because every other path a pass
+  //    writes is ALREADY DECLARED ABOVE — so the entry is added WITH the edit that dirtied the path and never after it
+  //    (`D-146`'s precedent, `D-195`'s for a re-grained instrument). It is reported as a FILE rather than as
+  //    `docs/guides/` only because of that flag, which is the reading this instrument exists to take (`focus-retirement`'s
+  //    measurement): the directory spelling would have been the one scope that satisfies a bare `--porcelain`.
+  //    **ITS SUBJECT IS A USER-FACING GUIDE TO THE REBUILD'S FEATURES — `607` lines in `10` sections carrying `69`
+  //    DISTINCT `D-n` CITATIONS**, and it is not a layer design scope: `docs/L2/<module>/` and `docs/L3/<module>/` are
+  //    written by their own layer only and address the module's implementer (`D-3`), while this page addresses the
+  //    developer who forked this repository and wants their own surface. It documents **THE ENVELOPE AND THE RECORD
+  //    FAMILIES** (§1: the node shape and its every-data member, handler bodies as compiled strings with the declared
+  //    no-op pair the wiring replaces under the same `(name, event)`, and the five families with their tiers),
+  //    **AUTHORED PANES AND THEIR RECORD MEMBERS** (§2: the pane/head/body literal, the members a pane reads, what the
+  //    paint writes and never writes, and the five places a fourth pane touches with the census it moves), **DYNAMIC
+  //    CONTENT** (§3: the `state-slice` paint, what not to do, and the cost that a paint replaces `css.style` whole), **THE
+  //    STATUS INDICATOR WITH ITS DERIVED `updated`** (§4: the closed three, the one ruling the component makes and the one
+  //    it refuses to make, and the two leaf writes), **THE STAGE AND THE `tabs` FAMILY** (§5: the stage as a derived
+  //    position with no zone to inherit a clamp from, the `order` seat plus one leaf per tab under six declarations, and
+  //    the three-line recipe for showing a row's data in the stage), **CREATING TABS** (§6: the one leaf write, what the
+  //    repairs then do for you, the minted row's datum and the add control authored beside the set), and **THE CHANGED
+  //    BEHAVIOURS A FORK WILL HIT** (§7: zone collapse, pane collapse, rearrangement, relocation, the pane minimum and the
+  //    gutter pill) — each behaviour with the row that decided it, so a reader can read the reasoning instead of the page.
+  //    **ITS EXAMPLES ARE VERIFIED AGAINST THIS TREE RATHER THAN INVENTED, AND §10 SAYS IN WHICH WAY FOR EACH ONE**: a
+  //    `run` column for what was executed here at this head — the pane/head/body literal translated and compiled through
+  //    `root.compile(nodes)`, the `status` and `updatedAt` leaves against a real storeroom instance and `createViewRecord`,
+  //    `createTabsRecord` over a fresh profile, the new-tab leaf both through the module's `commit` and as a raw leaf, and
+  //    both collapse writes with their non-boolean and undeclared-zone refusals — and a `read` column for what is cited
+  //    from the code that implements it, with the unverifiable named in its own closing sentence instead of claimed. **A
+  //    guide whose code blocks were invented would be the worst artifact in this tree**, because a fork copies them before
+  //    it reads anything else.
+  //    **AND IT CARRIES A "YOU PROVIDE THIS" TABLE (§9)** for the half the corpus deliberately leaves to the app that forks
+  //    it: the `updatedAt` producer, the "last view" policy, the terminal predicates' pages, the status word, the ids, the
+  //    census figures and the pane names — component-supplies against you-supply, one row each — because a guide that only
+  //    describes this app would ship a fork that inherits this app's POLICY by accident.
+  //    **WHAT IT REFRAINS FROM CLAIMING IS PART OF WHAT IT IS**, and the omission is the opposite of a gap: three things are
+  //    documented as **IMPOSSIBLE OR NON-EXISTENT RATHER THAN INVENTED** — that **there is no `viewTabsPlaceholder`** (the
+  //    view record's three placeholders are named and there is no fourth; the tab record's creation placeholder is the
+  //    PRIVATE `landingRow` its creation repair `tabs-must-stand` mints, §5.2), that **a tab row has NO `index` member**
+  //    (the order of tabs is the `order` seat's one stored array, and `index` is the PANES family's per-record place,
+  //    §6.1), and that **`updatedAt` CANNOT be cleared through the data route** (the crossing refuses `undefined` and the
+  //    pane's own parse refuses a DELETE at that leaf, so the `updated` word is cleared by the LOOK instead —
+  //    `paneStatusOf`'s comparison, §4.4). **A GUIDE THAT SAYS WHAT CANNOT BE DONE IS WORTH MORE THAN ONE THAT OMITS IT**:
+  //    each of the three is a write a fork would otherwise attempt first, and each would compile, run and quietly do
+  //    nothing — which is the class of defect no row in this suite can see, because the code was correct all along.
+  //    **AND IT CLAIMS NO END TO THIS LIST** (`D-146`): the reading that called `app-envelope`'s page *"the last entry this
+  //    union is owed"* stands as a reading at a date, and this entry is one more pass that wrote a path — which RE-OPENS
+  //    the union rather than contradicting it. **NOTHING OUTSIDE THIS ONE PATH IS DECLARED HERE**: the guide adds no test
+  //    file, so `strata/marks.json` does not move and `strata-marks.mjs check` stays green UNREGENERATED, and it files no
+  //    module, so `strata/modules.json` takes no map row and no `endpoints` figure moves — the map's paths are L1's claim
+  //    and this row takes no edit to say so (`D-3`, `D-41`).
+  'docs/guides/forking.md',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without
