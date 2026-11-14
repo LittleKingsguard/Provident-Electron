@@ -6080,3 +6080,34 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **THE READINGS.** `npm test` **`2,969 passed / 2 skipped` of `2,971`** over **`147`** files, **ZERO red** (`B-1` green, the sheet standing in its declared set); `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; **one file changed, CSS plus the notes that derive it**; **no node, no channel, no bridge member, census unmoved**. **The app is live on `http://127.0.0.1:3787/mcp`.**
 
 **ITS REGISTER IS `D-71` TO `D-275`** as prose, unchanged and extended by this row only. **This row records a revert taken on instruction rather than on argument, two corrections collapsed into one measured inset, a state that was content-sized rather than inflexible, and a subject named as below the viewport instead of counted out.**
+## D-277 — THE TRAILING SPACE NOW MATCHES THE HANDLE GAP, AND **THREE ROWS BEFORE IT NAMED THE WRONG PAIR**: five numbers, not four, and two of them had shared a label
+
+**Status:** ACTIVE · **Date:** 2026-11-12 · **Source (user, marked):** ***"The problem is the absence of any space on the right side (red line) that balances the space between the handle and the title name (red box)"***
+
+**THE MARKS MADE THE MODEL RIGHT, AND THE MODEL WAS WHAT WAS WRONG.** **The red box was the GLYPH-TO-TITLE gap; the red line was the TITLE-TO-PILL-EDGE gap.** **But `D-275`'s `A` had been THE PILL-EDGE-TO-GLYPH gap** and **its `B` the title-to-edge one** — **so `A` and `B` WERE NEVER THE PAIR THE USER MEANT**, **and `D-276` then balanced `B` against `A` and reported `1.75 ↔ 1.75` for two gaps the marks did not show.** **Four rows, and the fault was a NAMING error in the first one: two different gaps shared a letter.**
+
+**FIVE NUMBERS, NAMED APART, MEASURED AT DEVICE SCALE 8** (**ink found by RGB threshold against the pill's own fill**):
+
+| name | before | after | note |
+|---|---|---|---|
+| `EDGE→GLYPH` | `1.625` | `1.625` | untouched |
+| **`GLYPH→TITLE`** | **`7.5`** | **`7.5`** | **THE USER'S REFERENCE** |
+| **`TITLE→EDGE`** | **`1.625`** | **`7.5`** | **THE GAP THAT WAS MISSING** |
+| `PILL→CONTROL` | `4` | `4` | untouched |
+| `EDGE→PILL` | `4` | `4` | untouched |
+
+**THE INSET, WITH ITS ARITHMETIC RATHER THAN A GUESS.** **`padding-inline-end: 0.59em`** on the name's carrier, **the start side keeping its `0.06em`**: **`7.5 − 1.625 = 5.875` owed**, **the gap already holds `0.965` of trailing ink offset** (`0.69` bearing + `0.44` letter-spacing), **so `7.5 − 0.965 = 6.535`**, **which at the title's `11px` is `0.594em`, declared `0.59em`.** **In `em` BECAUSE A BEARING IS FONT-RELATIVE** (**a `px` figure is right at one size and wrong at the next**) **and LOGICAL so `sideways-lr` carries it onto the lane's axis with no second declaration** — **the fourth row in five where a logical property is what makes a fix survive a writing mode.**
+
+**MEASURED, ON THREE SEPARATE BOOTS.** **Collapsed**: **`TITLE→EDGE 1.625 → 7.5`, EXACTLY `GLYPH→TITLE`.** **Lane**: **`6.875` against its own `7.75`** — **a residual `0.875`**, **because rotated ink quantizes on the whole-device-pixel grid** (`D-274`'s own note, and the reason the figure is derived in the horizontal head the user marked and then carried).
+
+**AND THE STRETCH IS INTACT, PROVEN RATHER THAN HOPED.** **Expanded `74 → 74`, the `120` rail's collapsed `94 → 94`, its expanded `79 → 79`, the gutter `74 → 74`** — **the inset is INSIDE the pill and moves NO OUTER EDGE where a leftover exists**, **shrinking that leftover by exactly itself.** **That is why it could be added without touching the thing `D-276` had just restored.**
+
+**AND WHERE THERE IS NO LEFTOVER IT GIVES, WHICH IS NAMED RATHER THAN SMOOTHED.** **The inspector's head content is `92` and its pill floor is `74`** — **the inset pushes the floor past the remainder by `1.484px`**, **so that row overflows into the head's own `4px` inline padding**, **with the control still inside the head and inside the pane.** **The stretch gives there by `1.484`, and a row that reported only the four states with leftovers would be reporting the convenient half.**
+
+**AND ONE HIT POINT MOVED, REPORTED RATHER THAN CLAIMED.** **The inspector control's 1px BOTTOM-RIGHT CORNER, INSIDE ITS 3px RADIUS, now answers `inspector-head` — `5/5 → 4/5`.** **That is `D-274`'s measured class**, **and the corner is OUTSIDE THE VISIBLE ROUNDED CONTROL**, **so it is a radius artifact**: **a hit test at a rounded box's corner asks about a pixel the control does not paint.** **Its centre and its other three corners still answer.** **The pass claims no fix for it — the same restraint `D-274` showed.**
+
+**INVARIANTS HELD AND MEASURED.** **Direction still BOTTOM-TO-TOP** (`sideways-lr` on head and grip, glyph at the lane's foot, `transform: none` on all three, control `horizontal-tb`). **`padding-block` `0px` on head, grip and carrier.** **The lane's cross extent `14`**, **so the rail still reclaims `106` of `120`.** **The collapse derivation unmoved** (**pane `width: auto` collapsed, `100px` expanded**) **and the round trip returns `120×96` and `94×14`.** **And the gutter pair is NAMED as below the `640×349` viewport rather than dropped from the count.**
+
+**THE READINGS.** `npm test` **`2,969 passed / 2 skipped` of `2,971`** over **`147`** files, **ZERO red**; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; **one file changed, CSS plus the notes that derive it**; **no node, no channel, no bridge member, census unmoved**. **The app is live on `http://127.0.0.1:3787/mcp`.**
+
+**ITS REGISTER IS `D-71` TO `D-276`** as prose, unchanged and extended by this row only. **This row records a pair of gaps that shared a letter for three rows, an inset whose arithmetic is written down, a stretch proven intact in the four states that have leftover and named as giving in the one that does not, and a corner hit-test that asks about a pixel a rounded control never paints.**
