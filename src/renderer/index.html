@@ -970,9 +970,10 @@
          DIRECTION**: **`B` AND `D` ARE ONE NUMBER** (`D-275` measured `B + D` constant at `48.00` across its change), so a
          stretched pill has spare width INSIDE it, and that width now sits AFTER the name's own trailing inset and BEFORE
          the pill's right fill edge. **A GAP THAT IS A PANE'S SPARE WIDTH CANNOT BE BALANCED AWAY BY ANY TYPE METRIC**
-         (`D-275`'s own finding, kept): what the user asked for is the TEXT's inset — a symmetric `padding-inline` on the
-         name's carrier below, which holds in every state — and the pill's leftover beyond it is the pill's and grows
-         exactly as the pane grows. That is the honest shape, and the note on the carrier states it with the numbers.
+         (`D-275`'s own finding, kept): what the user asked for is the TEXT's own inset — the name's carrier below
+         carries one, in `em` and logical, and its END side is the figure that closes the handle-to-title gap — while the
+         leftover BEYOND that inset is the pill's and grows exactly as the pane grows, the inset coming out of the
+         leftover rather than out of the pill's outer edge. The note on the carrier states that with all five figures.
          ══ **THE GRIP'S BOX MUST CONTAIN THE NAME IT CARRIES, AND THIS IS MEASURED RATHER THAN LIKELY** ══ A flex item's
          basis is its authored `width: 14px`, so in a row with no free space to grow into — WHICH IS EXACTLY A COLLAPSED
          PANE'S ROW, whose width is `auto` and therefore its content's — the grip stayed `14px` wide while its `::after`
@@ -1008,45 +1009,54 @@
        title-to-control side to `4.84px` (`D-274`). **SO THE COMPENSATION CANNOT LIVE IN `gap`**: a symmetric addition to
        either gap — or to both — leaves the difference exactly where it was, and the head cannot change a glyph's metrics
        at all.
-       ══ **THE CARRIER INSETS ITSELF AT BOTH ENDS, AND `D-274`'s ONE-SIDED MARGIN IS DELETED WITH ITS SUBJECT** ══ The
-       user, verbatim: ***"Undo last change, just balance left/right padding on the text so it maintains space from the
-       right side of the box."*** **`padding-inline: 0.06em` IS THE WHOLE OF IT** — `0.66px` at this rule's `11px`, at BOTH
-       ends of the name, so the name's own box carries one inset whichever end of it the eye reads, and it is in `em`
-       because the quantity it balances is a BEARING and bearings are font-relative: a fork that resizes the title's type
-       resizes the inset with it. **IT IS LOGICAL FOR THE REASON THE TWO ROWS BEFORE THIS ONE GAVE**: under `sideways-lr`
-       it insets the name along the LANE's axis at that axis' two ends, with no second declaration, and `padding-block`
-       stays ABSENT, so the lane's cross extent is still the bar's `14px`.
-       **WHY A SYMMETRIC INSET RATHER THAN A THIRD ONE-SIDED CORRECTION**: `D-274` added `margin-inline-end: 0.13em` to
-       close the EXTERIOR pair, and `D-275` then found that was the wrong pair — the reference the user marks is the
-       PILL's two interior insets, `A` against `B`. Keeping that margin and adding a padding would stack a third
-       correction on two, so the margin is GONE WHOLE and one symmetric inset takes its place.
-       **AND THE FIGURE IS MEASURED, NOT DERIVED FROM `D-274`'s**: on a live renderer at a DEVICE SCALE FACTOR OF EIGHT,
-       with the ink found by RGB threshold against the pill's own fill and read across the `140`–`200` luminance band,
-       **the name's trailing side leaves `1.03px` of box after its last ink column** (`0.69` of bearing plus the `0.44px`
-       `letter-spacing` Chromium sets after the last glyph — no ink shows either), while **`A` is the `⠿` glyph's own lead
-       bearing, `1.69px`** (`1.625`–`1.75` across that band) **and no rule on this carrier can reach before the glyph.**
-       So the inset that CLOSES the pair is `1.69 − 1.03 = 0.66px`, which at `11px` is `0.06em` — and the pair then reads
-       `1.69 ↔ 1.69`, a figure that is the SAME NUMBER because the declaration and the target were both derived from the
-       same measurement. **A `px` value would have been right at one font size and wrong at the next, so the `em` is what
-       keeps the equality after a fork resizes the title.** **`D-275` had to choose between two references exactly `1.00px`
-       apart because a margin is ONE number spent on ONE side**; a symmetric inset does not have to choose, and the split
-       goes with the choice.
-       **AND WHAT THE INSET DOES NOT DO IS BALANCE A STRETCHED PILL, WHICH IS SAID HERE AND NOT IMPLIED**: the pill is
-       `flex: 1 1 auto` again (its own rule above), so its spare width is `D-275`'s `B + D` trade and it lands BETWEEN this
-       inset and the pill's right fill edge. In an expanded head `B` therefore reads the row's remainder plus `1.69px`,
-       and **the user's "space from the right side of the box" is the name's own `1.69px` standing immediately after its
-       ink, with the pane's spare width beyond it** — the text is inset symmetrically in every state, the pill's leftover
-       is the pill's, and the pill's right fill edge is as far away as the pane is wide. **THAT IS THE HONEST SHAPE OF THE
-       REQUEST**: the gap the user still sees is now identifiably the pane's spare width and no longer a missing inset.
-       **AND THE START SIDE IS NOT DEAD WEIGHT**: the same `0.66px` stands between the glyph and the name, so the declared
-       space there is the row's `gap` plus it, and the name is inset from its own two edges by one figure instead of
-       padded on one side by a figure tuned to a bearing. */
+       ══ **THE FIVE GAPS ARE NAMED APART, AND THE ONE THE USER MARKS IS CLOSED BY A LOGICAL, FONT-RELATIVE END INSET** ══
+       The user, verbatim: ***"The problem is the absence of any space on the right side (red line) that balances the space
+       between the handle and the title name (red box)"*** — **THE RED BOX IS THE `⠿` AND THE GAP TO THE TITLE, AND THAT GAP
+       IS THE REFERENCE; THE RED LINE IS THE TITLE'S LAST INK, AND THERE IS NO SPACE BETWEEN IT AND THE PILL'S RIGHT EDGE.**
+       **THE LAST THREE ROWS EACH BALANCED A DIFFERENT PAIR**, which is why this note names all five and never reuses a
+       label: `EDGE→GLYPH` (the pill's left inner edge to the `⠿`'s first ink), **`GLYPH→TITLE` (the `⠿`'s last ink to the
+       title's first ink — THE REFERENCE)**, **`TITLE→EDGE` (the title's last ink to the pill's right inner edge — THE GAP
+       THAT IS MISSING)**, `PILL→CONTROL` (the pill's outer right edge to the control) and `EDGE→PILL` (the pane's edge to
+       the pill). `D-274` balanced handle-ink-to-title against title-to-control; `D-275` balanced the pill's two interior
+       insets `A`/`B`, where **`A` was THIS edge-to-glyph inset and not the reference the red box marks**; and `D-276` then
+       balanced `B` against `A` and reported `1.75 ↔ 1.75` for two gaps that were not the ones in the marks. **A LETTER IS
+       THEREFORE NEVER USED FOR A GAP ON THIS CARRIER AGAIN.**
+       **MEASURED AT DEVICE SCALE 8**, the ink found by RGB threshold against the pill's own fill (`#dfe5ec`, luminance
+       `228`, ink below it by `45`) — a sub-pixel target needs a sub-pixel method — the collapsed `top` head reads
+       `EDGE→GLYPH 1.625 · GLYPH→TITLE 7.5 · TITLE→EDGE 1.625 · PILL→CONTROL 4 · EDGE→PILL 4`, and the same head expanded
+       reads `1.625 · 7.5 · 23.625 · 4 · 4`, its `23.625` being the pill's own leftover and no typography at all.
+       **SO THE END SIDE OWED `GLYPH→TITLE − TITLE→EDGE = 7.5 − 1.625 = 5.875px`**, and `TITLE→EDGE` already holds this
+       rule's own `0.06em` end inset plus the name's trailing INK OFFSET — `0.965px`, being `0.69` of bearing plus the
+       `0.44px` `letter-spacing` Chromium sets after the last glyph, neither of which shows any ink — so the inset that
+       CLOSES the pair is `7.5 − 0.965 = 6.535px`, which at this rule's `11px` is **`0.594em`, declared `0.59em`
+       (`6.49px`)**. **THE START SIDE KEEPS `0.06em` AND THE END SIDE DOES NOT REPEAT IT**: the start figure is `D-276`'s
+       and closes a BEARING pair (`1.69` lead against `1.03` trailing, both measured at scale 8), while the end figure
+       closes the USER'S REFERENCE, which already contains that bearing — the two ends carry different quantities, and a
+       symmetric pair would re-open the `7.5` side it was chosen to close.
+       **BOTH ARE `em` BECAUSE A BEARING IS FONT-RELATIVE** (a `px` figure would be right at one font size and wrong at
+       the next, and a fork that resizes the title resizes both insets with it), **and both are LOGICAL so `sideways-lr`
+       rotates them onto the LANE's axis with no second declaration** — the fourth row running that way (`D-272`'s carrier
+       exemption, `D-273`'s `padding-inline`, `D-274`'s margin, this one). `padding-block` stays ABSENT, so the lane's
+       cross extent is still the bar's `14px`.
+       **AND WHAT THE END INSET DOES TO THE STRETCH IS SAID HERE RATHER THAN LEFT TO BE FOUND**: **the inset is INSIDE the
+       pill, so inside a pill that is the row's remainder it takes width from that pill's LEFTOVER and never from its
+       outer edge** — the expanded `top` head stays `74` and the `120` rail's collapsed `94` stays `94`, `TITLE→EDGE` there
+       staying `23.625`/`43.625` because neither the ink nor the fill edge moves — **while in a state whose row is
+       CONTENT-SIZED there is no leftover to take it from and the pill grows by exactly the inset** (measured
+       `52.016 → 57.844` collapsed, head `78.016 → 83.844`, lane pill `52.016 → 57.844` — `5.83px`, the inset's own delta),
+       the `top` zone's collapsed pane with it. **THE STRETCH IS THE USER'S RULING** (`D-276`, and the rule above re-states it), so where a leftover exists the
+       stretch keeps and the pair closes INSIDE the pill; where the row is content-sized the pill's outer edge follows its
+       content, which is what a row with no width means — and it is the state the user marked. */
     .pane-head > .pane-grab::after {
       content: attr(name);
       flex: 0 0 auto;
-      padding-inline: 0.06em;              /* THE NAME'S OWN INSET, AT BOTH ENDS — `0.66px` at this rule's `11px`, in `em`
-                                              because a bearing is font-relative, and LOGICAL so the lane gets it along
-                                              its axis with no second declaration (the note above carries the numbers) */
+      padding-inline-start: 0.06em;        /* THE GLYPH'S BEARING, CLOSED ON THE NAME'S LEADING SIDE — `0.66px` at this
+                                              rule's `11px` (`1.69 − 1.03`), in `em` because a bearing is font-relative */
+      padding-inline-end: 0.59em;          /* **THE USER'S REFERENCE, CLOSED ON THE NAME'S TRAILING SIDE** — `GLYPH→TITLE`
+                                              `7.5px` minus the name's `0.965px` trailing ink offset = `6.535px` =
+                                              `0.594em`, declared here in `em` because the quantity it balances is a
+                                              bearing pair, and LOGICAL so the lane carries it onto its own axis with no
+                                              second declaration (the note above carries all five figures) */
       font-size: 11px;
       font-weight: 700;
       line-height: 14px;
@@ -1223,11 +1233,18 @@
        same reason, as the gutter strip's own `!important`s above. **AND THE ORDER IS THE GRIP FIRST, THE NAME BETWEEN, THE
        CONTROL LAST ALONG THE LANE**, which bottom-to-top puts the grip at the lane's FOOT (its `⠿` measures `[3,265,15,8]`
        inside a grip spanning `222…273`) and the control at its HEAD.
-       **AND THE TITLE'S OWN INLINE MARGIN IS THE ONE SPACING DECLARATION THIS BLOCK DOES NOT RESTATE** (the note on
-       `.pane-head > .pane-grab::after` above): it is `margin-inline-end`, so under `sideways-lr` it spaces the title from
-       the control ABOVE it in the lane's own axis with no line here — measured before it, the lane read `6.75px` of
-       `⠿`-to-title against `4.75px` of title-to-control, and the cross extent stays the bar's `14px` because no
-       `padding-block` stands on any box in this lane.
+       **AND THE TITLE'S OWN INSETS ARE THE ONE SPACING DECLARATION THIS BLOCK DOES NOT RESTATE** (the note on
+       `.pane-head > .pane-grab::after` above): they are `padding-inline`, so under `sideways-lr` the pair lands on the
+       lane's own axis at no line here — the START side spaces the title from the `⠿` above it and the END side spaces it
+       from the control at the lane's HEAD — and the cross extent stays the bar's `14px` because no `padding-block` stands
+       on any box in this lane. **THE LANE CARRIES THE SAME TWO FIGURES AND MEASURES ITS OWN REFERENCE**: at device scale 8
+       the lane reads `EDGE→GLYPH 2.125 · GLYPH→TITLE 6.75 · TITLE→EDGE 1.875 · PILL→CONTROL 4 · EDGE→PILL 4` before the end
+       inset, and after it `2 · 7.75 · 6.875 · 4 · 4` — **so the end side moved `1.875 → 6.875` and the rotated pair closes
+       to `0.875px` where the horizontal head closes to nothing.** **THE ROTATED INK QUANTIZES ON A WHOLE-DEVICE-PIXEL GRID
+       AND THAT IS THIS ROW'S HONEST LIMIT** (`D-274` measured the same, `2.00 → 1.00`): the reference the user marked is the
+       HORIZONTAL head's `7.5`, the end figure is derived from it, and the writing mode carries the declaration onto the
+       lane's axis without re-deriving a second figure for a grid it cannot hit. Read twice on two boots, the lane reads the
+       same both times — it is a reading and not a flake.
 
        **AND NOTHING PRESSABLE TURNS**: `sideways-lr` is a `writing-mode` and NOT a transform, so no rotation is inherited by
        anything — nothing here carries one at all (`transform` computes `none` on the head, on the grip and on the control,
