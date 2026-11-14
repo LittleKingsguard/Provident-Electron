@@ -1458,20 +1458,28 @@
       align-self: stretch !important;      /* …and span it does, even where the node authored `flex-start` for the card */
       cursor: row-resize !important;        /* …and the cursor follows the axis it spans (the authored one is `col-resize`) */
     }
-    /* **AND THE THIN AXIS MOVES WITH THE STRIP** (the thinner-presentation rule above): in this form the `14px` is the
-       HEIGHT, so the `7px` band is inset on the BLOCK axis and not on the inline one — **the same node, the same `14px`
-       box, and the one declaration that cannot be written once for both forms** (`#menus-vertical` is `14px` wide in a
-       `top`/`bottom` pane and `14px` tall here). The selector is this block's own, so a fourth pane's strip joins the
-       line it joins and the pair cannot drift.
-       **AND THE PILL FOLLOWS THE SAME SWAP, WHICH IS WHY THIS RULE CARRIES FOUR DECLARATIONS OF THE `-vertical` ARM'S
-       GEOMETRY AND NOT TWO**: that arm keys on the AUTHORED `axis` (which says what the strip IS and never which way it
-       lies), so on this form it would put the pill's LENGTH on the BLOCK axis — the one that is `7px` here — and a
-       `48px` block-size inside a `14px` tall strip is an overflow, not a pill. So the length is RE-STATED on the inline
-       axis, the arm's block-axis declarations are RESET here (`block-size: auto` against `inset-block: 3.5px` stretches
-       the band to the `7px` the paint has measured since `D-278`), and the pair of auto margins moves with them. This
-       rule out-ranks both arms by one class, which is the same column that already moved the thin-axis insets here. */
+    /* **AND THE THIN AXIS MOVES WITH THE STRIP — BOTH LAYERS, ONE RULE EACH** (the two-layer rule above): in this form
+       the `14px` is the HEIGHT, so the divider is `1px` on the BLOCK axis and the pill is the `7px` band on it — **the
+       same node, the same `14px` box, and the declarations that cannot be written once for both forms**
+       (`#menus-vertical` is `14px` wide in a `top`/`bottom` pane and `14px` tall here). The selector is this block's own,
+       so a fourth pane's strip joins the line it joins and the pair cannot drift.
+       **AND EACH LAYER'S LONG AXIS FOLLOWS THE SAME SWAP, WHICH IS WHY EACH ARM RE-STATES THE OTHER FORM'S GEOMETRY**:
+       the `-vertical` arms key on the AUTHORED `axis` (which says what the strip IS and never which way it lies), so on
+       this form they would put the pill's LENGTH and the line's `1px` centring on the BLOCK axis — the one that is `7px`
+       here — and a `48px` block-size inside a `14px` tall strip is an overflow, not a pill. So each long axis is RE-STATED
+       on the inline axis, the arms' block-axis declarations are RESET here (`block-size: auto` against `inset-block: 3.5px`
+       stretches the pill to the `7px` the paint has measured since `D-278`; `block-size: 1px` with `margin-block: auto` is
+       the line's own centring), and the auto margins move with them. These rules out-rank both arms by one class, which is
+       the same column that already moved the thin-axis insets here. */
     .pane-in-left > .pane-body > .gutter-handle::before,
     .pane-in-right > .pane-body > .gutter-handle::before {
+      inline-size: auto;                   /* the line spans the strip's width: the `-vertical` arm's `1px` was its thin axis */
+      margin-inline: 0;
+      block-size: 1px;                     /* …and `1px` is the thin axis here */
+      margin-block: auto;
+    }
+    .pane-in-left > .pane-body > .gutter-handle::after,
+    .pane-in-right > .pane-body > .gutter-handle::after {
       inset-block: 3.5px;
       inset-inline: 0;
       block-size: auto;
@@ -1510,22 +1518,34 @@
        and for the same reasons. **NOTHING IS LOST AND NOTHING IS RE-SPELLED**: that pane's `D-253`/`D-256`/`D-257`
        readings are the generic rules' readings now. */
 
-    /* ══ **THE STRIP NOW PRESENTS THINNER AND SHORTER AND ITS BOX DID NOT MOVE: THE PAINT IS A `::before` PILL INSIDE A
-       BOX THAT KEEPS ITS `14px`** ══ Two changes, one mechanism, and the second is the first one's own shape taken one step
-       further: the user shrank the presentation (*"Also shrink the gutter handle presentation width so they occupy less
-       visual space"*, `D-278`) and then asked for the band to become an indicator (*"Trim the gutter handles down to a less
-       obstructive indicator. Example visual attached."* — the example a SHORT ROUNDED PILL standing in the MIDDLE of a
-       vertical gutter with the rest of it visually clear, against a FULL-LENGTH dotted band).
+    /* ══ **TWO GENERATED BOXES, ONE LANE: THE ELEMENT STILL PAINTS NOTHING, `::before` IS THE DIVIDER LINE AND
+       `::after` IS THE PILL** ══ Five asks have landed on these strips: the user shrank the presentation (*"Also shrink
+       the gutter handle presentation width so they occupy less visual space"*, `D-278`), then asked for the band to
+       become an indicator (*"Trim the gutter handles down to a less obstructive indicator. Example visual attached."* —
+       `D-284`'s short rounded pill in the middle of a lane), and now says, verbatim: ***"Keep the divider lines, and
+       make the pill outline/background less visually distinct. Pill size is fine."*** **AND THE FIRST CLAUSE IS A
+       RESTORATION, NAMED AS ONE**: `D-284` replaced the FULL-LENGTH BAND with a `48px` pill, and the band's hairline
+       went with it — the gutter stopped drawing the line that separated the panes it resizes. **SO THE LINE IS BACK,
+       FULL LENGTH, IN THE HAIRLINE PAIR `D-284` MEASURED**: `#c9d2dc` in light and `#3a4654` in dark — the two colours
+       the pill's old inset stroke carried — `1px` on the thin axis, the strip's WHOLE length on the long axis, on the
+       lane's centre. **THE PILL KEEPS EVERY FIGURE `D-284` CHOSE — `min(48px, 100%)`, `7px` thin, radius `3.5px`,
+       centred by auto margins — because *"Pill size is fine"*.** **AND THE TWO LAYERS ARE TWO PSEUDO-ELEMENTS BECAUSE
+       THE ELEMENT AND EACH PSEUDO PAINT NOTHING ALREADY**: `D-278`'s invariant is that the strip's box is the HIT AREA
+       and every painted member lives on a generated box, so the `14px` box, the `7`-in-`14` thin axis and the
+       five-point answer stay three facts about three different things — one pseudo cannot be both a `1px` line and a
+       `7px` pill, and the element stays the thing the pointer meets.
        **THE INVARIANT THAT DECIDES THE MECHANISM IS `D-261`'s**: that row measured a control which
        answered NINE OF FORTY-FIVE points while its CENTRE read `self` — so a strip that looks thin and IS thin to the
        pointer is the exact defect the five-point scan exists for. **SO THE PAINT SHRINKS AND THE BOX DOES NOT**: a narrower
        VISUAL strip may never become a narrower HIT area, and the mechanism is the element's own box untouched at `14px`
-       (`flex: 0 0 14px` on the four zone strips, the authored `width: 14px` on the three pane strips) with the fill, the
-       dot pattern, the hairline and the radius moving onto a generated box inset inside it — **`3.5px` on each of the two
-       sides of the THIN axis, so the band is `7px` where it presented `14px`**, measured rather than assumed below.
-       **AND THE BAND IS A SHORT PILL NOW, CENTRED ON THE LONG AXIS, SO THE REST OF THE GUTTER PAINTS NOTHING** — the
-       user's second sentence, taken literally on BOTH axes (a vertical pill in a vertical strip, a horizontal pill in a
-       horizontal one). **THE LENGTH IS A FIXED FIGURE CAPPED BY THE BOX — `min(48px, 100%)` — AND EACH HALF OF THAT IS
+       (`flex: 0 0 14px` on the four zone strips, the authored `width: 14px` on the three pane strips) with BOTH layers
+       standing on generated boxes inside it — the pill `3.5px` a side on the THIN axis, so it draws `7px` where it
+       measures `14px`.
+       **AND THE PILL IS SHORT AND CENTRED ON THE LONG AXIS, SO WHAT IT LEAVES CLEAR IS THE LINE** — the pill's ask taken
+       literally on BOTH axes (a vertical pill in a vertical strip, a horizontal pill in a horizontal one) and the
+       divider drawn along the rest of the lane, which is the second ask of this pass and the reason the two layers are
+       both needed rather than one box that would have to be both.
+       **THE LENGTH IS A FIXED FIGURE CAPPED BY THE BOX — `min(48px, 100%)` — AND EACH HALF OF THAT IS
        ARGUED**: a fixed figure because the indicator is the sheet's presentation and never the record's (`['zones', <id>,
        'size']` and `['panes', <id>, 'width'|'height']` are those figures' ONE source, `D-278`), and a figure rather than
        a SHARE of the gutter because a percentage would make the same control a `980px` bar in the root column and a `6px`
@@ -1541,18 +1561,51 @@
        pill in a `456px` zone strip and a `20px` pill in a `20px` one are both centred by the same two declarations.
        **THE RADIUS IS `3.5px`, WHICH IS HALF THE THIN AXIS, SO THE CAPS ARE FULL ROUNDS** (a `3px` radius on a `7px`
        band leaves two flat `1px` edges, which reads as a rounded rectangle rather than as a pill).
-       **AND THE BAND NEEDS NO NEW NODE, NO NEW CLASS AND NO AUTHORED FIGURE**: a `::before` hit-tests as its ORIGINATING
-       element (`D-269` §3 measured exactly that, from the other side — an overflowed pseudo answering the grip's own id), so
-       the element's border box is the hit area whatever the generated box paints. **AND THE RADIUS MOVED WITH THE PAINT, SO
-       THE INVARIANT MOVED THE OTHER WAY AND THAT IS MEASURED RATHER THAN ASSUMED**: a `border-radius` trims an element's hit
-       area exactly as it trims its fill, so `#gutter-horizontal` answered `3/5` at its own five points before this rule
-       (its two bottom corners read `#gutter-target`, `D-277`'s corner class) and `5/5` after — a box whose radius belongs
-       to the paint it clips is a box the pointer meets whole.
+       **AND NEITHER LAYER NEEDS A NEW NODE, A NEW CLASS OR AN AUTHORED FIGURE**: a generated box hit-tests as its
+       ORIGINATING element (`D-269` §3 measured exactly that, from the other side — an overflowed pseudo answering the
+       grip's own id), so the element's border box is the hit area whatever the two generated boxes paint. **AND THE
+       PILL'S RADIUS STAYS ON THE LAYER THAT DRAWS IT, WHICH IS WHAT KEEPS THE BOX WHOLE**: a `border-radius` trims an
+       element's hit area exactly as it trims its fill, so `D-278` measured `#gutter-horizontal` at `3/5` on its own five
+       points while the radius stood on the ELEMENT (its two bottom corners read `#gutter-target`, `D-277`'s corner class)
+       and `5/5` once the radius moved onto the generated band — and it now stands on `::after`, which is a generated box
+       and not the strip, so the `5/5` is structural rather than a coincidence of which pseudo draws it.
        **THE THIN AXIS IS NOT ONE AXIS IN THIS SHEET, WHICH IS WHY THE KEY IS THE AUTHORED `axis` ATTRIBUTE AND NOT AN ID**:
        `#menus-vertical` is `14px` WIDE in a `top`/`bottom` pane and `14px` TALL in a sidebar (`.pane-in-left > .pane-body >
        .gutter-handle` below, `D-246`'s bottom edge), so the same node needs both insets and no id-keyed rule could say so
        once. The two `axis$=` arms are the envelope's own tokens (`MENUS_AFFORDANCE_ID`'s triple spelling, `D-192`) read as
        the bare attribute the affordance's seam already reads — a declaration's key from the data, never a second table.
+       **"LESS VISUALLY DISTINCT" IS THREE NAMED SUBTRACTIONS AND ONE NAMED REFUSAL, NOT A VIBE.** The pill used to draw
+       FOUR things over the surface and `D-284` measured all four — light `#dfe5ec` fill, `#6f7d90` dot ink, `#c9d2dc`
+       inset stroke; dark `#2c3642`, `#7d8a9b`, `#3a4654` — and the loudest of them BY FAR was **THE DOT INK**, `3.30:1`
+       light and `3.49:1` dark against the pill's own fill, which is what made a handle read as a rail of dots. So:
+       **(1) THE INK IS GONE** — no pattern on either layer; **(2) THE STROKE IS GONE** — the hairline became the DIVIDER
+       line, which is where a stroke belongs once the line runs the whole lane, so the pill is a fill and nothing else; and
+       **(3) THE FILL MOVED ONE STEP TOWARD THE SURFACE** — `#e8edf4` light (the sheet's own tab-hover figure) and
+       `#1b222b` dark (its dark card fill). **MEASURED AS LUMINANCE CONTRAST AGAINST THE SURFACE `D-284` READ**
+       (`#f4f6f8` light, `#12161c` dark): the pill's fill stood at **`1.17:1` / `1.48:1`** and stands at **`1.09:1` /
+       `1.13:1`** — **i.e. the pill is now QUIETER THAN THE LINE IT SITS ON** (`1.41:1` / `1.89:1`), which is the ranking
+       the two asks need: the divider is what a person reads and the pill is a bulge in it. **(4) AND TRANSLUCENCY IS
+       REFUSED, NAMED**: an alpha fill would tint the divider inside the pill's span and make the pill's rendered colour a
+       function of what lies beneath it — two numbers per theme instead of one, and the two layers' pixel reads no longer
+       independent — while an opaque pill keeps every lane pixel painted by exactly ONE of them. **THE COST IS STATED**:
+       the hairline is interrupted across the pill's `48px` (a `456px` lane keeps `408px` of line), and that interruption
+       is itself what locates the handle along the lane.
+       **HOW THE TWO LAYERS STACK, MEASURED RATHER THAN ASSERTED.** Both generated boxes are `position: absolute` with
+       `z-index: auto`, so they paint as one element's two children in tree order: **`::before` FIRST — the line — and
+       `::after` LAST — the pill, so the pill is ABOVE the line**. No `z-index` and no `transform` is spent, because the
+       tree order is the one thing in this sheet a later arm cannot re-spell by accident. **AND THE LINE IS VISIBLE BESIDE
+       THE PILL, NOT ONLY THROUGH IT** (the pill is opaque, so nothing of the line survives under it): the lane's centre
+       column reads the line above and below the caps and the pill's own fill between them, and the thin axis reads the
+       line alone where the pill does not stand.
+       **THE LINE'S OWN GEOMETRY IS TWO DECLARATIONS AND ONE ARGUMENT.** It is `1px` on the thin axis with the other axis
+       taken from the box (`inset: 0`), so its length is the strip's and never a second figure; **and its centring is an
+       auto margin on the thin axis** (`margin-inline: auto` where the strip lies vertically, `margin-block: auto` where it
+       lies horizontally), because `6.5px`-a-side arithmetic would be a second spelling of the `14px` and would slide the
+       moment a lane's padding moved. **AND THE ANTIALIASING IS NAMED RATHER THAN HIDDEN**: `14` is even and `1` is odd, so
+       a `1px` box centred in a `14px` lane lands on a half device pixel and Chromium blends it 50/50 into the two columns
+       beside it — the declared colour stays `#c9d2dc`/`#3a4654` and the pixel run reads that blend. A fixed `6px` offset
+       would buy one crisp column and lose the centring, and it would only hold while every strip lands on an integer
+       device pixel: `#gutter-horizontal` measures `y 525.88`.
        **THE FIVE STATIC STRIPS NEED A CONTAINING BLOCK AND GET ONE BY ID, WHICH IS THE ONLY ID LIST HERE**: the two pane
        strips are ALREADY positioned (`position: sticky`, the pins `D-246`/`D-270` measured), so a `position` on
        `.gutter-handle` would OUT-RANK `:where(#menus-vertical)`'s `sticky` — a zero-specificity declaration — and DROP THE
@@ -1566,10 +1619,11 @@
     #zone-right-vertical { position: relative; }
 
     .gutter-handle {
-      color: #6f7d90;
-      /* THE BOX PAINTS NOTHING: every member of the old rule that drew a pixel is on the `::before` below, so the element
-         is the HIT AREA and the generated box is the presentation. `color` stays here because the dot pattern is
-         `currentColor` and a pseudo inherits its originating element's ink — so the dark pair below needs no second copy. */
+      /* THE BOX PAINTS NOTHING: every member of the old rule that drew a pixel stands on a generated box below —
+         `::before` is the DIVIDER LINE and `::after` is the PILL — so the element is the HIT AREA and the two generated
+         boxes are the presentation (`D-278`). **AND THE `color` THAT USED TO STAND HERE LEFT WITH THE DOT PATTERN**:
+         the ink existed because the dots were `currentColor`, and the ink and the stroke are the two members this pass
+         subtracted, so nothing on this strip reads `currentColor` now. */
       background-color: transparent;
       background-image: none;
       box-shadow: none;
@@ -1578,34 +1632,49 @@
          IS NOT HERE ON PURPOSE: it is the BOX's figure and stands in the arm that has a box to take it from. */
       --gutter-pill: 48px;
     }
+    /* ══ LAYER 1, BENEATH: THE DIVIDER LINE — `1px` on the thin axis, the strip's whole length on the long axis, the
+       hairline pair, centred by an auto margin on the thin axis ══ */
     .gutter-handle::before {
       content: '';
       position: absolute;
-      border-radius: 3.5px;                 /* half the `7px` thin axis: full round caps, which is what "a pill" means */
-      background-color: #dfe5ec;
-      background-image: radial-gradient(circle at center, currentColor 0.8px, transparent 1px);
-      background-size: 4px 6px;
-      background-position: center;
-      background-repeat: repeat;
-      box-shadow: inset 0 0 0 1px #c9d2dc;
-      transition: background-color 120ms ease, box-shadow 120ms ease;
+      inset: 0;                             /* the length is the BOX's, on both axes: the arms below only narrow it */
+      background-color: #c9d2dc;            /* the light hairline `D-284` measured on the pill's old inset stroke */
     }
-    /* THE TWO ARMS: the thin axis is a `7px` band at `3.5px` a side, and the LONG axis is a pill of `min(48px, 100%)`
-       centred by auto margins — `100%` is the box's own extent, so a gutter shorter than the figure gives a pill the
-       length of the gutter and never an overflow or a negative size (the block above states both refusals). */
-    .gutter-handle[axis$="-vertical"]::before {
+    /* THE LINE'S TWO ARMS: the thin axis is `1px` and the OTHER axis keeps `inset: 0`'s length from the box, so a strip
+       that lies vertically is narrowed on its inline axis and one that lies horizontally on its block axis — the same
+       axis attribute the pill's arms read, one layer down. */
+    .gutter-handle[axis$="-vertical"]::before { inline-size: 1px; margin-inline: auto; }
+    .gutter-handle[axis$="-horizontal"]::before { block-size: 1px; margin-block: auto; }
+    /* ══ LAYER 2, ABOVE (TREE ORDER, NOT `z-index`): THE PILL — `D-284`'s geometry in every figure, one step quieter in
+       colour, with no ink and no stroke ══ */
+    .gutter-handle::after {
+      content: '';
+      position: absolute;
+      border-radius: 3.5px;                 /* half the `7px` thin axis: full round caps, which is what "a pill" means */
+      background-color: #e8edf4;            /* ONE STEP toward the light surface `#f4f6f8`: `1.09:1` where `#dfe5ec` read `1.17:1` */
+      transition: background-color 120ms ease;
+    }
+    /* THE PILL'S TWO ARMS: the thin axis is a `7px` band at `3.5px` a side, and the LONG axis is a pill of
+       `min(48px, 100%)` centred by auto margins — `100%` is the box's own extent, so a gutter shorter than the figure
+       gives a pill the length of the gutter and never an overflow or a negative size (the block above states both
+       refusals). `D-284`'s figures, unmoved. */
+    .gutter-handle[axis$="-vertical"]::after {
       inset-block: 0;
       inset-inline: 3.5px;
       block-size: min(var(--gutter-pill), 100%);
       margin-block: auto;
     }
-    .gutter-handle[axis$="-horizontal"]::before {
+    .gutter-handle[axis$="-horizontal"]::after {
       inset-block: 3.5px;
       inset-inline: 0;
       inline-size: min(var(--gutter-pill), 100%);
       margin-inline: auto;
     }
-    .gutter-handle:hover::before { background-color: #c3ccd8; box-shadow: inset 0 0 0 1px #8f9dae; }
+    /* THE HOVER STEP MOVED ONE LAYER DOWN THE TREE AND STILL LIGHTS FROM ANYWHERE IN THE LANE — the hover target is the
+       `14px` box and not its paint (`D-284`), so a point in the lane beside the pill lights the pill. The fill steps to
+       the sheet's `#c3ccd8` (`1.50:1` against the light surface) and there is no stroke to step with it: the stroke is the
+       divider's now, and a hover that re-drew it would put back the member this pass removed. */
+    .gutter-handle:hover::after { background-color: #c3ccd8; }
     /* ══ **A COLLAPSED ZONE OFFERS NO RESIZE STRIP: THE HANDLE IS HIDDEN WITH THE ZONE IT CANNOT MOVE** ══
        The user, verbatim: ***"Resize gutters are visible when zone is hidden"*** — with a screenshot of a COLLAPSED zone
        still showing its dotted strip. **THE CAUSE IS STRUCTURAL AND IT IS `D-244`'s OWN RULE SEEN FROM ITS COST SIDE**:
@@ -1625,11 +1694,12 @@
        **IT IS `visibility: hidden` AND NOT `display: none`, AND THE LANE IS WHY**: the strip's box IS the `14px` column
        (a `width` in the arrangement row, a `height` in the root column), so removing it would move the strip's own lane
        back into the stage — every measured figure `D-278` and `D-281` pin would move with it, and the collapsed rail's
-       cross extent would stop being the zone's. `visibility` inherits into the `::before` band, so the dotted paint goes
-       with it, and a `hidden` box is not hit-tested — **so the strip is neither seen nor pressed, and the two are the same
+       cross extent would stop being the zone's. `visibility` inherits into BOTH generated boxes, so the divider line and the
+       pill go with it in one declaration — and a `hidden` box is not hit-tested — **so the strip is neither seen nor
+       pressed, and the two are the same
        declaration rather than a paint with a live target behind it** (`D-261`'s whole lesson). **THE EXPANDED ARM IS
        UNTOUCHED BY CONSTRUCTION**: the selectors are `[collapsed="true"]` only, and absence is the one spelling of
-       EXPANDED (`D-253`), so the expanded strip keeps its `14px` box, its `7px` band (`D-278`) and its five-point answer.
+       EXPANDED (`D-253`), so the expanded strip keeps its `14px` box, its `7px` pill (`D-278`) and its five-point answer.
        **AND THE HIDING IS CSS AND NEVER DELETION**, the discipline `D-249` set for the drops: all four strips stay in the
        markup for `provident.dispatch`, `list_targets`, `get_rendered_html` and `get_markdown`, and the census is unmoved.
        **ONE COST, STATED**: while a pane is DRAGGED over a collapsed zone's drop the zone paints its remembered extent
@@ -1805,17 +1875,18 @@
        grip with no dark hover arm would compute its RESTING colour while hovered. The light hover arm also states a
        `box-shadow` (`#8f9dae`) that would otherwise leak into the dark arm, so the dark hover states both members and
        moves the FILL one step (`#2c3642` → `#3a4654`), exactly as the `gutter-handle` arm always has. */
-    /* **AND THE STRIP'S HALF OF THE PAIR IS ON ITS `::before` NOW, BECAUSE THAT IS WHERE ITS FILL IS** (the
-       thinner-presentation rule above moved every painted member off the element and onto the generated band): the
-       `gutter-handle` selector keeps the same place in this pair and only gains the pseudo, so the pair is still stated ONCE
-       and both classes are still named in it. **THE `color` ARM STAYS ON THE ELEMENT AND IS NOT COPIED**: the dot pattern is
-       `currentColor` and a pseudo inherits its originating element's ink, so one declaration still inks both. The GRIP's
-       half is untouched — it paints its own box, and its `14px` is the head row's thickness (`D-269`, `D-273`). */
-    body:has([theme="dark"]) .gutter-handle,
-    body:has([theme="dark"]) .pane-grab { color: #7d8a9b; }
-    body:has([theme="dark"]) .gutter-handle::before,
-    body:has([theme="dark"]) .pane-grab { background-color: #2c3642; box-shadow: inset 0 0 0 1px #3a4654; }
-    body:has([theme="dark"]) .gutter-handle:hover::before,
+    /* **THE STRIP'S TWO LAYERS TAKE ONE COLOUR EACH AND THE GRIP'S HALF IS UNTOUCHED** (the two-layer rule above moved
+       the fill to `::after` and gave `::before` the divider): the DIVIDER is the dark hairline `#3a4654`, the PILL is
+       `#1b222b` — the sheet's dark card fill, one step out of the `#12161c` surface, so it stands at `1.13:1` where
+       `D-284`'s `#2c3642` stood at `1.48:1` — and the hover step is the `#3a4654` this pair already used (`1.89:1`). The
+       GRIP is `.pane-grab`, which paints its own box at the head row's `14px` (`D-269`, `D-273`): its fill, its stroke and
+       its two arms stand exactly as they were, which is why that selector now stands on its own line rather than beside the
+       strip's. **AND THE STRIP'S `color` ARM LEFT WITH THE DOT PATTERN**: nothing on the strip reads `currentColor` now
+       (the ink and the stroke are the two members this pass subtracted), so only the grip carries the muted ink. */
+    body:has([theme="dark"]) .gutter-handle::before { background-color: #3a4654; }   /* LAYER 1 — the divider line */
+    body:has([theme="dark"]) .gutter-handle::after { background-color: #1b222b; }    /* LAYER 2 — the pill, one step out */
+    body:has([theme="dark"]) .gutter-handle:hover::after { background-color: #3a4654; }
+    body:has([theme="dark"]) .pane-grab { color: #7d8a9b; background-color: #2c3642; box-shadow: inset 0 0 0 1px #3a4654; }
     body:has([theme="dark"]) .pane-grab:hover,
     body:has([theme="dark"]) .pane-grab:focus-within { background-color: #3a4654; box-shadow: inset 0 0 0 1px #3a4654; }
     body:has([theme="dark"]) #status,
