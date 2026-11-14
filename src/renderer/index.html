@@ -1462,9 +1462,23 @@
        HEIGHT, so the `7px` band is inset on the BLOCK axis and not on the inline one — **the same node, the same `14px`
        box, and the one declaration that cannot be written once for both forms** (`#menus-vertical` is `14px` wide in a
        `top`/`bottom` pane and `14px` tall here). The selector is this block's own, so a fourth pane's strip joins the
-       line it joins and the pair cannot drift. */
+       line it joins and the pair cannot drift.
+       **AND THE PILL FOLLOWS THE SAME SWAP, WHICH IS WHY THIS RULE CARRIES FOUR DECLARATIONS OF THE `-vertical` ARM'S
+       GEOMETRY AND NOT TWO**: that arm keys on the AUTHORED `axis` (which says what the strip IS and never which way it
+       lies), so on this form it would put the pill's LENGTH on the BLOCK axis — the one that is `7px` here — and a
+       `48px` block-size inside a `14px` tall strip is an overflow, not a pill. So the length is RE-STATED on the inline
+       axis, the arm's block-axis declarations are RESET here (`block-size: auto` against `inset-block: 3.5px` stretches
+       the band to the `7px` the paint has measured since `D-278`), and the pair of auto margins moves with them. This
+       rule out-ranks both arms by one class, which is the same column that already moved the thin-axis insets here. */
     .pane-in-left > .pane-body > .gutter-handle::before,
-    .pane-in-right > .pane-body > .gutter-handle::before { inset-block: 3.5px; inset-inline: 0; }
+    .pane-in-right > .pane-body > .gutter-handle::before {
+      inset-block: 3.5px;
+      inset-inline: 0;
+      block-size: auto;
+      margin-block: 0;
+      inline-size: min(var(--gutter-pill), 100%);
+      margin-inline: auto;
+    }
     /* THE PANEL OPENS SIDEWAYS IN A SIDEBAR — keyed on the pane's `zone` and the MENU's own class, which is the content's
        hook and no pane's name: `.menus-menu` occurs only in the menus pane, so this says "in a sidebar, every panel opens
        into the stage" without naming a pane, and `right`'s arm opens LEFTWARD for the reason clause (3) states. */
@@ -1496,15 +1510,37 @@
        and for the same reasons. **NOTHING IS LOST AND NOTHING IS RE-SPELLED**: that pane's `D-253`/`D-256`/`D-257`
        readings are the generic rules' readings now. */
 
-    /* ══ **THE STRIP NOW PRESENTS THINNER AND ITS BOX DID NOT MOVE: THE PAINT IS A `::before` BAND INSIDE A BOX THAT
-       KEEPS ITS `14px`** ══ The user, verbatim: ***"Also shrink the gutter handle presentation width so they occupy less
-       visual space"***. **THE INVARIANT THAT DECIDES THE MECHANISM IS `D-261`'s**: that row measured a control which
+    /* ══ **THE STRIP NOW PRESENTS THINNER AND SHORTER AND ITS BOX DID NOT MOVE: THE PAINT IS A `::before` PILL INSIDE A
+       BOX THAT KEEPS ITS `14px`** ══ Two changes, one mechanism, and the second is the first one's own shape taken one step
+       further: the user shrank the presentation (*"Also shrink the gutter handle presentation width so they occupy less
+       visual space"*, `D-278`) and then asked for the band to become an indicator (*"Trim the gutter handles down to a less
+       obstructive indicator. Example visual attached."* — the example a SHORT ROUNDED PILL standing in the MIDDLE of a
+       vertical gutter with the rest of it visually clear, against a FULL-LENGTH dotted band).
+       **THE INVARIANT THAT DECIDES THE MECHANISM IS `D-261`'s**: that row measured a control which
        answered NINE OF FORTY-FIVE points while its CENTRE read `self` — so a strip that looks thin and IS thin to the
        pointer is the exact defect the five-point scan exists for. **SO THE PAINT SHRINKS AND THE BOX DOES NOT**: a narrower
        VISUAL strip may never become a narrower HIT area, and the mechanism is the element's own box untouched at `14px`
        (`flex: 0 0 14px` on the four zone strips, the authored `width: 14px` on the three pane strips) with the fill, the
        dot pattern, the hairline and the radius moving onto a generated box inset inside it — **`3.5px` on each of the two
        sides of the THIN axis, so the band is `7px` where it presented `14px`**, measured rather than assumed below.
+       **AND THE BAND IS A SHORT PILL NOW, CENTRED ON THE LONG AXIS, SO THE REST OF THE GUTTER PAINTS NOTHING** — the
+       user's second sentence, taken literally on BOTH axes (a vertical pill in a vertical strip, a horizontal pill in a
+       horizontal one). **THE LENGTH IS A FIXED FIGURE CAPPED BY THE BOX — `min(48px, 100%)` — AND EACH HALF OF THAT IS
+       ARGUED**: a fixed figure because the indicator is the sheet's presentation and never the record's (`['zones', <id>,
+       'size']` and `['panes', <id>, 'width'|'height']` are those figures' ONE source, `D-278`), and a figure rather than
+       a SHARE of the gutter because a percentage would make the same control a `980px` bar in the root column and a `6px`
+       dot in a narrow lane — the same element presenting two sizes, which is exactly the thing being removed; `min()`
+       because a gutter can be SHORTER than the figure (a `top` zone dragged to `20`, a pane squeezed to its head) and an
+       uncapped `48px` box would OVERFLOW that lane and be clipped at both caps; and `100%` rather than
+       `calc(100% - n)` because a subtraction in a sub-`n` lane resolves NEGATIVE, which is an invalid `block-size` whose
+       used value is `0` — **a pill that VANISHES in the shortest gutter is the one failure worse than a pill that fills
+       it**. **THE CENTRING IS `inset: 0` PLUS AUTO MARGINS ON THE LONG AXIS AND NOT `top: 50%`/`translate`**: a
+       percentage offset cannot also honour the `min()` cap (it would be half of the UNCAPPED length, so a capped pill
+       would sit off centre) and a `transform` here would be a new painted mechanism in a lane whose `transform: none` is
+       measured elsewhere; auto margins spend the free space equally at WHATEVER length the cap resolved to, so a `48px`
+       pill in a `456px` zone strip and a `20px` pill in a `20px` one are both centred by the same two declarations.
+       **THE RADIUS IS `3.5px`, WHICH IS HALF THE THIN AXIS, SO THE CAPS ARE FULL ROUNDS** (a `3px` radius on a `7px`
+       band leaves two flat `1px` edges, which reads as a rounded rectangle rather than as a pill).
        **AND THE BAND NEEDS NO NEW NODE, NO NEW CLASS AND NO AUTHORED FIGURE**: a `::before` hit-tests as its ORIGINATING
        element (`D-269` §3 measured exactly that, from the other side — an overflowed pseudo answering the grip's own id), so
        the element's border box is the hit area whatever the generated box paints. **AND THE RADIUS MOVED WITH THE PAINT, SO
@@ -1537,11 +1573,15 @@
       background-color: transparent;
       background-image: none;
       box-shadow: none;
+      /* THE PILL'S LENGTH ON THE LONG AXIS, STATED ONCE AND SHARED BY EVERY ARM BELOW — a custom property rather than a
+         third spelling of `48px` in the two arms and the sidebar's re-grain, so the figure has ONE site. THE `100%` HALF
+         IS NOT HERE ON PURPOSE: it is the BOX's figure and stands in the arm that has a box to take it from. */
+      --gutter-pill: 48px;
     }
     .gutter-handle::before {
       content: '';
       position: absolute;
-      border-radius: 3px;
+      border-radius: 3.5px;                 /* half the `7px` thin axis: full round caps, which is what "a pill" means */
       background-color: #dfe5ec;
       background-image: radial-gradient(circle at center, currentColor 0.8px, transparent 1px);
       background-size: 4px 6px;
@@ -1550,9 +1590,21 @@
       box-shadow: inset 0 0 0 1px #c9d2dc;
       transition: background-color 120ms ease, box-shadow 120ms ease;
     }
-    /* the two arms of the thin axis: a `14px` band becomes `7px`, at `3.5px` a side, and the long axis is untouched */
-    .gutter-handle[axis$="-vertical"]::before { inset-block: 0; inset-inline: 3.5px; }
-    .gutter-handle[axis$="-horizontal"]::before { inset-block: 3.5px; inset-inline: 0; }
+    /* THE TWO ARMS: the thin axis is a `7px` band at `3.5px` a side, and the LONG axis is a pill of `min(48px, 100%)`
+       centred by auto margins — `100%` is the box's own extent, so a gutter shorter than the figure gives a pill the
+       length of the gutter and never an overflow or a negative size (the block above states both refusals). */
+    .gutter-handle[axis$="-vertical"]::before {
+      inset-block: 0;
+      inset-inline: 3.5px;
+      block-size: min(var(--gutter-pill), 100%);
+      margin-block: auto;
+    }
+    .gutter-handle[axis$="-horizontal"]::before {
+      inset-block: 3.5px;
+      inset-inline: 0;
+      inline-size: min(var(--gutter-pill), 100%);
+      margin-inline: auto;
+    }
     .gutter-handle:hover::before { background-color: #c3ccd8; box-shadow: inset 0 0 0 1px #8f9dae; }
     /* ══ **A COLLAPSED ZONE OFFERS NO RESIZE STRIP: THE HANDLE IS HIDDEN WITH THE ZONE IT CANNOT MOVE** ══
        The user, verbatim: ***"Resize gutters are visible when zone is hidden"*** — with a screenshot of a COLLAPSED zone
