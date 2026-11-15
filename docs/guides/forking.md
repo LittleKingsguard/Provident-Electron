@@ -12,7 +12,8 @@ app that forks it.
 **One rule up front, because everything else is downstream of it.** Every element outside the Electron shell's own
 chrome is **provident data** — envelope nodes, handler bodies, hooks, component bindings — driven through the
 producing graph, **never hand-written DOM**. An element rendered outside that graph is invisible to
-`provident.dispatch`, `get_rendered_html` and `get_markdown` (`AGENTS.md` § "Non-negotiables", quoting the charter at
+`provident.dispatch` and `get_markdown`, and (measured, §8.6) `get_rendered_html` carries it only when it was appended
+inside the mount, because that endpoint is the mount's own HTML (`AGENTS.md` § "Non-negotiables", quoting the charter at
 `archive/gate-corpus-2026-10-29/AGENTS.md:22-34`). The row that owns this rebuild's reading of it is **D-122**'s first
 ruling (the tab bar's authority is settled on the data side) and **D-231**, which exists because a UI-authority
 violation *shipped and passed every row* — the page's own scaffolding is not provident data, so **no test can see
@@ -73,7 +74,7 @@ The view record's four families are read by **one** channel (`IPC_VIEW_READ`) an
 
 A pane is **three authored things and one record**: a pane node, its **head row** (grip + collapse control), its
 **body**, and the record that supplies its geometry and state. This is the shape the app authors, and it compiles —
-see §10 for how that was checked:
+see §11 for how that was checked:
 
 ```ts
 // ONE PANE, ITS HEAD ROW, ITS BODY. Ids are literals on both sides in this tree (D-41, D-188 debt 2).
@@ -217,11 +218,14 @@ const write = (runtime: Runtime, nodeId: string, text: string): void => {
 ### 3.2 What NOT to do
 
 **Do not hand-write DOM.** No `createElement`, no `document.querySelector` + `innerHTML`, no attribute stamped from
-outside the graph. Such an element **cannot be dispatched, read or marked down**: it answers no `list_targets` entry,
-`provident.dispatch` cannot address it, and `get_rendered_html`/`get_markdown` do not contain it — the whole reason
-this template exists (`AGENTS.md` § "Non-negotiables"). It is also the one defect class **no row can catch**, because
-the page's scaffolding is not provident data: D-231 found a `<header>` that had been there since the demo and read
-green everywhere.
+outside the graph. Such an element **cannot be dispatched and is not marked down**: it answers no `list_targets` entry
+and `provident.dispatch` cannot address it, while `get_markdown` re-emits the graph and does not contain it — the whole
+reason this template exists (`AGENTS.md` § "Non-negotiables"). **One measured correction to the flat "invisible
+everywhere" reading, because it matters when you test**: `get_rendered_html` is the mount's own `innerHTML`, so an
+element appended *under the mount* does appear in that fragment (an element placed outside the mount does not) — the
+endpoint that should have caught it is the one that shows it, while nothing can press it or read it as an agent. §8.6
+has the three answers quoted. It is also the one defect class **no row can catch**, because the page's scaffolding is
+not provident data: D-231 found a `<header>` that had been there since the demo and read green everywhere.
 
 ### 3.3 The cost: a paint replaces `css.style` WHOLE
 
@@ -283,7 +287,8 @@ hold it (D-269 §6, D-145).
 ### 4.3 Example — writing a status
 
 The bar's three members are **not** `commitPane`'s: that route carries `{width?, height?, bounds?}` only, and a
-status-only payload answers `committed` and **writes nothing** (§10, probe A). Write the member at its own leaf instead:
+status-only payload answers `committed` and **writes nothing** (§11, probe A; quoted in §8.5). Write the member at its own
+leaf instead:
 
 ```ts
 // THE WRITE THE APP ITSELF USES for a bar member (`paneCollapseAct`, `zoneCollapseAct`): one leaf, its own tier.
@@ -309,11 +314,15 @@ await dataRoute('write', {
 })
 ```
 
-**You cannot clear that stamp through the data route, and the corpus does not want you to.** A `undefined` value is
-refused at the crossing's boundary (*"`undefined` is not a value the JavaScript crossing admits"*), and a **delete** at
-that leaf is refused by the pane's own parse. The `updated` **word** is cleared instead by the comparison
-`paneStatusOf` makes: a look at or after the content's stamp clears it (D-269 §6's `T4`). That is the shape the user's
-ruling asks for — the component owns the channel and the comparison, **the fork owns what counts as a look**.
+**You cannot clear that stamp through a LEAF write or a leaf delete at it, and the corpus does not want you to.** A
+`undefined` value is refused at the crossing's boundary (*"`undefined` is not a value the JavaScript crossing admits"*),
+and a **delete** at that leaf is refused by the pane's own parse — both quoted in §8.1. The `updated` **word** is cleared
+instead by the comparison `paneStatusOf` makes: a look at or after the content's stamp clears it (D-269 §6's `T4`). That
+is the shape the user's ruling asks for — the component owns the channel and the comparison, **the fork owns what counts
+as a look**. **The stamp itself has exactly two clearing routes, both measured in §8.1**: a whole-record write at
+`['panes', <id>]` that omits it (which also replaces every member you do not restate), or deleting `['panes']` and
+letting `panes-must-stand` re-mint the placeholder (which resets every figure to `100`). Neither is a route to reach for;
+both exist, and saying so is cheaper than a fork discovering them by accident.
 
 **You provide this:** the write above, its trigger, and the look policy that clears the word. Nothing under `src/`
 calls the write, and nothing under `src/` clears the stamp.
@@ -356,7 +365,9 @@ it: `tabs-must-stand`, `order-names-its-tabs` (whose `'seat'` repair appends an 
 record's placeholder is the private `landingRow` its creation repair `tabs-must-stand` mints: the reserved entry
 `id: 'landing'` (one spelling, `src/shared/tabs-landing.ts`), `target: 'tabs-landing-page'`, `active: true`,
 `label: 'landing'` and a `lastActiveAt` stamped at the mint. A fresh `read()` answers
-`{ order: ['landing'], landing: 'landing', rows: [ that row ] }` (§10, probe G's "before").
+`{ order: ['landing'], landing: 'landing', rows: [ that row ] }` (§11, probe G's "before"). **So do not import it**: the
+name does not exist and your build stops on it, and the three that do exist come from `src/shared/view-shape.ts` — §8.3
+quotes both the build error and the floor you read back instead.
 
 ### 5.3 How a fork shows a tab's data in the stage
 
@@ -409,7 +420,7 @@ await dataRoute('write', {
 })
 ```
 
-What the corpus then does for you — measured in §10's probes G/H/K except where marked *read*:
+What the corpus then does for you — measured in §11's probes G/H/K except where marked *read*:
 
 - `order` becomes `['landing', 'tab-3']` — **the seat repair's append, not the act's promise**;
 - the previous active row reads `active: false`, and exactly one row reads `active: true`;
@@ -419,7 +430,9 @@ What the corpus then does for you — measured in §10's probes G/H/K except whe
   defaults), and a missing `lastActiveAt` is stamped with the repair's clock.
 
 **A tab row has NO `index` member.** The order of tabs is the `order` seat, one stored array; `index` is the *pane*
-family's per-record place (D-259). Do not look for it in a row and do not write it.
+family's per-record place (D-259). Do not look for it in a row and do not write it — **and if you write it anyway, nothing
+refuses you**: the leaf route answers `{"status":"committed"}` and the member sits in your profile's bytes while `read()`
+never returns it (quoted, §8.2). The seat is the repair's even when you write it by hand.
 
 The renderer's own "add a tab" act is `focusActRoute({ target, newTab: true })` — it derives a distinct target
 (`untitled-1`, `untitled-2`, … skipping any string a row already carries, because a repeated target would *seat* the
@@ -552,7 +565,357 @@ whole `14px` lane even though the paint shrank (D-284).
 
 ---
 
-## 8. What a fork must NOT copy
+## 8. What refuses you, and what commits but is wrong
+
+Every refusal in this guide is stated in one line where the behaviour lives, and **one line is not enough when you are about
+to write the code.** So this section takes each of them the same four ways: **the attempt** a fork reasonably writes,
+**what actually happens** (the answer, quoted — a refusal's reason and sentence, a repair's verdict, a parse's message, or
+the `undefined` that comes back, never a paraphrase of it), **why** (the mechanism and the row that owns it), and
+**instead** (the route that *is* lawful, as a snippet, or a statement that there is none and why the mechanism cannot
+have one). Every quoted answer below was **run** at this head against a real storeroom and the real view and tab records
+on a scratch profile; §11 carries one probe row per item and marks the two that needed the layout-less DOM shim. In the
+quotes below **`…` marks members omitted for width and nothing else** — no word inside a quote is re-spelled.
+
+**Four of these are refusals, three are silent, and the silent ones do the damage.** A fork that reads only the refusals
+walks into a write that returns `committed` and leaves the surface in a state nobody stated, so the verdict column is the
+one to read first:
+
+| Behaviour you will try | Verdict | What it costs you |
+|---|---|---|
+| `updatedAt` cleared at its own leaf (`undefined`, then `delete`) | **REFUSED** — `value-not-admitted`, then `ConstraintPassRefused` | two sentences and no way to spell absence at a leaf |
+| a tab row's `index` | **COMMITTED-BUT-WRONG** — in the profile's bytes, in no read | order is the `order` seat's (D-156) |
+| `viewTabsPlaceholder` | **REFUSED** — no such export; your build stops | the tab placeholder is private (D-286) |
+| `commitPane` with a status-only payload | **COMMITTED-BUT-WRONG** — `{"status":"committed"}`, nothing written | the route carries `{width?, height?, bounds?}` only |
+| an undeclared pane or zone reference | **REFUSED** — `parent-absent`, `undeclared-pane`, `undeclared-zone` | both id domains are closed (D-138, D-151) |
+| hand-written DOM | **REFUSED** at `dispatch`, **SILENT** at `get_markdown`, **LEAKED** into `get_rendered_html` | no graph node — and a silence is worse than a refusal |
+| a `css.style` write | **COMMITTED-BUT-WRONG** — the whole declaration block replaced | `replace` mode, one value (D-234) |
+
+### 8.1 Clearing `updatedAt` through the data route
+
+**The attempt.** The two things a fork reaches for, and both are the obvious spelling of "there is no stamp now":
+
+```ts
+await dataRoute('write', { path: ['panes', 'pane-menus', 'updatedAt'], tier: 'file', value: undefined })
+await dataRoute('delete', { path: ['panes', 'pane-menus', 'updatedAt'], tier: 'file' })
+```
+
+**What actually happens.** Two different refusals, and the first one's sentence names the boundary's whole domain:
+
+```json
+// (i) the write, refused at the crossing's boundary
+{"status":"refused","reason":"value-not-admitted",
+ "message":"'undefined' is not a value the JavaScript crossing admits, the crossing carries strings, booleans, finite numbers, plain objects and arrays, the value at the write's value argument is undefined",
+ "log":[],"path":["panes","pane-menus","updatedAt"]}
+
+// (ii) the delete, refused by the pane's own parse
+{"status":"refused","reason":"store-refused","storeStatus":"ConstraintPassRefused",
+ "message":"the pane geometry carries a member that is no geometry — no finite non-negative width or height, or a bounds pair of two finite numbers whose min does not exceed its max, or a zone the pane names that this record does not declare, or an index that is not a non-negative integer, or a collapsed that is not a boolean, or a status outside busy/waiting/done, or an updatedAt that is not a string, or a pane id this record does not declare"}
+```
+
+The stamp is still there afterwards — `{"id":"pane-menus","width":100,"height":100,"zone":"top","updatedAt":"2026-11-12T10:00:00.000Z"}`
+— and the same delete aimed at the pane itself (`['panes','pane-menus']`) is refused with the same sentence, so there is no
+"delete a bigger thing and take the member with it" either.
+
+**Why.** The crossing's boundary carries strings, booleans, finite numbers, plain objects and arrays and **refuses
+`undefined` and `null`** (measured, D-87, D-91), so absence is not a value it can be handed; and a delete at that leaf hands
+the panes family's parse a member it cannot admit, because `updatedAt` must be a string where it is stated
+(`paneNodeAdmits`) — the delete is refused rather than landed (D-269 §6, D-242).
+
+**Instead.** One route does clear it, and its price is every member you do not restate:
+
+```ts
+// THE WHOLE RECORD, WITHOUT THE STAMP: committed, and `updatedAt` is gone from the read.
+await dataRoute('write', {
+  path: ['panes', 'pane-menus'],   // the pane's own address: a whole-record write REPLACES the record
+  tier: 'file',
+  value: { width: 100, height: 100, zone: 'top' },   // BOTH axis members are required — omit one and the write is refused
+})
+```
+
+Measured: the answer is `{"status":"committed","repaired":false}` and the pane then reads
+`{"id":"pane-menus","width":100,"height":100,"zone":"top"}` — the stamp went, **and so did the `status` word and
+`collapsed` if you did not restate them** (§8.8). A record missing `width` is refused with the sentence above. The second
+route is the family root: `store.delete(['panes'], 'file')` answers the delete's own record (`"tiers":["file"]`, the `op`)
+and `panes-must-stand` re-mints the placeholder — the stamp gone and **every figure back to `100`**.
+
+Neither is the route the corpus wants. **The `updated` word is cleared by the LOOK, not by a write**: `paneStatusOf`
+compares the content's stamp against the realm's last look and shows nothing when a look stands at or after it (§4.4,
+D-269 §6) — zero writes, and the policy of what counts as a look is the fork's half (§10).
+
+### 8.2 A tab row's `index`
+
+**The attempt.** Order looks like a per-row place, so a fork writes one — the same member that works on a pane (§7.3):
+
+```ts
+await dataRoute('write', { path: ['tabs', 'tab-2', 'index'], tier: 'file', value: 3 })
+// or in the row it hands the record:
+tabs.commit({ id: 'tab-3', target: 'notes-page', active: true, lastActiveAt: stamp, index: 9 })
+```
+
+**What actually happens.** Nothing refuses you, and nothing reads it back. Three answers, quoted:
+
+```json
+// the raw leaf write: COMMITTED, and the member is in the profile's bytes
+{"status":"committed","path":["tabs","tab-2","index"],"repaired":false, …}
+// tabs.read() — the rows carry {id, target, active, label, lastActiveAt} and no `index` at all
+{"status":"committed","order":["landing","tab-2"],"landing":"tab-2",
+ "rows":[{"id":"landing",…},{"id":"tab-2","target":"notes-page","active":true,"label":"untitled","lastActiveAt":"2026-11-12T10:00:00.000Z"}]}
+// and the profile file, read off disk after that act:
+"tab-2":{"active":true,"id":"tab-2","index":3,"label":"untitled","lastActiveAt":"…","target":"notes-page"}
+// the same member through the record's own route is dropped BEFORE the write:
+tabs.commit({ id:'tab-9', …, index: 5 })  →  {"status":"committed","repaired":true}, and the stored row has no `index`
+```
+
+So: **not refused, silently persisted by the leaf route, and invisible to every reader** — a member sitting in your
+profile that no read, paint or minted row will ever see. The route's `{"status":"committed"}` is the whole of the
+feedback you get.
+
+**Why.** The tab record's order is a **singleton seat**, one stored array `order`, and insertion is one fact the
+`order-names-its-tabs` repair owns (D-156); `index` is the **pane** family's per-record place (D-259, §7.3). A row
+carrying one is a second authority, and `rowOf` drops a member it does not name rather than carrying it.
+
+**Instead.** Write the row (§6.1) and let the seat repair place it; to re-order, write the seat — and even *that* is the
+repair's answer, not yours:
+
+```ts
+// writing the seat by hand over three standing tabs: committed AND repaired
+await dataRoute('write', { path: ['tabs', 'order'], tier: 'file', value: ['landing', 'tab-2'] })
+// → {"status":"committed","repaired":true}; the read carries order: ["landing","tab-2","tab-3"] — the repair appended it back
+```
+
+**The contrast is what makes the silence visible, and it is worth one line of code in your own probe:** on a PANE the same
+member is the lawful one — `dataRoute('write', { path: ['panes','pane-menus','index'], tier:'file', value: 1 })` answers
+`{"status":"committed"}` and `read()` carries `"index":1`; `1.5` is refused with §8.1's `PANE_UNUSABLE_MESSAGE`. That is
+`index` doing its job in the family that owns it.
+
+### 8.3 `viewTabsPlaceholder`
+
+**The attempt.** Three view placeholders exist, so a fourth name reads as an obvious symmetry:
+
+```ts
+import { viewTabsPlaceholder } from '../../main/view-record/index.js'
+const placeholder = viewTabsPlaceholder()
+```
+
+**What actually happens.** There is no such export, and you find out at build time rather than at the call:
+
+```
+✘ [ERROR] No matching export in "src/main/view-record/index.ts" for import "viewTabsPlaceholder"
+```
+
+and with no bundler in the way, at link time:
+
+```
+SyntaxError: The requested module '/tmp/…/view-record.mjs' does not provide an export named 'viewTabsPlaceholder'
+```
+
+Read off the modules themselves, the placeholder names that do exist are exactly
+`["viewPanesPlaceholder","viewThemePlaceholder","viewZonesPlaceholder"]`; `"viewTabsPlaceholder" in module` is `false` for
+both the view-record and the tabs-record module, and the tabs record exports **no** name matching `/[Pp]laceholder|[Ll]anding/`
+at all — its placeholder is the module-private `landingRow` its creation repair mints.
+
+**Why.** The three `view…Placeholder` values are the *view* record's creation repairs' values, minted per family (D-91,
+D-97, D-233); the tab record's floor is the `tabs-must-stand` repair's own private row (D-286's first refusal).
+
+**Instead.** The three that exist come from the one spelling both realms read, and the tab floor is *read back* rather
+than imported:
+
+```ts
+import { viewPanesPlaceholder, viewZonesPlaceholder, viewThemePlaceholder } from '../../shared/view-shape.js'
+
+// THE TAB RECORD'S FLOOR — read it, do not import it. Measured on a fresh profile:
+const floor = tabs.read()
+// {"order":["landing"],"landing":"landing",
+//  "rows":[{"id":"landing","target":"tabs-landing-page","active":true,"label":"landing","lastActiveAt":"2026-11-…"}]}
+
+// AND IF YOU NEED THE ID ITSELF, there is one spelling for it:
+import { TABS_LANDING_ENTRY_ID } from '../../shared/tabs-landing.js'   // 'landing'
+```
+
+A fork that wants a placeholder row of its own **authors it** — that is §6.1's write, and it is the fork's half.
+
+### 8.4 An undeclared pane or zone reference
+
+**The attempt.** The pane you added to the envelope, named in the record:
+
+```ts
+await dataRoute('write', { path: ['panes', 'pane-notes', 'width'], tier: 'file', value: 100 })
+await dataRoute('write', { path: ['zones', 'zone-1', 'size'], tier: 'mem', value: 100 })
+view.commitPane('pane-notes', { height: 100 })
+```
+
+**What actually happens.** The store's own sentence names the declared set, which is the useful part of the answer:
+
+```json
+{"status":"refused","reason":"parent-absent",
+ "message":"'pane-notes' does not exist in 'panes', panes are 'pane-a', 'pane-inspector', 'pane-menus'",
+ "log":[],"path":["panes","pane-notes","width"]}
+
+{"status":"refused","reason":"parent-absent",
+ "message":"'zone-1' does not exist in 'zones', zones are 'bottom', 'left', 'right', 'top'", …}
+
+{"status":"refused","reason":"undeclared-pane",
+ "message":"the pane id names no pane this record declares, and the pane family is addressed only by its declared ids",
+ "address":["panes","pane-notes"]}
+
+// the zone route's own domain arm, same shape:
+{"status":"refused","reason":"undeclared-zone","address":["zones","zone-1"],
+ "message":"the zone id names no zone this record declares, and the zone family is addressed only by its declared ids"}
+```
+
+A value that *names* an undeclared id answers `"reason":"store-refused","storeStatus":"ConstraintPassRefused"` from the
+family's own judge, whose sentence is the family's and not the route's:
+
+```json
+// dataRoute('write', { path: ['panes'], value: { 'pane-a': {…}, 'pane-notes': { width: 100, height: 100 } } })
+{"status":"refused","reason":"store-refused","storeStatus":"ConstraintPassRefused",
+ "message":"the pane geometry carries a member that is no geometry — … , or a pane id this record does not declare"}
+
+// dataRoute('write', { path: ['zones'], value: { top: { size: 140 }, 'zone-1': { size: 10 } } })
+{"status":"refused","reason":"store-refused","storeStatus":"ConstraintPassRefused",
+ "message":"the zone family holds a member that is no record, or a zone carrying a size that is not finite and non-negative, a distance that is not finite, a display that is not a string, a collapsed that is not a boolean, or a slot the crossing refuses, or a zone id this record does not declare"}
+```
+
+So the closure has two seats — the route's domain arm and the family's judge — and a fork meets both.
+
+**Why.** Both id domains are closed at the route **and** at the family's own judge, because a leaf write needs the parent
+node to stand and the store creates no parent: an open set could guarantee nothing, and a route-only closure would leave
+an outside writer free to mint the id (`DECLARED_PANE_IDS`, `DECLARED_ZONE_IDS`; D-138, D-151, D-183, D-192).
+
+**Instead.** Declare the id where the record can see it — §2.4's five places — or, if the pane is yours, use a declared
+one. Nothing else will make `['panes', 'pane-notes', 'width']` land.
+
+### 8.5 `commitPane` with a status-only change
+
+**The attempt.** The route that carries a pane's figures looks like the route that carries its state:
+
+```ts
+const answer = await viewRecord.commitPane('pane-menus', { status: 'busy' })
+```
+
+**What actually happens.**
+
+```json
+{"status":"committed"}
+```
+
+and **nothing moves**: `read()` still answers `{"id":"pane-menus","width":100,"height":100,"zone":"top"}` with no `status`
+at all. The same act with the retired member is the same act — `commitPane('pane-menus', { size: 40 })` →
+`{"status":"committed"}`, nothing written.
+
+**Why.** `commitPane`'s argument is the record's own member set, `{width?, height?, bounds?}` (D-138, D-189, D-191), and a
+payload supplying **zero** of them writes nothing and answers `committed`, because the state it names — the declared
+pane's node already standing with its geometry — is already true. That is `D-53`'s "a delete that removes nothing is the
+store's own success" read at a route, and it is why the answer word is not evidence of a write.
+
+**Instead.** Write the member at its own leaf, which is the act the app itself makes for a bar member (§4.3):
+`dataRoute('write', { path: ['panes','pane-menus','status'], tier:'file', value:'busy' })` answers
+`{"status":"committed","repaired":false}` and `read()` then carries `"status":"busy"`; a fourth word (`'idle'`) is refused
+with §8.1's sentence. A fork that wants the status to ride a *figure* commit is asking for two authorities in one act — the
+route carries the geometry and the leaf carries the state, and the paint reads both.
+
+### 8.6 Hand-written DOM
+
+**The attempt.** The one every fork makes, in the first hour, because it is the shortest path from data to pixels:
+
+```ts
+const badge = document.createElement('div')      // the ids below are the probe's, so the quotes match it
+badge.id = 'hand-written'
+badge.textContent = 'THIS IS HAND-WRITTEN DOM'
+badge.setAttribute('data-probe', 'hand-written')
+mount.appendChild(badge)                          // or document.body.appendChild(badge) — outside the mount
+```
+
+**What actually happens — and the three endpoints do not agree, which is why this one is worth reading twice.**
+
+```json
+// provident.dispatch at the hand-written id
+{"status":"rejected"}
+
+// get_markdown, with the badge present on the page — the graph's own text only
+"this one is the graph"
+
+// get_rendered_html — the badge is IN the fragment when it was appended under the mount
+"<div … id=\"graph-node\">this one is the graph</div><div data-probe=\"hand-written\" id=\"hand-written\">THIS IS HAND-WRITTEN DOM</div>"
+// and after one graph render it is still there: the fragment contains "hand-written"
+```
+
+Appended **outside** the mount, the fragment does not carry it at all. Appended **inside**, it does — because
+`get_rendered_html` is the mount's own `innerHTML` (`runtime.ts`'s `renderedHtml`), not a re-emission of the graph.
+
+**So: refused at the endpoint that would let anything *press* it, silent at the endpoint that says what the page *is*, and
+visible in the one that only says what it *looks like* — and that last case is worse than a refusal.** A refusal would
+tell you; this looks finished and correct on the surface, reads as nothing to an agent, and answers `rejected` to every
+attempt to touch it. It is D-231's class exactly: a `<header>` that had stood in this demo since the beginning, was read
+green by every row, and was not provident data.
+
+**Why.** The graph is the authority and the element is not a node in it, so there is no `data-node-id`, no target for
+`dispatch`, and nothing for the markdown adapter's actionable set (charter §"Project-wide constraint (UI rendering)",
+`archive/gate-corpus-2026-10-29/AGENTS.md:22-34`; D-122, D-231).
+
+**Instead.** Author the node (§2.1). The same markup as a node literal is data, and everything above sees it: `dispatch`
+resolves it, `get_markdown` emits its text, and `get_rendered_html` carries it because the graph drew it.
+
+### 8.7 A `css.style` write
+
+**The attempt.** One figure to change, so one declaration to write:
+
+```ts
+runtime.applyCommand({
+  kind: 'state-slice',
+  node: 'zone-top',
+  mutation: [{ targetProp: 'css.style', mode: 'replace', value: 'height: 120px' }],
+})
+```
+
+**What actually happens.** The engine applies it and **the whole declaration block it replaced is gone**:
+
+```json
+{"status":"applied","dirtied":["node-2"]}
+```
+
+```html
+<!-- before: <div data-wire="node-2" data-node-id="node-2" id="zone-top" style="height: 140px; overflow-x: auto;">top</div> -->
+<div data-wire="node-2" data-node-id="node-2" id="zone-top" style="height: 120px">top</div>
+```
+
+The authored `overflow-x: auto` went with the height it sat beside — exactly the failure D-243 measured on `#pane-menus`
+(`style="width: 100px;"`, its authored `height: 100%` and `overflow-x: auto` gone). **The value is CSS TEXT and not an
+object**, and that is a second trap on the same member: an object in that slot answers the same `applied` and renders
+`style="{"height":"120px"}"` under this shim, while in a real Electron DOM it writes nothing at all and the attribute is
+left empty (D-203, upstream-owned and recorded rather than patched).
+
+**Why.** `replace` mode carries one value for the whole `css.style` member, so a write that does not restate a declaration
+removes it (D-234, D-240, D-243, D-225).
+
+**Instead.** Put a painted node's static layout on a **class**, or on a **child the paint never touches**, and where a paint
+arm must compose a style it restates **every** part it needs, reading `LAYOUT_ZONE_AXES` rather than declaring a second
+table (§3.3, D-243).
+
+### 8.8 The other writes that succeed and are wrong
+
+Each of these answers `committed` (or `applied`) and leaves a state nobody stated. They are listed together because a fork
+that only reads the refusals walks straight into them:
+
+| The write | The observed answer | What it leaves |
+|---|---|---|
+| `['panes', id]` written whole to change a figure | `{"status":"committed","repaired":false}` | the record replaced: `status`, `collapsed`, `updatedAt`, `index` all gone unless restated (§8.1) |
+| `commitPane('pane-menus', { width: 40 })` | `{"status":"committed"}` | `"width":40` stored — a pane narrower than its own head; the renderer will not floor it (D-280, §7.5) |
+| `['zones','top','size'] = 10` | `{"status":"committed", …}` | `{"id":"top","size":10}` — heads clipped below their boundary (D-280) |
+| `['zones','top','display'] = 'none'` | `{"status":"committed", …}` | `{"id":"top","size":140,"display":"none"}` — a whole-zone hide with no affordance (D-244 §5) |
+| `['tabs','order'] = [...]` written by hand | `{"status":"committed","repaired":true}` | the seat the repair composed, not the array you wrote (§8.2) |
+| `commitPane(id, {width, height})` — both axes | `{"status":"refused","reason":"malformed-geometry"}` | nothing; that one *is* a refusal, and the message names the clause |
+
+**What could not be run, and is therefore not claimed here.** The three MCP endpoints in §8.6/§8.7 were driven through the
+renderer's own runtime (`renderedHtmlResult()`, `markdown()`, `applyCommand()`) under the layout-less DOM shim — the same
+`renderedHtml()` code path a live renderer serves, but **not** a spawned app, so `provident.dispatch`'s refusal is the
+runtime's own `{"status":"rejected"}` and not the MCP tool's envelope. A live renderer's painted geometry, the pill's
+pixels and the drag's felt behaviour are §7's rows and their owners' measurements (D-244, D-249, D-261, D-272, D-280,
+D-284, D-285), restated and cited rather than re-derived (D-178).
+
+---
+
+## 9. What a fork must NOT copy
 
 - **The demo's landing content.** The `h1` and the four content cards inside the authored landing page are demo
   content, not a layout contract; `tabs-landing-page` is a page node the tab record points at, nothing more.
@@ -570,7 +933,7 @@ whole `14px` lane even though the paint shrank (D-284).
 
 ---
 
-## 9. "You provide this" — the fork's own half
+## 10. "You provide this" — the fork's own half
 
 | The component supplies | You supply |
 |---|---|
@@ -584,7 +947,7 @@ whole `14px` lane even though the paint shrank (D-284).
 
 ---
 
-## 10. How the examples in this guide were checked
+## 11. How the examples in this guide were checked
 
 Every code block above was checked against `src/shared/view-shape.ts`'s types and the envelope's actual node shape,
 and most of them were also **run**, against this tree, at this head:
@@ -600,8 +963,19 @@ and most of them were also **run**, against this tree, at this head:
 | §6.1 the new-tab leaf write | **run**: both through the module's `commit` and as a **raw leaf write** at `['tabs', id]` — `order` gained the id, the landing row went `active: false`, exactly one row reads active, and a missing `label` was repaired to `'untitled'` |
 | §6.2 the minted row datum | **read**: `driveTabsRows`' datum literal and its own measured notes (`label` first, `props` last, no `keyField`) |
 | §7.1/§7.2 the two collapse leaf writes | **run**: `['panes', id, 'collapsed'] = true` at `file` and `['zones', id, 'collapsed'] = false` at `mem` are both admitted and carried by `read()`; a non-boolean and an undeclared zone id are both refused. `zoneCollapsedOf`'s arms were run: empty ⇒ collapsed, occupied ⇒ expanded, a stated word wins, an undeclared id answers expanded |
+| §8.1 the two `updatedAt` clearing attempts | **run**: a real storeroom + `createViewRecord` + `createDataSurface` — `undefined` at the leaf refused `value-not-admitted` with the boundary's own sentence, the delete at that leaf refused `ConstraintPassRefused` with the pane parse's sentence, the stamp still carried after both; the whole-record write committed and the member gone; `store.delete(['panes'])` answered its delete record and `panes-must-stand` re-minted the placeholder |
+| §8.2 a tab row's `index` | **run**: the raw leaf write committed and the profile's bytes carry `"index":3` while `tabs.read()` returns no `index`; `tabs.commit` with an `index` dropped it before the write (the stored row has none); the hand-written `['tabs','order']` answered `repaired:true` with the seat appended back; the PANE's `index` leaf committed and read back, and `1.5` was refused |
+| §8.3 `viewTabsPlaceholder` | **run**: esbuild's `No matching export in "src/main/view-record/index.ts" for import "viewTabsPlaceholder"` and node's link `SyntaxError: … does not provide an export named 'viewTabsPlaceholder'`; both modules' export names filtered for `/[Pp]laceholder/` answer only the view record's three |
+| §8.4 the undeclared pane and zone | **run**: the four answers quoted, plus a family write and a `zone` member naming an undeclared id (both `ConstraintPassRefused` with the pane/zone sentence) |
+| §8.5 the status-only `commitPane` | **run**: `{"status":"committed"}` and `read()` unchanged; `{ size: 40 }` the same; the lawful leaf write beside it committed and was carried |
+| §8.6 hand-written DOM | **run under the layout-less DOM shim** through `Runtime.applyCommand`/`renderedHtmlResult()`/`markdown()`: the hand-written id answers `{"status":"rejected"}`, the markdown omits it, the rendered fragment carries it when it was appended under the mount and omits it outside; **not run against a spawned app** |
+| §8.7 the `css.style` replace | **run under the same shim**: `{"status":"applied","dirtied":["node-2"]}` and the authored `overflow-x: auto` gone from the fragment; the object spelling's `style="{"height":"120px"}"` measured here, its live-DOM "writes nothing" arm is D-203's |
+| §8.8 the writes that commit but are wrong | **run**: each answer in that table is a measured one, from the same scratch profile |
 | §7's behaviours | **run** where a predicate answers (zone collapse's arms, the status derivation) and **read** where the behaviour is a gesture or a paint (relocation, the preview band, the pill) — a gesture's felt behaviour is not verifiable from this tree (D-178) |
 
 **What was not verified.** Anything that needs the running app: the drag gestures, the painted geometry, the pill's
 pixels, the rotated lane and the hit-scans are the rows' own measurements (D-244, D-249, D-261, D-272, D-284, D-285),
-restated here and cited rather than re-derived. No example in this guide claims a measurement it did not take.
+restated here and cited rather than re-derived. **§8's two shim rows are marked shim rows for the same reason**: they drove
+the renderer's own runtime in node under `src/shared/dom-shim.ts`, so their answers are the runtime's and not a spawned
+app's — the `renderedHtml()` they read is the same `mount.innerHTML` call a live renderer serves, and no row here claims
+the MCP tool envelope for it. No example in this guide claims a measurement it did not take.
