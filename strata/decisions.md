@@ -6324,3 +6324,34 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **THE READINGS.** `npm test` **`2,969 passed / 2 skipped` of `2,971`** over **`147`** files, **ZERO red**; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; **`strata-marks check` exit `0`** (**the marks index scans `tests/**/*.test.ts` only, and a guide is not a gating file — no `index` run was needed**); **`docs/guides/forking.md` declared per-path in `DECLARED_SCOPE` with its reason** (**`docs/guides/` is never a prefix**) **and the `B-1` row green at `3/3`.** **The app remains live on `http://127.0.0.1:3787/mcp`.**
 
 **ITS REGISTER IS `D-71` TO `D-285`** as prose, unchanged and extended by this row only. **This row records a new kind of document outside the layer scopes, a guide whose examples were executed where they could be, three names refused because the corpus does not have them, and a citation count given so the guide can be re-read rather than believed.**
+## D-287 — THE GUIDE'S REFUSALS BECOME A SECTION OF THEIR OWN, **with every answer run and quoted** — and writing it **corrected a claim the first guide had wrong**
+
+**Status:** ACTIVE · **Date:** 2026-11-12 · **Source (user, verbatim):** ***"Clarify the refused behavior in the guide"***
+
+**THE THREE REFUSALS HAD BEEN ONE LINE EACH, AND ONE LINE IS NOT ENOUGH FOR A PERSON ABOUT TO TRY IT.** **The most useful page in a guide is the one that says *you will try this, here is exactly what will happen, and here is what to do*.** **So `§8` exists — «What refuses you, and what commits but is wrong», `8.1`–`8.8`** — **FOUR PARTS EACH, IN ORDER**: **the ATTEMPT a fork would write** (a real snippet), **WHAT ACTUALLY HAPPENS quoted**, **WHY** (one or two sentences, **the row cited**), **and the lawful INSTEAD** (**or "there is none, and here is why the mechanism cannot have one"**). **The old `§8`–`§10` are renumbered `§9`–`§11` with their content unchanged, and all five cross-references are retargeted** — **a renumbering that does not retarget is how a guide starts citing the wrong section.**
+
+**AND IT BUILT THE TABLE THAT MAKES THE SECTION READABLE AT A GLANCE — SEVEN ROWS WITH A REFUSED / COMMITTED-BUT-WRONG COLUMN.**
+
+| attempt | verdict |
+|---|---|
+| `updatedAt` leaf-clear | **REFUSED** |
+| a tab row's `index` | **COMMITTED-BUT-WRONG** |
+| `viewTabsPlaceholder` | **REFUSED** |
+| status-only `commitPane` | **COMMITTED-BUT-WRONG** |
+| an undeclared pane or zone | **REFUSED** |
+| hand-written DOM | **REFUSED at `dispatch` · SILENT at `get_markdown` · LEAKED into `get_rendered_html`** |
+| a `css.style` write | **COMMITTED-BUT-WRONG** |
+
+**THE QUOTES ARE OBSERVED RATHER THAN RECALLED, WHICH IS THE WHOLE POINT OF THE REVISION.** **The `updatedAt` write answers `refused` with `reason: value-not-admitted`** and a sentence saying **`undefined` is not a value the crossing admits, and that it carries strings, booleans, finite numbers, plain objects and arrays.** **The delete answers `refused` with `store-refused`/`ConstraintPassRefused`** and a pane-geometry sentence **naming an `updatedAt` that is not a string.** **And `viewTabsPlaceholder` answers at BOTH layers** — **a bundler `No matching export` and a link-time `SyntaxError`** — **which is what a fork will actually see, in the order it will see it.**
+
+**AND THE TAB-ROW `index` IS THE BEST PAIR IN THE SECTION BECAUSE IT IS NOT REFUSED AT ALL.** **The write reports `committed`** — **and THE PROFILE CARRIES `index: 3` WHILE `read()` RETURNS NO `index`**, **because `tabs.commit` drops it before the write.** **WHILE A PANE'S `index` IS COMMITTED AND READ BACK.** **So THE SAME MEMBER NAME IS A REAL MEMBER IN ONE FAMILY AND A DEAD ONE IN THE OTHER** — **a fork would not guess which, and a one-line refusal list could never have said it.** **That is the difference between documenting a refusal and documenting a SHAPE.**
+
+**AND THE REVISION CORRECTED THE FIRST GUIDE, WHICH IS THE BEST EVIDENCE IT WAS WRITTEN AGAINST THE MECHANISM RATHER THAN DEFENDED.** **`§0` AND `§3.2` HAD SAID HAND-WRITTEN DOM IS INVISIBLE TO `get_rendered_html`.** **IT IS NOT: that endpoint returns THE MOUNT'S `innerHTML`**, **so DOM appended UNDER the mount DOES appear in it** — **measured, and corrected in place** — **while the stronger claims that DO hold are kept** (**refused at `dispatch`, silent at `get_markdown`**) **and the LEAK is stated instead of the tidy version.** **A guide that had kept the stronger claim would have been confidently wrong about the one thing a fork might test first.**
+
+**AND THE TRAPS THAT COMMIT BUT ARE WRONG ARE LISTED BESIDE THE REFUSALS, BECAUSE A FORK THAT ONLY READS REFUSALS WILL WALK INTO THE SUCCESSES**: **a whole-pane write that drops `status`/`collapsed`/`updatedAt`/`index`**, **`commitPane('pane-menus', { width: 40 })`**, **`['zones','top','size'] = 10`**, **`['zones','top','display'] = 'none'`**, **a hand-written `['tabs','order']`** (**`repaired: true`, repaired into the repair's own seat**), **and a `css.style` replace that deletes the authored `overflow-x: auto`** — **every one of them a `committed` that is worse than a refusal.**
+
+**THE PROBE LOG IS A FILE, NOT A MEMORY**: **`93` labelled answers** with **the six probe sources beside it** — **so the quotes in the guide can be checked against the report that produced them.** **And what could not be run is SAID**: **the three MCP endpoints were driven through the renderer's own runtime under the layout-less DOM shim, NOT a spawned app**, **and live painted geometry, gestures and the pill remain their own rows' measurements** — **`§8` and `§11` both say so.**
+
+**THE READINGS.** `npm test` **`2,969 passed / 2 skipped` of `2,971`** over **`147`** files, **ZERO red**; `typecheck` **0**; `typecheck:tests` **0**; `build` **0**; **`strata-marks check` exit `0`**; **one file: `docs/guides/forking.md`.** **The app remains live on `http://127.0.0.1:3787/mcp`.**
+
+**ITS REGISTER IS `D-71` TO `D-286`** as prose, unchanged and extended by this row only. **This row records a refusal list turned into a shape document, a member name that is real in one family and dead in another, a claim corrected by measurement in the act of clarifying it, and traps listed beside refusals because a fork reads one column and walks into the other.**
