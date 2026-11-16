@@ -6396,3 +6396,15 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **WHAT THIS ROW DOES NOT DO.** `DLV-2`'s clause 4 — an exported helper minting a family's entries, roots and declarations from one object — is **explicitly optional in the request and is a mechanism**, so it belongs in a unit or not at all (`D-3`); nothing here takes it. `D-288` is read as the pass it was, neither reworded nor superseded in substance (`D-46`).
 
 **ITS REGISTER IS `D-71` TO `D-288`** as prose, unchanged and extended by this row only. **This row records an incomplete pass caught by auditing a document against the request it claimed to answer, and the four contracts that were named, missing, and are now stated.**
+
+## D-290 — `§8.3` NOW SENDS A FORK WITH A PLACEHOLDER OF ITS OWN TO `§2.5`, because the refusal is about THIS app's names and a new family's placeholder is a different question
+
+**Status:** ACTIVE · **Date:** 2026-11-16 · **Source (user, verbatim):** *"make the 8.3 edit"* — the cross-reference this seat had named as omitted in `D-289`'s report rather than slipped into it.
+
+**THE GAP IT CLOSES, AND WHY IT WAS A GAP.** `DLV-2`'s own filing said *"`forking.md` `§8.3` answers the wrong question"*: that section refuses `viewTabsPlaceholder` correctly and then tells a fork with a placeholder of its own only *"authors it — that is `§6.1`'s write"*, which is a **tab row's** write and not a family's creation repair. `D-288`/`D-289` landed the answer in `§2.5` and did not connect it, so a reader who arrives by the refusal — the way a fork actually arrives — still stops at the wrong page.
+
+**WHAT LANDED: one paragraph, `docs/guides/forking.md` only, no source, no test, no signature.** It states that all three `view…Placeholder` names belong to this app's view record, that a family of your own mints its placeholder **inside its own creation repair**, and it points at `§2.5` for what that repair must guarantee — carrying `D-233`'s measured consequence, that a placeholder stating no figure leaves a cold profile whose paint has nothing to paint.
+
+**THE READINGS** (taken after the commit): `npm test` **`2,969 passed / 2 skipped` of `2,971` over `147` files, ZERO red** — unmoved again; `typecheck` **`0`**; `typecheck:tests` **`0`**; `build` **`0`**; `strata-marks check` **exit `0`**; `strata-lint`'s three reds unchanged and none in this pass's files.
+
+**ITS REGISTER IS `D-71` TO `D-289`** as prose, unchanged and extended by this row only. **This row records a cross-reference taken as its own landing rather than folded into the row before it, because a reader arriving by a refusal is the reader the sentence exists for.**

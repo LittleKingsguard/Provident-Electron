@@ -885,6 +885,11 @@ import { TABS_LANDING_ENTRY_ID } from '../../shared/tabs-landing.js'   // 'landi
 
 A fork that wants a placeholder row of its own **authors it** — that is §6.1's write, and it is the fork's half.
 
+**And a placeholder for a family of your own is `§2.5`'s subject, not this section's.** All three names above belong to
+*this* app's view record; a family you add mints its placeholder inside its own creation repair, and `§2.5` states what
+that repair must guarantee — including the rule `D-233` measured, that a placeholder stating no figure leaves a cold
+profile whose paint has nothing to paint.
+
 ### 8.4 An undeclared pane or zone reference
 
 **The attempt.** The pane you added to the envelope, named in the record:
