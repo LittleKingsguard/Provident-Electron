@@ -26,3 +26,5 @@
 **What the pass leaves standing.** All three items are real work; none survives as written. Finding 3 moves DLV-1's subject one layer from the surface it names and finding 2 shows a route already open, so its scope is the bridge and the client, not one signature. Finding 10 and 11 narrow DLV-2 from "undocumented" to documented-only-where-a-fork-will-not-look, while findings 12 and 15 leave its ask intact and its home existing. Finding 16 makes DLV-3's mechanism claim false and its ask a fork-facing channel pattern, whose precedent is D-286's guide and whose invariant owner is D-82 clause 4.
 
 **Not established here:** what any of the three should become — a unit, a doc re-grain, a refusal — is the user's ruling and no layer's (D-1, D-5). No leg was run: this is an intake reading, and `brief.md` §6's counts are unmoved by it (D-26).
+
+**Disposition, recorded 2026-11-16:** the user ruled documentation rather than mechanism, and `D-288` lands `docs/guides/forking.md` §2.5 and §3.4 from findings 2, 10-12, 15-17 — with the probe's answers — while `DLV-1`'s bridge ask stays the user's and is taken by nothing here.

@@ -200,7 +200,8 @@ same list**: this crossing publishes **four** roots and declares **three**, the 
 invariant holds and no repair supplies (D-145, D-101).
 
 - omit the **declaration**, and your family has no repair — nothing mints its creation value, and an absent family stays
-  absent;
+  absent. **That omission is lawful only when no invariant holds your family**: `['drag']` is the precedent, and its
+  absence is the product rather than a gap (D-145, D-132);
 - omit the **root**, and two things stop: `data`'s guard cannot refuse a second version of your address at another tier
   (`src/main/data/types.ts:180-212`, D-101), and — the sentence that matters — *"a root the array omits is a write the
   renderer NEVER HEARS"* (`src/main/view-record/index.ts:1391`, D-137).
@@ -262,6 +263,10 @@ Three lawful routes, and nothing else:
   rendered value, and how an authored control's live body is installed over the authored no-op (D-209, D-239).
 - **A `rows-mint`** for a *family of rows* minted into an authored placement node — the tab chips' mechanism (D-179,
   D-182, D-201).
+
+**A source the app does not own is not a fourth route.** Data in your own database, file or peer reaches the screen
+through the **same three**: what you add is a change signal and a re-read, and the paint stays the second route above —
+§3.4 states the shape this tree already uses for it.
 
 ```ts
 // A LIVE pane-content write, with the two failures REPORTED rather than swallowed (D-117's register)
@@ -326,9 +331,9 @@ re-read**, in that order:
 
 **Copy the pattern this tree already uses rather than inventing one.** Three deliveries for something that is not the
 record are already here, and each is the shape to imitate: `IPC_MODULE_CHANGED` with `src/renderer/module-client.ts`'s
-shape; `IPC_SECURITY_CHANGED` with `src/renderer/security-client.ts`; and the app-state rows behind `settings-surface`'s
-`onAppStateDelivery` (`src/main/settings-surface/index.ts:186`) — *"called INSIDE the instance's delivery body and never at
-a call site, a poll or a boot-order re-read"*. **Every channel is a closed literal**, not a registration: a constant in a
+shape; `IPC_SECURITY_CHANGED` with `src/renderer/security-client.ts`; and the app-state rows behind the
+`onAppStateDelivery` callback (`src/main/settings-surface/index.ts:109-113`, raised at `:186`) — *"called INSIDE the
+instance's delivery body and never at a call site, a poll or a boot-order re-read"*. **Every channel is a closed literal**, not a registration: a constant in a
 shared channels module (`src/shared/view-channels.ts`, `src/shared/tabs-channels.ts`), a member of the preload's
 `ProvidentBridge`, and the renderer's `declare global` half — with the two halves compared **literally** by a gating row,
 so a half-edit reds with both texts in hand (`tests/integration/store-view-record/crossing.test.ts:890-903`). **Adding
