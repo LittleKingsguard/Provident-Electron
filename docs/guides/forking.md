@@ -65,6 +65,9 @@ D-97, D-98, D-145):
 
 The view record's four families are read by **one** channel (`IPC_VIEW_READ`) and written by one route per act
 (`src/shared/view-channels.ts`); the tab record has its own three-and-a-push set (`src/shared/tabs-channels.ts`).
+**A family of your own — its address, the two lists it belongs in, the delivery it rides and what each half of that
+delivery is handed — is §2.5. A change source that is NOT the record is §3.4**, and both are written from what this
+tree already does rather than from a proposed extension.
 
 ---
 
@@ -182,6 +185,68 @@ id, precisely so that a swap cannot hide inside a sum (D-269 §7, D-270, D-271).
 will re-take that literal (and every `AL-*`/`PM-*` row that names this app's ids) the first time you change the
 envelope, and a red there is your figure moving, not a defect (D-26, D-43).
 
+### 2.5 A record family of your own
+
+**The mechanism exists and no page said where it is, so this section is the state rather than a proposal.** A family is
+an **address**, a **tier**, an **entry** the delivery carries and — where an invariant holds it — a **constraint
+declaration** that repairs. Every one of those is a separate export you spread, not a factory you call: the view record
+exports `viewConstraintDeclarations` (`src/main/view-record/index.ts:1292`), `viewDeclaredRoots` (`:1334`) and
+`createViewDelivery` (`:1439`), and the app's own boot is the only place they meet (`D-219`).
+
+**The two lists, and the different price of each omission.** Both are the **caller's** — `constraints` and `listeners`
+are options of `createProfileStore` (`src/main/storeroom.ts:101`, `:119-120`) — and the one construction spreads the two
+families' halves into them (`src/main/main.ts:437`, `:452`). **A family of yours belongs in both, and they are not the
+same list**: this crossing publishes **four** roots and declares **three**, the fourth being `['drag']`, which no
+invariant holds and no repair supplies (D-145, D-101).
+
+- omit the **declaration**, and your family has no repair — nothing mints its creation value, and an absent family stays
+  absent;
+- omit the **root**, and two things stop: `data`'s guard cannot refuse a second version of your address at another tier
+  (`src/main/data/types.ts:180-212`, D-101), and — the sentence that matters — *"a root the array omits is a write the
+  renderer NEVER HEARS"* (`src/main/view-record/index.ts:1391`, D-137).
+
+The count is asserted rather than promised: `tests/integration/central-data/declared-root.test.ts` pins the union root
+for root, so a family in one list and not the other is a red rather than a surprise (D-26, D-43).
+
+**The entry, and the two guarantees its body owes.** An element is `{ address, handle, listener }` with the **third
+required**; a two-member element is refused `AddressMalformed` before any filesystem act (D-219). The body **writes
+nothing** — a write opens a commit inside the commit that fired it — and **contains its own throw**, because at a
+registration instant an uncontained one refuses the construction, which is this app's fatal arm (D-124, D-105).
+
+**What each half of the delivery is handed, measured rather than described.** Four facts a subscription model needs,
+taken off the probe in §11:
+
+| Question | The measured answer |
+|---|---|
+| what the **sink** gets | **the triggering address**, and it is usually a **leaf**: `["panes","pane-a","collapsed"]`, `["zones","top","collapsed"]`, `["panes","pane-a","status"]`. Route on `address[0]` or a prefix — **never** on equality with one of the four root literals (`crossing.test.ts:508-518` asserts by prefix for the same reason) |
+| what a **subscriber** gets | **nothing**: a rest-parameter handler and a zero-parameter handler were both called at arity `0`, on every delivery |
+| in what **order** | **fan-out first, then the sink**, on every delivery — one event with two readings, never two code paths (`D-92`) |
+| a subscriber that **throws** | already contained at the fan-out: the delivery happened and the standing siblings were still served (`D-105`) |
+
+**And the address does not cross the bridge.** The push is arity-zero (`src/main/main.ts:278`), the preload's
+`onChanged(handler: () => void)` hands its handler nothing (`src/main/preload.ts:401-407`), and the client hands **a
+whole reading** (`src/renderer/view-client.ts:214`, `:674-677`) — the rule as the shared types state it: *"the address
+and the value stay on the main side and the renderer's listener answers with its own re-read"* (`src/shared/types.ts:354`).
+**So a renderer consumer's unit of work is a re-read and a repaint**, and a family-scoped consumer in the renderer
+filters on what it read, never on what it was handed.
+
+**If you want per-family routing, take the sink — that is the expected use.** The sink is the caller's
+(`createViewDelivery(sink)` is exported, `:1439`), this app's own sink already routes on the address it is handed
+(`src/main/main.ts:308`), and it is the only half of the delivery an address reaches (D-92).
+
+**The pre-window hold — the one delivery a bare `webContents.send` loses.** A delivery fires **at the construction**,
+before any `BrowserWindow` exists: measured, the creation's repairs delivered `['panes']`, `['zones']` and `['theme']` with
+no window and no subscriber registered. A send there is discarded, so each channel holds and flushes:
+`createDeliveryQueue` (`src/main/main.ts:173-197`) and the secure crossing's `createPendingChange` (`:230-251`), armed at
+the renderer's `IPC_READY` (`:1002-1016`, D-218, D-219). **A channel added without a hold loses exactly one delivery —
+its first** — and the defect is recorded where it was fixed: *"the empty array this line replaces was the whole defect"*
+(`:438-443`).
+
+**And the seam constructs no instance.** `store` and `declaredRoots` are required and their fallback was deleted, because
+a surface that can build a store is a surface one caller away from a second one (D-80, D-101) — so your family's wiring
+lives **beside the boot**, in the one construction, and never inside a surface. **You provide** the family: its address,
+its tier, its declaration, its placeholder and its channel.
+
 ---
 
 ## 3. Dynamic pane content
@@ -246,6 +311,43 @@ painted node is gone the moment a paint touches it**. This is not a quirk; it is
 
 **So for a fork:** put a painted node's *static* layout on **a class, or on a child the paint never touches**. Never
 on the painted node's inline `css.style`.
+
+### 3.4 When your data is not the record
+
+**§3.1's three routes say how a rendered value changes, and none of them is a place to keep your data.** A pane whose
+data lives in a database, a file or an HTTP peer keeps it there; what the app needs from you is **a signal and a
+re-read**, in that order:
+
+1. **your source** decides something changed;
+2. **your channel** announces it — a push carrying **no value and no address**: nothing about your data crosses the
+   bridge, because the push is a signal and the realm's answer is its own read (§2.5, D-92);
+3. **your renderer consumer** re-reads your source and **paints through §3.1's second route**, a `state-slice` on the
+   node. That step is not optional: a value painted by hand is invisible to `dispatch` and `get_markdown` (§3.2, D-231).
+
+**Copy the pattern this tree already uses rather than inventing one.** Three deliveries for something that is not the
+record are already here, and each is the shape to imitate: `IPC_MODULE_CHANGED` with `src/renderer/module-client.ts`'s
+shape; `IPC_SECURITY_CHANGED` with `src/renderer/security-client.ts`; and the app-state rows behind `settings-surface`'s
+`onAppStateDelivery` (`src/main/settings-surface/index.ts:186`) — *"called INSIDE the instance's delivery body and never at
+a call site, a poll or a boot-order re-read"*. **Every channel is a closed literal**, not a registration: a constant in a
+shared channels module (`src/shared/view-channels.ts`, `src/shared/tabs-channels.ts`), a member of the preload's
+`ProvidentBridge`, and the renderer's `declare global` half — with the two halves compared **literally** by a gating row,
+so a half-edit reds with both texts in hand (`tests/integration/store-view-record/crossing.test.ts:890-903`). **Adding
+one touches four places**: the shared constant, the preload member, the renderer's declared half, and your client's
+`subscribe` + `fill`.
+
+**The invariants travel with the source, and they are the same four.** The listener body writes nothing and contains its
+own throw (D-105, D-124); the push carries a signal and never a value (D-82 clause 2); the consumer's only correct answer
+is a re-read; and **no timer, no poll, no retry** (D-82 clause 4).
+
+**The test that keeps it from becoming a second store** is the client's own header: *"The provident-ssr graph is not a
+store. It is a rendering engine. Do not refer to it as a store. Do not use it as one. It controls the render and the data
+shape is driven by the listener events"* (`src/renderer/view-client.ts:4-5`). Applied to your source: it holds **no
+address space, no persistence, no constraint and no journal**. A source that passes that sentence's test is a delivery
+source; one that fails it is a store wearing a channel.
+
+**The one instant it cannot promise** is §2.5's pre-window hold: there is no construction to adopt your entries, so
+**your source states its own ready/flush moment**, and what a consumer may assume before it. **You provide** the source,
+its addresses, that moment, and the re-read.
 
 ---
 
@@ -944,6 +1046,8 @@ D-284, D-285), restated and cited rather than re-derived (D-178).
 | `DECLARED_PANE_IDS`, `DECLARED_ZONE_IDS`, the drop operands, the three node maps | **your ids**, declared where the record can see them (§2.4) |
 | a census instrument and the shape of its terms | **your census figures** (§2.4) |
 | the four families, their tiers and their routes | **your pane names** (`props.name`), your menu, your theme control |
+| a delivery with two halves — entries and a sink — and a construction that adopts the entries (§2.5) | **your family**: its address, its tier, its declaration, its placeholder, and the routing in your own sink |
+| the channel pattern, the lockstep rule and the four invariants (§3.4) | **your source**, its addresses, its ready/flush moment, and its re-read |
 
 ---
 
@@ -971,6 +1075,10 @@ and most of them were also **run**, against this tree, at this head:
 | §8.6 hand-written DOM | **run under the layout-less DOM shim** through `Runtime.applyCommand`/`renderedHtmlResult()`/`markdown()`: the hand-written id answers `{"status":"rejected"}`, the markdown omits it, the rendered fragment carries it when it was appended under the mount and omits it outside; **not run against a spawned app** |
 | §8.7 the `css.style` replace | **run under the same shim**: `{"status":"applied","dirtied":["node-2"]}` and the authored `overflow-x: auto` gone from the fragment; the object spelling's `style="{"height":"120px"}"` measured here, its live-DOM "writes nothing" arm is D-203's |
 | §8.8 the writes that commit but are wrong | **run**: each answer in that table is a measured one, from the same scratch profile |
+| §2.5 the delivery's contract — sink address, subscriber arity, order, containment | **run**: a real `provident-storeroom` + `createViewDelivery` + `createViewRecord` over a scratch profile — the sink was handed `["panes","pane-a","collapsed"]`, `["zones","top","collapsed"]` and `["panes","pane-a","status"]` (the **leaf**, never the root) while a rest-parameter subscriber and a zero-parameter subscriber were both called at arity `0`; the order was `handler` then `sink` on every delivery; and a subscriber that threw left its siblings served |
+| §2.5 the creation's pre-window deliveries | **run**: the same probe — the construction's repairs delivered `['panes']`, `['zones']` and `['theme']` before any window existed and with no subscriber registered |
+| §2.5 the two lists and the price of each omission | **read** + the row that owns the count: `src/main/main.ts:437`, `:452`, `src/main/storeroom.ts:101`, `:119-120`, and `tests/integration/central-data/declared-root.test.ts`'s union equality |
+| §3.4 the channel pattern and the lockstep rule | **read**: the three clients' headers, `src/main/preload.ts`'s bridge literal, and `crossing.test.ts:890-903`'s lockstep row |
 | §7's behaviours | **run** where a predicate answers (zone collapse's arms, the status derivation) and **read** where the behaviour is a gesture or a paint (relocation, the preview band, the pill) — a gesture's felt behaviour is not verifiable from this tree (D-178) |
 
 **What was not verified.** Anything that needs the running app: the drag gestures, the painted geometry, the pill's
@@ -978,4 +1086,7 @@ pixels, the rotated lane and the hit-scans are the rows' own measurements (D-244
 restated here and cited rather than re-derived. **§8's two shim rows are marked shim rows for the same reason**: they drove
 the renderer's own runtime in node under `src/shared/dom-shim.ts`, so their answers are the runtime's and not a spawned
 app's — the `renderedHtml()` they read is the same `mount.innerHTML` call a live renderer serves, and no row here claims
-the MCP tool envelope for it. No example in this guide claims a measurement it did not take.
+the MCP tool envelope for it. **§2.5's two run rows are main-process rows and say so**: they drove a real store in node
+with no window and no Electron, which is exactly why the pre-window hold's **flush** is not among them — the arming
+instant is D-218/D-219's measurement and the boot battery's, cited here rather than re-taken. No example in this guide
+claims a measurement it did not take.
