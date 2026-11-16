@@ -193,6 +193,21 @@ declaration** that repairs. Every one of those is a separate export you spread, 
 exports `viewConstraintDeclarations` (`src/main/view-record/index.ts:1292`), `viewDeclaredRoots` (`:1334`) and
 `createViewDelivery` (`:1439`), and the app's own boot is the only place they meet (`D-219`).
 
+**The tier is a declaration, and one of them is decided before your code runs.** Each family states its own tier in
+`viewDeclaredRoots()` — `file` persists, `mem` lives in the register, `temp` persists nowhere — and the guard refuses a
+write at your address that names a different tier (`declared-tier`, D-101). **The register's own tier is fixed at
+creation**: a store built with no `filePath` can never reach `file`, so a `file` family needs that path supplied at the
+one construction (`src/main/storeroom.ts`'s `ProfileStoreOptions.filePath` note, D-91).
+
+**The value admission: refuse the member, never coerce it.** A family's judge is the same parse its read uses
+(`paneOf`, `src/main/view-record/index.ts:576`), and it judges a member **only where it is stated, refusing it
+otherwise**: `index` refuses `1.5`, `-1`, `'2'` and `null` rather than rounding or coercing; `collapsed` refuses a
+non-boolean, because `0`/`''` would make a pane's state a truthiness question the module never states; `status` names one
+of the closed three or is refused by name. **An absent member is lawful and means something** — absent `index` is the
+family's own order, absent `collapsed` is expanded, absent `status` is no indicator (§2.2). **This is not strictness for
+its own sake**: a value that stands and names a member the parse cannot state is refused **with no repair**, because the
+read would drop that member and answer the default while `source` still said `'record'` (D-105).
+
 **The two lists, and the different price of each omission.** Both are the **caller's** — `constraints` and `listeners`
 are options of `createProfileStore` (`src/main/storeroom.ts:101`, `:119-120`) — and the one construction spreads the two
 families' halves into them (`src/main/main.ts:437`, `:452`). **A family of yours belongs in both, and they are not the
@@ -214,6 +229,21 @@ required**; a two-member element is refused `AddressMalformed` before any filesy
 nothing** — a write opens a commit inside the commit that fired it — and **contains its own throw**, because at a
 registration instant an uncontained one refuses the construction, which is this app's fatal arm (D-124, D-105).
 
+**The declaration, its id, and what it actually repairs.** Three ids stand in ONE namespace with the tab record's batch
+(`src/main/main.ts:435`): `panes-must-stand`, `zones-must-stand` and `theme-must-stand`
+(`src/main/view-record/index.ts:119`, `:163`, `:166`). Each has **two arms, and they answer differently**: at the
+family's **root**, an absent or unusable family is **repaired with the module's own placeholder**; a value that
+**stands** and names a member the parse cannot state is **refused, with no repair** (D-105). The body judges
+`context.value` and **never reaches for the instance**, because at the construction the boot's holder is not yet
+assigned — the one instant that body is the only actor there is (`D-219`).
+
+**And the placeholder must state what the paint needs.** Each family's default belongs to the module that owns it and is
+never invented at the repair: panes repair to `defaultPaneGeometry()`, zones to `DEFAULT_ZONE_SIZES`
+(`src/shared/view-shape.ts`), and the appearance family's resolution is its repair's own product (D-97, D-98). **The
+measured lesson is D-233's**: a repair and a placeholder that both wrote a *memberless* record left a cold profile with
+four zones and no fixed dimension, because the paint writes a zone's axis only from `['zones', id, 'size']` and invents
+no fallback.
+
 **What each half of the delivery is handed, measured rather than described.** Four facts a subscription model needs,
 taken off the probe in §11:
 
@@ -229,7 +259,9 @@ taken off the probe in §11:
 whole reading** (`src/renderer/view-client.ts:214`, `:674-677`) — the rule as the shared types state it: *"the address
 and the value stay on the main side and the renderer's listener answers with its own re-read"* (`src/shared/types.ts:354`).
 **So a renderer consumer's unit of work is a re-read and a repaint**, and a family-scoped consumer in the renderer
-filters on what it read, never on what it was handed.
+filters on what it read, never on what it was handed. **The shape is the client's and the next delivery replaces it** —
+`reading()`/`fill()` and the `paneGeometryOf`-style accessors serve the shape the client holds, so a consumer that keeps
+its own copy of a value is a cache the design forbids (D-92).
 
 **If you want per-family routing, take the sink — that is the expected use.** The sink is the caller's
 (`createViewDelivery(sink)` is exported, `:1439`), this app's own sink already routes on the address it is handed
@@ -247,6 +279,13 @@ its first** — and the defect is recorded where it was fixed: *"the empty array
 a surface that can build a store is a surface one caller away from a second one (D-80, D-101) — so your family's wiring
 lives **beside the boot**, in the one construction, and never inside a surface. **You provide** the family: its address,
 its tier, its declaration, its placeholder and its channel.
+
+**Five checks that say a new family is wired**, from this section alone and before anything else is trusted: (1) a write
+at its address commits, and a leaf write under it is **delivered**; (2) a member the parse cannot state is **refused**,
+and the sentence names your family's vocabulary rather than another's; (3) its **creation repair delivers** on a scratch
+profile with no act at all — §11's probe is that reading for the families that stand; (4) its root is listed in **both**
+lists, which `declared-root.test.ts`'s equality row asserts for the crossings; (5) a channel added for it **loses no
+delivery across a boot**, which needs the hold above and not a bare `send`.
 
 ---
 
@@ -328,6 +367,11 @@ re-read**, in that order:
    bridge, because the push is a signal and the realm's answer is its own read (§2.5, D-92);
 3. **your renderer consumer** re-reads your source and **paints through §3.1's second route**, a `state-slice` on the
    node. That step is not optional: a value painted by hand is invisible to `dispatch` and `get_markdown` (§3.2, D-231).
+
+**The two halves are yours to supply.** A source declares the addresses it will announce, mints
+`{address, handle, listener}`-shaped entries against them where it binds a record, and **calls its own sink** — the same
+two halves `createViewDelivery` has (`src/main/view-record/index.ts:1439-1479`). **There is no construction to adopt
+those entries**, which is why the ready/flush moment below is yours to state and not the boot's.
 
 **Copy the pattern this tree already uses rather than inventing one.** Three deliveries for something that is not the
 record are already here, and each is the shape to imitate: `IPC_MODULE_CHANGED` with `src/renderer/module-client.ts`'s
@@ -1082,6 +1126,8 @@ and most of them were also **run**, against this tree, at this head:
 | §8.8 the writes that commit but are wrong | **run**: each answer in that table is a measured one, from the same scratch profile |
 | §2.5 the delivery's contract — sink address, subscriber arity, order, containment | **run**: a real `provident-storeroom` + `createViewDelivery` + `createViewRecord` over a scratch profile — the sink was handed `["panes","pane-a","collapsed"]`, `["zones","top","collapsed"]` and `["panes","pane-a","status"]` (the **leaf**, never the root) while a rest-parameter subscriber and a zero-parameter subscriber were both called at arity `0`; the order was `handler` then `sink` on every delivery; and a subscriber that threw left its siblings served |
 | §2.5 the creation's pre-window deliveries | **run**: the same probe — the construction's repairs delivered `['panes']`, `['zones']` and `['theme']` before any window existed and with no subscriber registered |
+| §2.5 the value admission, the declaration ids and the placeholders | **read**: `paneOf`'s member-by-member refusals (`src/main/view-record/index.ts:576-600`), `panesMustStand`/`zonesMustStand`'s two arms (`:1014-1110`), the three id constants (`:119`, `:163`, `:166`) and the defaults in `src/shared/view-shape.ts`; the `1.5` refusal itself is §8.2's **run** row |
+| §3.4 the source's two halves | **read**: `createViewDelivery`'s entries-and-sink pair (`src/main/view-record/index.ts:1439-1479`) |
 | §2.5 the two lists and the price of each omission | **read** + the row that owns the count: `src/main/main.ts:437`, `:452`, `src/main/storeroom.ts:101`, `:119-120`, and `tests/integration/central-data/declared-root.test.ts`'s union equality |
 | §3.4 the channel pattern and the lockstep rule | **read**: the three clients' headers, `src/main/preload.ts`'s bridge literal, and `crossing.test.ts:890-903`'s lockstep row |
 | §7's behaviours | **run** where a predicate answers (zone collapse's arms, the status derivation) and **read** where the behaviour is a gesture or a paint (relocation, the preview band, the pill) — a gesture's felt behaviour is not verifiable from this tree (D-178) |
