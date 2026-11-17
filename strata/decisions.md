@@ -1493,42 +1493,17 @@ own address — and returns **the op its write landed**, `{ok: true, op: receipt
 
 ## D-68 — `provident-storeroom` moves to 1.6.2, and the repair's return contract reaches the artifacts it ships
 
-**Status:** ACTIVE · **Date:** 2026-11-01 · **Source:** measurement — the published `1.6.2` installed and read at its own bytes
-this date (its `RELEASE-NOTES.md` §1.6.2, `README.guide.md` §7.6 and §7.2's clause stamped 2026-11-02, `index.d.ts`'s
-`Constraint` docblock), plus a drive of the guide's own example through the published entry.
+**Status:** ACTIVE · **Date:** 2026-11-01 · **Source:** measurement — the published `1.6.2` installed and read at its own bytes this date (`RELEASE-NOTES.md` §1.6.2, `README.guide.md` §7.6 and §7.2's 2026-11-02 clause, `index.d.ts`'s `Constraint` docblock), plus the guide's own example driven through the published entry.
 
-**Decision:** the consumed package is **`provident-storeroom ^1.6.2`**, up from `^1.6.1`, and every in-repo pin of the
-reviewed version moves with it — `package.json` and `package-lock.json`, `tests/storeroom-surface.test.ts`'s `S-1.3`,
-`brief.md` §2's pinned row, and the census header in `src/main/storeroom.ts`.
+**Decision:** the consumed package is **`provident-storeroom ^1.6.2`**, up from `^1.6.1`, and every in-repo pin of the reviewed version moves with it — `package.json`, `package-lock.json`, `tests/storeroom-surface.test.ts`'s `S-1.3`, `brief.md` §2's pinned row and the census header in `src/main/storeroom.ts`. **The caret already admitted it and the pin moved anyway**: `^1.6.1` resolved to `1.6.2` the day it published, so the pin is a REVIEWED pin (D-41's site) and not a resolution floor.
 
-- **The caret already admitted it and the pin moved anyway**: `^1.6.1` resolved to `1.6.2` the day it published, so nothing
-  here needed a repo change to receive it — the pin is a **reviewed** pin (D-41's site), not a resolution floor.
-- **The eleven cells moved together, none left behind**: the manifest's `version`, its five exact `optionalDependencies`
-  pins and the five `platforms/*/package.json` versions all read `1.6.2`, and the lock carries all six at `1.6.2`.
-- **What a consumer sees change**, each an item of the package's own `RELEASE-NOTES.md` §1.6.2 change list: a pair whose
-  PARENT does not resolve is **skipped, not asked**; a pair whose parent resolves is applied **even where the parent holds a
-  leaf**; `ConstraintListInvalid` answers the **malformed list alone**; a repair at a **registration instant can write**
-  through a `write` on its own record, taking the store write's first three positions and **no fourth**; the re-run after a
-  repair **always runs**; `value` on a registration record is read **once**; a `rollback`'s judgement reads the same rule.
-  **The one member added is not on the store** — `write` rides the repair's record at that instant — so the store's own census
-  reads **14, unmoved**.
-- **Two costs the release declares rather than leaving to bug reports**: a pair at a deep address no longer guards its
-  ANCESTOR's removal (to guard a container, register AT the container), and a construction refused for a well-formed pair with an absent parent now stands.
-- **What 1.6.2 discharges for this repo is a citation, not a behaviour.** The app's four tab-record pairs stand at `['tabs']`,
-  whose parent is the register and always resolves, and their repairs already name the commit at `write`'s fourth position
-  and answer `{ok: true, op}` — so none of the seven arms moves them, and the suite is unmoved at `3,247` tests.
-- **The repair's `{ok: true, op}` return contract is now documented in the shipped artifacts**: `README.guide.md` §7.6 declares the
-  closed two-arm set with a worked example and §7.2's 2026-11-02 clause declares the registration instant's write route, and
-  `index.d.ts`'s `Constraint` docblock declares both — so **D-67's *"documented nowhere a consumer can read it"* is read through this row.**
-- **So is the "name the commit at `write`'s fourth position" rule** — the guide's example carries it at its own line and the
-  docblock at its own — so D-67's practice is no longer folklore this repo alone holds.
-- **What 1.6.2 does NOT deliver, said so it is not read as done:** `Constraint` is **still** `(context: unknown) => unknown`,
-  so the return is prose in a docblock and not a type a consumer can annotate; and the `produced no op` sentence **still names
-  the attempt's address**, the release naming that a recorded defect row with *"no successor queued"*.
-- **Both halves are measured, not read** (2026-11-01, the installed `1.6.2`): the guide's §7.6 block driven on its own bytes
-  answers `{"opId":"op-3","address":["b"]}` with `read(['a'])` `2`, while the same body returning `undefined` is refused
-  `the repair two-goes-elsewhere produced no op at a` and its own write stands at `b` — `ST-F1` discharged at its evidence,
-  `ST-F2` narrowed to what is still owed (`records/store-tabs-record-unit.md` §1, `pending.md`).
+- **The eleven cells moved together**: the manifest's `version`, its five exact `optionalDependencies` pins and the five `platforms/*/package.json` versions all read `1.6.2`, and the lock carries all six at `1.6.2`.
+- **What a consumer sees change**, each an item of `RELEASE-NOTES.md` §1.6.2: a pair whose PARENT does not resolve is **skipped, not asked**; a pair whose parent resolves is applied **even where the parent holds a leaf**; `ConstraintListInvalid` answers the **malformed list alone**; a repair at a **registration instant can write** through a `write` on its own record, taking the store write's first three positions and **no fourth**; the re-run after a repair **always runs**; `value` on a registration record is read **once**; a `rollback`'s judgement reads the same rule. **The member added is not on the store**, so the store's own census reads **14, unmoved**.
+- **Two costs the release declares rather than leaving to bug reports**: a pair at a deep address no longer guards its ANCESTOR's removal — register AT the container — and a construction refused for a well-formed pair with an absent parent now stands.
+- **What 1.6.2 discharges for this repo is a citation, not a behaviour**: the tab record's four pairs stand at `['tabs']`, whose parent is the register and always resolves, and their repairs already name the commit at `write`'s fourth position and answer `{ok: true, op}` — so none of the seven arms moves them, and the suite is unmoved at `3,247` tests.
+- **The repair's `{ok: true, op}` return contract is now documented in the shipped artifacts** — `README.guide.md` §7.6's closed two-arm set with a worked example, its §7.2 clause of 2026-11-02 declaring the registration instant's write route, and `index.d.ts`'s `Constraint` docblock declaring both — so **D-67's *"documented nowhere a consumer can read it"* is read through this row**; the "name the commit at `write`'s fourth position" rule is too, carried at the guide's own line and the docblock's.
+- **What 1.6.2 does NOT deliver, said so it is not read as done:** `Constraint` is **still** `(context: unknown) => unknown`, so that return is prose in a docblock and not a type a consumer can annotate; and the `produced no op` sentence **still names the attempt's address**, the release recording it as a defect row with *"no successor queued"*.
+- **Both halves are measured, not read** (2026-11-01, the installed `1.6.2`): the guide's §7.6 block driven on its own bytes answers `{"opId":"op-3","address":["b"]}` with `read(['a'])` `2`, while the same body returning `undefined` is refused `the repair two-goes-elsewhere produced no op at a` and its own write stands at `b` — `ST-F1` discharged at its evidence, `ST-F2` narrowed to what is still owed (`records/store-tabs-record-unit.md` §1).
 
 ---
 
@@ -1573,87 +1548,33 @@ invariant of the instance and no longer a side effect of the first commit.** The
 
 ## D-70 — The change push is REGISTERED, `repaired` is DERIVED, and `cursor` is deleted as a member that named nothing
 
-**Status:** ACTIVE · **Date:** 2026-11-01 · **Source:** the user's instruction, verbatim — *"every committed change to the
-record delivers exactly one notification"*, and *"`cursor` … is a member that names nothing in the package that would ever
-supply it"* — plus the measurements below, driven over the installed `provident-storeroom@1.6.2`.
+**Status:** ACTIVE · **Date:** 2026-11-01 · **Source:** the user's instruction, verbatim — *"every committed change to the record delivers exactly one notification"*, and *"`cursor` … is a member that names nothing in the package that would ever supply it"* — plus the measurements below, driven over the installed `provident-storeroom@1.6.2`.
 
-**Decision:** three corrections to the crossing, each measured before it was written, and the third a contract deletion.
+**Decision:** three corrections to the crossing, each measured before it was written, the third a contract deletion.
 
-- **A LISTENER CANNOT BE INSTALLED WHERE A CONSTRAINT'S `id` STANDS**, so the record's change delivery installs at a
-  DESCENDANT address and REGISTERS a body. `subscribe` asked for `['tabs']` — where all five of this module's pairs stand —
-  and the package refused it `AddressMalformed`: *"… the constraint 'tabs-must-stand' stands there, and a listener and a
-  constraint do not share one"*. It installs at `['tabs','order']`, lawful because a trigger is decided by `PREFIX` **or**
-  by `TOUCHED` and the one whole value every act writes carries its `order` seat; and the registration is the package's TWO
-  acts — `listen(handle, addresses)`, then `register(handle, listener)`.
-- **`subscribe` HAD INSTALLED NOTHING AND INVOKED NOTHING, so the push existed in name only.** It passed `handler` to
-  nothing — the parameter's only two occurrences in the file were its declaration and itself — and the `catch` around the
-  refused `listen` answered a withdrawal that withdrew nothing, so every `commit` and `remove` answered `committed` while no
-  subscriber heard one. The battery's counter reads `0` on the revert and `1` per committed change now.
-- **`repaired` IS DERIVED FROM THE STORE AND NEVER PREDICTED, AND `cursor` IS DELETED.** A repair-running commit answered
-  `{"status":"committed"}` — keys `["status"]` — though the interface declares `repaired` and `design.md` §4 promises it: the
-  write's own record carries no member for a repair inside its own commit. So the act holds the record it INTENDED, writes
-  it, and compares it with the record that STANDS — CANONICALLY, member order and absence normalised, because a raw
-  `JSON.stringify` differs on every clean act — answering `repaired: true` only where they differ and OMITTING the member on
-  a clean act. `remove` derives it the same way. **`cursor` was read off the store's write receipt, whose shape is
-  `{op, watched, triggered}`; the package declares no such member, so the name had no source at all.**
-- **`cursor`'s removal is a CONTRACT DELETION, not a design change**: no route, address or census moves, and the member is
-  gone from `TabsRecordAnswer`, from L2 §2's two answer rows, and from the bridge's `commit`/`remove` declarations in
-  lockstep (`preload.ts`, `secure-panels.ts`). `'constraint-repaired'` — a reason token no code produced — goes with it.
-- **Two more measured facts ride in the same fix.** The handle is MINTED PER SUBSCRIPTION: one spelled name made `register`
-  replace the earlier function and `unlisten` withdraw it WHOLE (measured `{first: 0, second: 1}`, unchanged after the first
-  withdrawal). And the body CONTAINS the caller's throw: a listener's throw crosses into the write that fired it, and an
-  uncontained subscriber turned a landed commit into `{"status":"refused","message":"boom-in-subscriber"}`. The body WRITES
-  NOTHING — the renderer re-reads.
-- **Measured, 2026-11-01, over a scratch `filePath` with the batch supplied:** a listener at `['tabs','order']` fires once
-  for a commit of a NEW tab, once for a commit that only UPDATES a label, once for a `remove`, and once for the root
-  `delete` whose `tabs-must-stand` repair re-creates the record inside that same commit; it fires ZERO times for a `mem`
-  write at `['elsewhere']`. **The construction instant is the one arm no listener can hear** — the instance that holds the
-  registry is the one being constructed — measured with a handle adopted by `cfg.listeners`, which delivered nothing there
-  and delivered on the next commit.
-- **A `listen` WITH NO `register` IS A LAWFUL RESERVATION AND HOLDS NOTHING AGAINST A PAIR — ONLY A LIVE LISTENER DOES**: the entry `listen` writes stands in the write's `triggered` list and fires nothing, and it carries no kind — the package's own record calls it *"a reservation, `off: true`, no function"* — so only a LIVE listener blocks a pair's `id`, one whose `off` is cleared and a function installed and whose kind is no constraint's (the package's own `D-24`/`D-25`, whose subject is a live listener). **Measured 2026-11-01 over the packaged `1.7.0`**, one fresh instance per arm: `listen('dup', [['q']])` with no `register`, then `addConstraint({address: ['q'], id: 'dup'})`, **ANSWERED**; the same with `register` before the add **THREW** `AddressMalformed` — *"the listener 'dup' keeps that handle, and a listener and a constraint do not share one handle"* — and threw where the live listener stood at `['x']` and the pair at `['q']`, so the arm reads the HANDLE and not the address; and a listener claiming a carried pair's `id` threw at `listen` and again at `register`. **THE LESSON, because a drive that never called `register` reported the rule as one-directional to the user: measure a REGISTERED listener, never a bare `listen` — a reservation is silent, and this `subscribe` is built on that silence, registering at once and withdrawing the entry where `register` fails.**
+- **A LISTENER CANNOT BE INSTALLED WHERE A CONSTRAINT'S `id` STANDS**, so the record's change delivery installs at a DESCENDANT address and REGISTERS a body. `subscribe` asked for `['tabs']` — where all five pairs stand — and the package refused it `AddressMalformed`: *"… the constraint 'tabs-must-stand' stands there, and a listener and a constraint do not share one"*. It installs at `['tabs','order']`, lawful because a trigger is decided by `PREFIX` **or** `TOUCHED` and the one whole value every act writes carries its `order` seat; the registration is the package's TWO acts, `listen(handle, addresses)` then `register(handle, listener)`. **`1.7.0` lifts the address exclusion and this installation is withdrawn at `D-71`.**
+- **`subscribe` HAD INSTALLED NOTHING AND INVOKED NOTHING, so the push existed in name only**: it passed `handler` to nothing, and the `catch` around the refused `listen` answered a withdrawal that withdrew nothing — every `commit` and `remove` answered `committed` while no subscriber heard one. The battery's counter reads `0` on the revert and `1` per committed change now.
+- **`repaired` IS DERIVED FROM THE STORE AND NEVER PREDICTED, AND `cursor` IS DELETED.** A repair-running commit answered keys `["status"]` alone though the interface declares `repaired`: the write's own record carries no member for a repair inside its own commit. So the act holds the record it INTENDED, writes it, and compares it with the record that STANDS — CANONICALLY, member order and absence normalised, because a raw `JSON.stringify` differs on every clean act — answering `repaired: true` only where they differ and OMITTING the member on a clean act; `remove` derives it the same way. **`cursor` was read off the store's write receipt, whose shape is `{op, watched, triggered}`; the package declares no such member, so the name had no source at all.**
+- **`cursor`'s removal is a CONTRACT DELETION, not a design change**: no route, address or census moves, and the member is gone from `TabsRecordAnswer`, from L2 §2's two answer rows and from the bridge's `commit`/`remove` declarations in lockstep (`preload.ts`, `secure-panels.ts`); `'constraint-repaired'`, a reason token no code produced, goes with it.
+- **Two more measured facts ride in the same fix.** The handle is MINTED PER SUBSCRIPTION: one spelled name made `register` replace the earlier function and `unlisten` withdraw it WHOLE (measured `{first: 0, second: 1}`, unchanged after the first withdrawal). And the body CONTAINS the caller's throw — a listener's throw crosses into the write that fired it, and an uncontained subscriber turned a landed commit into `{"status":"refused","message":"boom-in-subscriber"}` — while the body WRITES NOTHING, because the renderer re-reads.
+- **Measured, 2026-11-01, over a scratch `filePath` with the batch supplied:** a listener at `['tabs','order']` fires once for a commit of a NEW tab, once for a commit that only UPDATES a label, once for a `remove`, and once for the root `delete` whose `tabs-must-stand` repair re-creates the record inside that same commit; it fires ZERO times for a `mem` write at `['elsewhere']`. **The construction instant is the one arm no listener can hear** — the instance holding the registry is the one being constructed — measured with a handle adopted by `cfg.listeners`, which delivered nothing there and delivered on the next commit.
+- **A `listen` WITH NO `register` IS A LAWFUL RESERVATION AND HOLDS NOTHING AGAINST A PAIR — ONLY A LIVE LISTENER DOES**: the entry `listen` writes stands in the write's `triggered` list and fires nothing, and it carries no kind — the package's own record calls it *"a reservation, `off: true`, no function"* — so only a LIVE listener blocks a pair's `id`, one whose `off` is cleared and a function installed and whose kind is no constraint's. **Measured 2026-11-01 over the packaged `1.7.0`**, one fresh instance per arm: `listen('dup', [['q']])` with no `register`, then `addConstraint({address: ['q'], id: 'dup'})`, **ANSWERED**; the same with `register` before the add **THREW** `AddressMalformed` — *"the listener 'dup' keeps that handle, and a listener and a constraint do not share one handle"* — and threw where the live listener stood at `['x']` and the pair at `['q']`, so the arm reads the HANDLE and not the address. **THE LESSON, because a drive that never called `register` reported the rule as one-directional to the user: measure a REGISTERED listener, never a bare `listen`** — a reservation is silent, and this `subscribe` registers at once and withdraws the entry where `register` fails.
 
 ---
 
 ## D-71 — `provident-storeroom` moves to `1.7.0`: the cross-kind rule reads the HANDLE alone, and the change push returns to `['tabs']`
 
-**Status:** ACTIVE · **Date:** 2026-11-01 · **Source:** the user's instruction this pass carries — the published `1.7.0`
-removes the rule this app worked around, so the workaround goes — plus the measurements below, driven on the published
-artefact (`latest`, tagged `v1.7.0`) at its own bytes.
+**Status:** ACTIVE · **Date:** 2026-11-01 · **Source:** the user's instruction this pass carries — the published `1.7.0` removes the rule this app worked around, so the workaround goes — plus the measurements below, driven on the published artefact (tagged `v1.7.0`) at its own bytes.
 
-**Decision:** the consumed package is **`provident-storeroom ^1.7.0`**, up from `^1.6.2`, and the tab record's change push
-installs at the record's OWN address, `['tabs']`, beside all five of its constraint pairs.
+**Decision:** the consumed package is **`provident-storeroom ^1.7.0`**, up from `^1.6.2`, and the tab record's change push installs at the record's OWN address, `['tabs']`, beside all five of its constraint pairs.
 
-- **The eleven cells moved together, none left behind**: the manifest's `version`, its five exact `optionalDependencies`
-  pins and the five `platforms/*/package.json` versions all read `1.7.0`, and the lock carries all six nodes at `1.7.0` with
-  their own `resolved` and `integrity`; the three generated doc version lines read `1.7.0` at their own lines.
-- **The package lifted the ADDRESS exclusion and kept only the HANDLE** (its §7.3 clause of 2026-11-01, and its own
-  cross-kind register): a constraint pair and a listener MAY stand at one address — the pair ASKED by the pass, the
-  listener DELIVERED after it; multiple pairs at one address, and multiple listeners, are lawful; and the ONE cross-kind
-  restriction is that a listener's handle must not equal a pair's `id`, refused `AddressMalformed` at
-  `listen`/`register`/`addConstraint`, in both directions. **An application that moved a subscription off a constrained
-  address to work around a refusal may reclaim it**, and this module does.
-- **So the `['tabs','order']` installation is withdrawn, and it was always a workaround**: measured 2026-11-01 on the
-  then-installed `1.6.2`, `listen` at `['tabs']` threw *"a listener and a constraint do not share one"*. That reading stays
-  as that tree's own; the address is named by no rule `1.7.0` keeps.
-- **The handles cannot collide, and that is a property of the SPELLING**: this module mints `tabs-record:<n>@tabs` — a fixed
-  prefix no constraint id carries, a minted ordinal, and the address — while its five ids are `tabs-must-stand`,
-  `exactly-one-active`, `tab-has-title`, `tab-has-content` and `tab-has-lastActiveAt`, every one a literal. A table of
-  literals cannot spell the minted part.
-- **The fact that made the PREVIOUS pass's upstream report wrong, and the rule this row sets: measure a REGISTERED
-  listener, never a bare `listen`.** An entry `listen` writes and `register` never fills is a lawful, SILENT reservation —
-  the package's own record calls it *"a reservation, `off: true`, no function"* — so it holds nothing against a pair's `id`
-  and the cross-kind refusal does not fire for it; only a LIVE listener does, and a drive that never called `register`
-  reported the rule as one-directional. This `subscribe` registers at once and withdraws the entry where `register` fails.
-- **Measured 2026-11-01 on the published `1.7.0`, one fresh instance per arm:** all five of this module's pairs at
-  `['tabs']` plus a live listener there with a distinct handle — **accepted**; one whole-record write answered `triggered`
-  naming the five ids AND the listener, each at `['tabs']`, and fired it **once**; a write a pair REFUSED threw the pass's
-  own form and delivered **nothing**. **The store's census is unmoved** — `Object.getOwnPropertyNames(store)` still reads
-  the declared **14** members and **11** own symbols.
-- **What moves in the artifacts, and nothing else**: `src/main/tabs-record/index.ts`'s `LISTENER_ADDRESS` goes and the
-  record root is reused rather than re-spelled; `design.md` §5 (rev 8) and `interface.md` §2 (rev 3) are rewritten for the
-  new pattern; and the live pins move — `package.json`, `storeroom-surface.test.ts`'s `S-1.3`, `brief.md` §2's row and
-  `src/main/storeroom.ts`'s census header. **The dated readings do not move**: what `1.6.1` and `1.6.2` were measured to do
-  stays written as that tree's own, and `signatures.md`'s staleness stays next-steps' row 2.
+- **The eleven cells moved together, none left behind**: the manifest's `version`, its five exact `optionalDependencies` pins and the five `platforms/*/package.json` versions all read `1.7.0`, the lock carries all six nodes at `1.7.0` with their own `resolved` and `integrity`, and the three generated doc version lines read `1.7.0`.
+- **The package lifted the ADDRESS exclusion and kept only the HANDLE** (its §7.3 clause of 2026-11-01 and its cross-kind register): a constraint pair and a listener MAY stand at one address — the pair ASKED by the pass, the listener DELIVERED after it; **multiple pairs at one address, and multiple listeners, are lawful**; and the ONE cross-kind restriction is that a listener's handle must not equal a pair's `id`, refused `AddressMalformed` at `listen`/`register`/`addConstraint`, in both directions. **An application that moved a subscription off a constrained address to work around a refusal may reclaim it**, and this module does.
+- **So the `['tabs','order']` installation is withdrawn, and it was always a workaround**: measured 2026-11-01 on the then-installed `1.6.2`, `listen` at `['tabs']` threw *"a listener and a constraint do not share one"*. That reading stays as that tree's own; the address is named by no rule `1.7.0` keeps.
+- **The handles cannot collide, and that is a property of the SPELLING**: this module mints `tabs-record:<n>@tabs` — a fixed prefix no constraint id carries, a minted ordinal and the address — while its five ids are `tabs-must-stand`, `exactly-one-active`, `tab-has-title`, `tab-has-content` and `tab-has-lastActiveAt`, every one a literal. A table of literals cannot spell the minted part.
+- **The fact that made the previous pass's upstream report wrong, and the rule this row sets: measure a REGISTERED listener, never a bare `listen`.** An entry `listen` writes and `register` never fills is a lawful, SILENT reservation — the package's own record calls it *"a reservation, `off: true`, no function"* — so it holds nothing against a pair's `id` and the cross-kind refusal does not fire for it; only a LIVE listener does, and a drive that never called `register` reported the rule as one-directional. This `subscribe` registers at once and withdraws the entry where `register` fails.
+- **Measured 2026-11-01 on the published `1.7.0`, one fresh instance per arm:** all five of this module's pairs at `['tabs']` plus a live listener there with a distinct handle — **accepted**; one whole-record write answered `triggered` naming the five ids AND the listener, each at `['tabs']`, and fired it **once**; a write a pair REFUSED threw the pass's own form and delivered **nothing**. **The store's census is unmoved** — `Object.getOwnPropertyNames(store)` still reads the declared **14** members and **11** own symbols.
+- **What moves in the artifacts, and nothing else**: `src/main/tabs-record/index.ts`'s `LISTENER_ADDRESS` goes and the record root is reused rather than re-spelled; `design.md` §5 (rev 8) and `interface.md` §2 (rev 3) are rewritten for the new pattern; and the live pins move — `package.json`, `storeroom-surface.test.ts`'s `S-1.3`, `brief.md` §2's row and `src/main/storeroom.ts`'s census header. **The dated readings do not move**: what `1.6.1` and `1.6.2` were measured to do stays written as that tree's own.
 
 ---
 
@@ -1699,182 +1620,59 @@ constructor.
 
 ## D-73 — A repair write NAMES the commit, and the module makes an unnamed one a compile error
 
-**Status:** ACTIVE · **Date:** 2026-11-02 · **Source:** the user's instruction this pass carries, verbatim — *"Repairs that do not
-pass the commit are unsupported. Do not write them. A write it makes must join that attempt, and the only way to join is to name
-the commit the repair was handed"* — plus the audit and the measurements below, on the installed `provident-storeroom 1.7.0`.
+**Status:** ACTIVE · **Date:** 2026-11-02 · **Source:** the user's instruction this pass carries, verbatim — *"Repairs that do not pass the commit are unsupported. Do not write them. A write it makes must join that attempt, and the only way to join is to name the commit the repair was handed"* — plus the audit and the measurements below, on the installed `provident-storeroom 1.7.0`.
 
-**Decision:** every write a repair makes **NAMES THE COMMIT IT WAS HANDED** — at a **landing instant** the commit's record at
-`write`'s **FOURTH** position, at a **registration instant** the `write` MEMBER the registration's repair record carries,
-**three positions and no fourth** (a fourth there is a `TypeError` before any store act). **A repair write that names neither is
-not written here**: it opens a second commit at an address that already holds one, and the machinery refuses it `KC-7` or credits
-it against the wrong op (`D-67`).
+**Decision:** every write a repair makes **NAMES THE COMMIT IT WAS HANDED** — at a **landing instant** the commit's record at `write`'s **FOURTH** position, at a **registration instant** the `write` MEMBER the registration's repair record carries, **three positions and no fourth** (a fourth there is a `TypeError` before any store act). **A repair write that names neither is not written here**: it opens a second commit at an address that already holds one, and the machinery refuses it `KC-7` or credits it against the wrong op (`D-67`).
 
-- **Why, in the package's own framing**: a constraint body's direct write is **declared unsupported** while the capability stays —
-  *"any changes should be handled by a repair"* — and a repair's own write is the supported route **because it rides the commit it
-  is part of** (`guide §7.6`; its `§7.2` clause of 2026-11-02, item (4), is the registration route's).
-- **The audit found no unnamed repair write, and says so plainly** (2026-11-02, `grep -rn "\.write(\|\.delete(\|\.rollback("
-  src/ --include='*.ts'`): on a store handle, **seven** `.write(` calls, one `.delete(` and no `rollback` — `commit` and `remove`
-  in `createTabsRecord` (TERMINAL acts: no attempt is open, so naming a commit is neither possible nor required), four terminal
-  acts in `operator-settings` and `data/surface`, and the tab record's repairs, which already named the commit as
-  `context as never`. Every other `.write(`/`.delete(` in `src/` is a `Map`/`Set` or a surface's own member. **The defect closed is
-  LATENT**: `never` tells the compiler nothing, so `mintRecord`'s second cast sat one refactor from naming nothing.
-- **And it is STRUCTURAL, which is the whole of this change.** `TabsCommitCarrier` is EXPORTED — one member
-  `readonly pending: readonly TriggerPair[]`, taken from the position's own class test (a non-null, non-`Proxy`, non-array object
-  carrying an OWN, present, non-`undefined` `pending`: `1.7.0`'s `commitPositionRefusal`, mirrored by `isCommitCarrier` at run
-  time). `writeJoined(store, commit, value)` is the module's **ONE** repair write with its carrier position **REQUIRED**, both
-  repair bodies go through it, and the registration arm keeps its three positions because it is passed the ROUTE the record lends
-  — a different handle from the store, so the helper is not applicable to it. A repair write with no commit is an ARITY ERROR.
-- **One cast survives in the repair path, only at the package boundary.** The installed `1.7.0` declares
-  `write(address, tier, value, commit?: CommitRecord)` with **FOUR** members, while a landing repair's record is the six-member
-  `{address, id, op, tier, value, pending}` with no `attempt` — it satisfies the class test and not the declaration.
-  `commit as CommitRecord` is that seam, commented at `writeJoined` with what removes it: a release declaring
-  `commit?: CommitCarrier`, one member `readonly pending: readonly TriggerPair[]` — the shape the release after `1.7.0` declares,
-  which the carrier already IS. **This supersedes `D-72`'s clause counting `context as never` as "the package's commit
-  parameter"**: `never` was a type lie, and the honest carrier replaced it.
-  **⟶ SUPERSEDED IN PART, 2026-11-02: `1.9.0` IS THAT RELEASE, AND THE CAST IS GONE.** The installed
-  `provident-storeroom 1.9.0` declares `write(address: Address, tier: Tier, value: unknown, commit?: CommitCarrier): WriteRecord`
-  beside `export interface CommitCarrier { readonly pending: readonly TriggerPair[] }` — one member, the exact shape
-  `TabsCommitCarrier` already carried — so the carrier is assignable with **no assertion**: `writeJoined` now reads
-  `store.write(TABS_RECORD_ADDRESS, 'file', value, commit)`, the `CommitRecord` type import is gone from
-  `src/main/tabs-record/index.ts`, and `npm run typecheck` is clean without it. **Everything else in this bullet stands
-  unchanged** — the carrier position is still REQUIRED, `writeJoined` is still the module's ONE repair write, both repair bodies
-  still go through it, and the registration arm still cannot reach it. Measured the same day, end to end: a live
-  `exactly-one-active` repair writes the whole corrected record at the fourth position through the uncast carrier, answers
-  `{ok: true, op}`, throws nothing, leaves the corrected record standing, and fires its listener once.
-- **A type-level row pins it where a widening reds it** (`tests/integration/store-tabs-record/crossing.test.ts`, compiled by
-  `npm run typecheck:tests`): three `@ts-expect-error` rows over `writeJoined` — carrier omitted, an array, `null` — beside a
-  positive control, plus a run-time row pinning the class test case for case. **Measured 2026-11-02: `commit:
-  TabsCommitCarrier | undefined` → `TS2578` *"Unused '@ts-expect-error' directive"* at the omission row while
-  `npm run typecheck` over `src/**` stayed GREEN, so the catching leg is `typecheck:tests`; `commit: unknown` → three `TS2578`;
-  restore → both clean.** The JOIN stays measured by the repair-answer row's credited op, the delivery row's ONE notification.
+- **Why, in the package's own framing**: a constraint body's direct write is **declared unsupported** while the capability stays — *"any changes should be handled by a repair"* — and a repair's own write is the supported route **because it rides the commit it is part of** (`guide §7.6`; its `§7.2` clause of 2026-11-02, item (4), is the registration route's).
+- **The audit found no unnamed repair write, and says so plainly** (2026-11-02, `grep -rn "\.write(|\.delete(|\.rollback(" src/ --include='*.ts'`): on a store handle, **seven** `.write(` calls, one `.delete(` and no `rollback` — `commit` and `remove` in `createTabsRecord` (TERMINAL acts: no attempt is open, so naming a commit is neither possible nor required), four terminal acts in `operator-settings` and `data/surface`, and the tab record's repairs, which already named the commit as `context as never`. Every other `.write(`/`.delete(` in `src/` is a `Map`/`Set` or a surface's own member. **The defect closed is LATENT**: `never` tells the compiler nothing, so `mintRecord`'s second cast sat one refactor from naming nothing.
+- **And it is STRUCTURAL, which is the whole of this change.** `TabsCommitCarrier` is EXPORTED — one member `readonly pending: readonly TriggerPair[]`, taken from the position's own class test (a non-null, non-`Proxy`, non-array object carrying an OWN, present, non-`undefined` `pending`: `1.7.0`'s `commitPositionRefusal`, mirrored by `isCommitCarrier` at run time). `writeJoined(store, commit, value)` is the module's **ONE** repair write with its carrier position **REQUIRED**, both repair bodies go through it, and the registration arm keeps its three positions because it is passed the ROUTE the record lends — a different handle from the store, so the helper is not applicable to it. A repair write with no commit is an ARITY ERROR.
+- **One cast survived in the repair path, only at the package boundary.** The installed `1.7.0` declares `write(address, tier, value, commit?: CommitRecord)` with **FOUR** members, while a landing repair's record is the six-member `{address, id, op, tier, value, pending}` with no `attempt` — it satisfies the class test and not the declaration. `commit as CommitRecord` was that seam. **⟶ SUPERSEDED IN PART, 2026-11-02: `1.9.0` IS THAT RELEASE, AND THE CAST IS GONE** — it declares `write(address: Address, tier: Tier, value: unknown, commit?: CommitCarrier): WriteRecord` beside `export interface CommitCarrier { readonly pending: readonly TriggerPair[] }`, the exact shape `TabsCommitCarrier` already carried, so `writeJoined` now reads `store.write(TABS_RECORD_ADDRESS, 'file', value, commit)`, the `CommitRecord` import is gone and `npm run typecheck` is clean without it. **Everything else stands**: the carrier position is still REQUIRED, `writeJoined` is still the module's ONE repair write, both bodies still go through it, and the registration arm still cannot reach it. Measured end to end: a live `exactly-one-active` repair writes the corrected record at the fourth position through the uncast carrier, answers `{ok: true, op}`, leaves the corrected record standing and fires its listener once.
+- **A type-level row pins it where a widening reds it** (`tests/integration/store-tabs-record/crossing.test.ts`, compiled by `npm run typecheck:tests`): three `@ts-expect-error` rows over `writeJoined` — carrier omitted, an array, `null` — beside a positive control, plus a run-time row pinning the class test case for case. **Measured 2026-11-02: `commit: TabsCommitCarrier | undefined` → `TS2578` *"Unused '@ts-expect-error' directive"* at the omission row while `npm run typecheck` over `src/**` stayed GREEN**, so the catching leg is `typecheck:tests`; `commit: unknown` → three `TS2578`; restore → both clean. The JOIN stays measured by the repair-answer row's credited op and by the delivery row's ONE notification.
 
 ---
 
 ## D-74 — A boot battery's teardown SIGKILLs a boot's whole process TREE and PROVES zero; a bounded wait re-acquires only ABSENCE
 
-**Status:** ACTIVE · **Date:** 2026-11-02 · **Source:** the user's instruction this pass carries — *"after `npm test` completes, no
-process naming this repository survives … treat SIGTERM as a courtesy and SIGKILL as the guarantee … verify zero and fail the
-teardown loudly if anything survives"* — plus the measurements below, on this head and this checkout.
+**Status:** ACTIVE · **Date:** 2026-11-02 · **Source:** the user's instruction this pass carries — *"after `npm test` completes, no process naming this repository survives … treat SIGTERM as a courtesy and SIGKILL as the guarantee … verify zero and fail the teardown loudly if anything survives"* — plus the measurements below, on this head and this checkout.
 
-**Decision:** the boot battery's teardown **kills with SIGKILL, walks the process TREE (profile OR descent from a spawned root),
-repeats until a sweep finds nothing, and VERIFIES ZERO — failing loudly with every survivor listed.** SIGTERM is never load-bearing.
-And a bounded artifact wait **re-acquires only the ABSENCE class**: a content fault always reds the row.
+**Decision:** the boot battery's teardown **kills with SIGKILL, walks the process TREE (profile OR descent from a spawned root), repeats until a sweep finds nothing, and VERIFIES ZERO — failing loudly with every survivor listed.** SIGTERM is never load-bearing. And a bounded artifact wait **re-acquires only the ABSENCE class**: a content fault always reds the row.
 
-- **SIGKILL, because SIGTERM was measured not to work**: the reported survivor ignored SIGTERM for three seconds and needed SIGKILL. The
-  MCP SDK's `StdioClientTransport.close()` keeps its own `stdin.end()` → SIGTERM → SIGKILL ladder — a courtesy that lets a clean app
-  exit cleanly, reaching the MAIN process only — so the tree reap runs after it and is what guarantees the outcome.
-- **A TREE, because the cmdline cannot name the tree**: a live boot here is five processes and only three carry the scratch profile —
-  both `--type=zygote` children carry `--no-sandbox` and nothing else, and they were reaped by INHERITANCE, exactly the guarantee that
-  is gone when the parent is the survivor. Membership is the profile set UNION the descendants of every spawned root.
-- **NOT a process group**, a measurement rather than a preference: `detached: true` plus a negative-pid kill was tried in this repo and
-  regressed the SDK stdio transport the handshake rows drive (`MCP error -32001`, `1 checks, 2 failures` —
-  `scripts/electron-spawn.mjs`'s own account). The tree is reaped, never grouped.
-- **`/proc`, because the old reaper's only failure path was silence**: `catch { return }` around a `ps` pipeline meant one unreadable
-  listing left the tree alive with the caller unable to tell "reaped" from "not reaped". `/proc` needs no external binary, nothing on
-  PATH can shadow it, and an unreadable table THROWS; `ps` stays only as the fallback for a host without it, buffer sized for a busy
-  machine (measured here: 79-90 KB, so a 1 MB default would not have overflowed — the *response to any* failure was the defect).
-- **Zero is PROVEN, and a survivor is a verdict.** `afterAll` reaps, removes the profiles only after the zero, and throws naming every
-  survivor. Measured with the sweeps disabled and one process left naming a profile: the file fails with `4 process(es) SURVIVED …
-  pid … (ppid …) …` while all eight rows pass — a leak is now a red file, not a directory someone finds later. `process.on('exit')`
-  is the net for the teardown that never runs (a killed worker, a rejected `beforeAll`), as `scripts/electron-spawn.mjs` does.
-- **And the waits, the same defect in another shape**: a bound that answers alone cannot tell "never happened" from "too slow". The
-  boot wait reads the child's `error` and `close` too, so a dead child reds AT ONCE naming its exit — measured: a bundle that exits
-  silently reds in 1.5 s with `EXITED (code 3, signal null) … "never", not "too slow"`, one that hangs silently reds at the bound with
-  `still ALIVE (pid …) … "too slow", not "never"`. The 60 s bound is kept, with its margin stated: the control's observable arrives at
-  p95 83 ms over 15 boots: a ~720x margin.
-- **The artifact read re-acquires ABSENCE and nothing else, and every read of a co-owned artifact is BOUNDED** — `A-1`..`A-4` and,
-  once measured, the GATING `B-1`, which carried the same defect with no bound at all and red with `existsSync` false in 1 of 5 full
-  runs having built the artifact itself, because the sibling worker's `clean` landed after it. Reproduced before the fix: driving a
-  concurrent `npm run build` at `A-4` red it **2 of 4 runs** at a +250 ms offset with `MODULE_NOT_FOUND` at its `--check`; after,
-  0 of 16 across four offsets and 4 of 4 under a continuous build loop. **The bite is kept and measured**: a preload that parses but
-  never reaches `contextBridge` still reds `A-4`, an artifact carrying `var import_meta = {}` reds `A-2`..`A-4`, and a stable
-  unparseable one reds in 0.47 s with node's own SyntaxError — a row that retried a content fault could not fail, which is worth less
-  than no row (the boundary rows are why these batteries exist, `D-27`).
+- **SIGKILL, because SIGTERM was measured not to work**: the reported survivor ignored SIGTERM for three seconds and needed SIGKILL. The MCP SDK's `StdioClientTransport.close()` keeps its own `stdin.end()` → SIGTERM → SIGKILL ladder — a courtesy reaching the MAIN process only — so the tree reap runs after it and is what guarantees the outcome.
+- **A TREE, because the cmdline cannot name the tree**: a live boot here is five processes and only three carry the scratch profile — both `--type=zygote` children carry `--no-sandbox` and nothing else, and they were reaped by INHERITANCE, exactly the guarantee gone when the parent is the survivor. Membership is the profile set UNION the descendants of every spawned root.
+- **NOT a process group**, a measurement rather than a preference: `detached: true` plus a negative-pid kill was tried in this repo and regressed the SDK stdio transport the handshake rows drive (`MCP error -32001`, `1 checks, 2 failures` — `scripts/electron-spawn.mjs`'s own account). The tree is reaped, never grouped.
+- **`/proc`, because the old reaper's only failure path was silence**: `catch { return }` around a `ps` pipeline meant one unreadable listing left the tree alive with the caller unable to tell "reaped" from "not reaped". `/proc` needs no external binary, nothing on PATH can shadow it, and an unreadable table THROWS; `ps` stays only as the fallback for a host without it, buffer sized for a busy machine (measured here 79-90 KB, so a 1 MB default would not have overflowed — **the response to any failure was the defect**).
+- **Zero is PROVEN, and a survivor is a verdict.** `afterAll` reaps, removes the profiles only after the zero, and throws naming every survivor. Measured with the sweeps disabled and one process left naming a profile: the file fails with `4 process(es) SURVIVED … pid … (ppid …) …` while all eight rows pass — a leak is a red file, not a directory someone finds later. `process.on('exit')` is the net for the teardown that never runs (a killed worker, a rejected `beforeAll`).
+- **And the waits, the same defect in another shape**: a bound that answers alone cannot tell "never happened" from "too slow". The boot wait reads the child's `error` and `close` too, so a dead child reds AT ONCE naming its exit — measured: a bundle that exits silently reds in 1.5 s with `EXITED (code 3, signal null) … "never", not "too slow"`, one that hangs reds at the bound with `still ALIVE (pid …) … "too slow", not "never"`. The 60 s bound is kept with its margin stated: the control's observable arrives at p95 83 ms over 15 boots, a ~720x margin.
+- **The artifact read re-acquires ABSENCE and nothing else, and every read of a co-owned artifact is BOUNDED** — `A-1`..`A-4` and the GATING `B-1`, which carried the same defect with no bound at all and red with `existsSync` false in 1 of 5 full runs having built the artifact itself, because the sibling worker's `clean` landed after it. Reproduced before the fix: a concurrent `npm run build` at `A-4` red it **2 of 4 runs** at a +250 ms offset with `MODULE_NOT_FOUND` at its `--check`; after, 0 of 16 across four offsets and 4 of 4 under a continuous build loop. **The bite is kept and measured**: a preload that parses but never reaches `contextBridge` still reds `A-4`, an artifact carrying `var import_meta = {}` reds `A-2`..`A-4`, and a stable unparseable one reds in 0.47 s with node's own SyntaxError — a row that retried a content fault could not fail, which is worth less than no row (the boundary rows are why these batteries exist, `D-27`).
 
 ---
 
 ## D-75 — The landing entry's id is `'landing'`, and this record cannot SPELL it yet: `landing` is one of its two SEATS
 
-**Status:** ACTIVE · **Date:** 2026-11-02 · **Source:** the user's two decisions this pass carries, verbatim — *"The landing entry
-id is `'landing'`. The renderer's spelling wins; the crossing adopts it."* and *"There is no migration. No install holds tabs in the
-operator-settings carrier, so the old rows are dropped rather than migrated. Do not build a boot migration."* — plus the measurements below, 2026-11-02.
+**Status:** ACTIVE · **Date:** 2026-11-02 · **Source:** the user's two decisions this pass carries, verbatim — *"The landing entry id is `'landing'`. The renderer's spelling wins; the crossing adopts it."* and *"There is no migration. No install holds tabs in the operator-settings carrier, so the old rows are dropped rather than migrated. Do not build a boot migration."* — plus the measurements below.
 
-**Decision:** both user decisions stand as taken, and the id they name is **not yet spelled by the record**: `'landing'` is the
-landing ENTRY's id, while `TABS_LANDING_ID` still reads `'tabs-landing-page'`, because the record's own family already spends that
-name on a different thing. **So the alignment is held rather than half-landed, and the reason is measured rather than argued.**
+**Decision:** both user decisions stand as taken, and the id they name is **not yet spelled by the record**: `'landing'` is the landing ENTRY's id, while `TABS_LANDING_ID` still reads `'tabs-landing-page'`, because the record's own family already spends that name on a different thing. **So the alignment is held rather than half-landed, and the reason is measured rather than argued. `D-76` derives the seat and moves the id; the dated measurements below stay as this head's own.**
 
-- **THREE THINGS SHARE THESE LETTERS, ONLY THE FIRST IS THE ENTRY, AND THERE IS A FOURTH.** The **entry id** is `'landing'` by the
-  decision above — what `order` seats and what the minted row's `id` and `label` carry. The **authored page node** `'tabs-landing-page'`
-  does NOT move: `src/shared/demo-envelope.ts`'s `TABS_LANDING_PAGE_ID` is the node a client resolves through
-  `Runtime.elementForNodeId`. The **content target** stays `'tabs-landing-page'` too (`TAB_CONTENT_FALLBACK`), because a row's
-  `target` is the content it CONTAINS while its `id` is its IDENTITY, and `'landing'` names no authored node — a blank target
-  repaired to it would mint the unresolvable-target terminal the error page exists to show. **The fourth spelling is the `landing`
-  SEAT** (`['tabs','landing']`, L1 §1's second singleton, L2 §1's table), and it is the one that keeps the other three from mattering.
-- **WHY THE ENTRY CANNOT MOVE YET — MEASURED**, scratch profile with the five declarations batched, one fresh instance per arm. The
-  family keys one member per tab in the SAME flat object as its seats, so `composeRecord` writes the row at `landing` and then the seat
-  string over it: the construction write's own bytes read `{"landing":"landing","order":["landing"]}`, `read()` answers
-  `order: ['landing']` with `rows: []`, and the first `commit({id:'landing',…})` is refused `ConstraintPassRefused` — *"the pair
-  tabs#exactly-one-active violated a re-run and its repair had already been applied"*. **A healthy record is worse**: the same commit
-  answers `{status:'committed'}` and writes `{"landing":"landing","order":["tab-1","landing"], …}` with NO `landing` row member, so
-  `read()` names a landing row the record does not hold. **And the fix is not a rename**: a record carrying the landing ROW at that
-  key with no string seat passes all five pairs and reads `landing: 'tab-1'`, so the seat must be DERIVED rather than stored.
-- **"RESERVED" THEREFORE HAS NO COUNTERPART IN THE CROSSING YET — A HOLE THIS ROW NAMES RATHER THAN FILLS.** The renderer guards the
-  spelling twice: `mintTabId('landing')` answers `'reserved-spelling'`, and its store answers `remove('file.tabs.landing')`
-  `'reserved-name'`. The expectation this pass carried was that the crossing answers that same reservation with an UPDATE on `commit`
-  and the empty-sequence REPAIR on `remove`; **the measurement is that neither happens today** — the guards lose their counterpart to
-  a GAP and not by design, an entry id equal to either SEAT name (`order`, `landing`) being unrepresentable here with nothing at
-  either route refusing it. **No reserved flag and no new refusal were added** (a crossing design change this pass does not take):
-  the guard such a write needs is **REPORTED HERE AND BUILT NOWHERE**, and the repair is the answer once the seat is derived.
-- **NO MIGRATION, AND NOTHING WAS DROPPED.** No install holds these rows in the operator-settings carrier, so they are dropped rather
-  than migrated and no boot migration is built; this pass had nothing to drop either, since the rows are simply not read.
-- **CONSEQUENCE FOR THE RENDERER PASS, CORRECTED AGAINST WHAT THIS PASS EXPECTED.** The two records do **not** yet spell the entry the
-  same way, so the migration is an OWNERSHIP CHANGE **AND** the disposition of the `landing` seat — not an ownership change alone. Its
-  cheapest measured shape: derive the seat (`read()`'s `landing` member is already the fallback `landingOf` computes) and let
-  `['tabs','landing']` mean the landing entry's leaf, exactly as the renderer's `file.tabs.landing` does. **Only then does the entry
-  id move, and only then is the migration the ownership change this pass set out to hand over.**
+- **THREE THINGS SHARE THESE LETTERS, ONLY THE FIRST IS THE ENTRY, AND THERE IS A FOURTH.** The **entry id** is `'landing'` by the decision above — what `order` seats and what the minted row's `id` and `label` carry. The **authored page node** `'tabs-landing-page'` does NOT move: `src/shared/demo-envelope.ts`'s `TABS_LANDING_PAGE_ID` is the node a client resolves through `Runtime.elementForNodeId`. The **content target** stays `'tabs-landing-page'` too (`TAB_CONTENT_FALLBACK`), because a row's `target` is the content it CONTAINS while its `id` is its IDENTITY, and `'landing'` names no authored node — a blank target repaired to it would mint the unresolvable-target terminal the error page exists to show. **The fourth spelling is the `landing` SEAT** (`['tabs','landing']`, L1 §1's second singleton, L2 §1's table), and it is the one that keeps the other three from mattering.
+- **WHY THE ENTRY COULD NOT MOVE YET — MEASURED**, scratch profile with the five declarations batched, one fresh instance per arm. The family keys one member per tab in the SAME flat object as its seats, so `composeRecord` wrote the row at `landing` and then the seat string over it: the construction write's own bytes read `{"landing":"landing","order":["landing"]}`, `read()` answered `order: ['landing']` with `rows: []`, and the first `commit({id:'landing',…})` was refused `ConstraintPassRefused` — *"the pair tabs#exactly-one-active violated a re-run and its repair had already been applied"*. **A healthy record was worse**: the same commit answered `{status:'committed'}` and wrote `{"landing":"landing","order":["tab-1","landing"], …}` with NO `landing` row member, so `read()` named a landing row the record did not hold. **And the fix is not a rename**: a record carrying the landing ROW at that key with no string seat passes all five pairs and reads `landing: 'tab-1'`, so the seat had to be DERIVED rather than stored.
+- **"RESERVED" THEREFORE HAS NO COUNTERPART IN THE CROSSING YET — A HOLE THIS ROW NAMES RATHER THAN FILLS.** The renderer guards the spelling twice: `mintTabId('landing')` answers `'reserved-spelling'`, and its store answers `remove('file.tabs.landing')` `'reserved-name'`. The expectation this pass carried was that the crossing answers that same reservation with an UPDATE on `commit` and the empty-sequence REPAIR on `remove`; **the measurement is that neither happens** — the guards lose their counterpart to a GAP and not by design, an entry id equal to either SEAT name (`order`, `landing`) being unrepresentable here with nothing at either route refusing it. **No reserved flag and no new refusal were added** (a crossing design change this pass does not take): the guard such a write needs is **REPORTED HERE AND BUILT NOWHERE**, and the repair is the answer once the seat is derived.
+- **NO MIGRATION, AND NOTHING WAS DROPPED.** No install holds these rows in the operator-settings carrier, so they are dropped rather than migrated and no boot migration is built; this pass had nothing to drop either, since the rows are simply not read.
+- **CONSEQUENCE FOR THE RENDERER PASS, CORRECTED AGAINST WHAT THIS PASS EXPECTED.** The two records did **not** yet spell the entry the same way, so the migration was an OWNERSHIP CHANGE **AND** the disposition of the `landing` seat — not an ownership change alone. Its cheapest measured shape: derive the seat (`read()`'s `landing` member is already the fallback `landingOf` computes) and let `['tabs','landing']` mean the landing entry's leaf, exactly as the renderer's `file.tabs.landing` does. **Only then does the entry id move** — and `D-76` is that landing.
 
 ---
 
 ## D-76 — The `landing` seat is DERIVED, not stored, so the family has ONE seat and the entry's id can be spelled
 
-**Status:** ACTIVE · **Date:** 2026-11-02 · **Source:** the user's decision D-75 carries — the landing entry's id is `'landing'` —
-plus D-75's own four measurements, re-measured on this head before the change and again after it (2026-11-02).
+**Status:** ACTIVE · **Date:** 2026-11-02 · **Source:** the user's decision `D-75` carries — the landing entry's id is `'landing'` — plus `D-75`'s own four measurements, re-measured on this head before the change and again after it.
 
-**Decision:** `['tabs','landing']` is **the landing ENTRY's own leaf and no longer a SEAT.** `composeRecord` writes the `order`
-array and one member per seated id and **no witness at all**; `landingOf` derives the witness — the landing entry's row when it
-reads active, else `order`'s active row — and `read()`'s `landing` member **is that derivation**. One namespace is left where
-there were two, which is what frees `landing` to be an entry's id. **The five pairs are unmoved**, and that is the test of the
-change rather than a hope: `exactly-one-active` still requires one active among the survivors, the empty sequence still re-mints
-the landing entry, and `tab-has-content`'s fallback is still the authored `'tabs-landing-page'` CONTENT target.
+**Decision:** `['tabs','landing']` is **the landing ENTRY's own leaf and no longer a SEAT.** `composeRecord` writes the `order` array and one member per seated id and **no witness at all**; `landingOf` derives the witness — the landing entry's row when it reads active, else `order`'s active row — and `read()`'s `landing` member **is that derivation**. One namespace is left where there were two, which is what frees `landing` to be an entry's id. **The five pairs are unmoved**, and that is the test of the change rather than a hope: `exactly-one-active` still requires one active among the survivors, the empty sequence still re-mints the landing entry, and `tab-has-content`'s fallback is still the authored `'tabs-landing-page'` CONTENT target.
 
-- **Why, in the collision this head measured** (a scratch profile with the five declarations batched, one fresh instance per arm).
-  The family keys one member per tab in the SAME flat object as its seats, so with the entry spelled `'landing'` the composer wrote
-  the row and then the seat STRING over it: the construction instant's own bytes read `{"landing":"landing","order":["landing"]}`
-  and `read()` answered `rows: []`. **A HEALTHY record was worse** — the same `commit({id:'landing',…})` was ANSWERED
-  `{status:'committed'}` and wrote `{"landing":"landing","order":["tab-1","landing"], …}` with **no `landing` row member**, so the
-  record answered `committed` over a read that names a landing row it does not hold. **And a record carrying the landing ROW at
-  that key, no string seat, passes all five pairs** and reads `landing: 'tab-1'`: the seat, not the id, was the whole obstruction.
-- **Measured after it, the same arms on this head.** The construction write's own bytes are now
-  `{"order":["tabs-landing-page"],"tabs-landing-page":{…}}` with `read()` answering `landing: 'tabs-landing-page'`, and the same
-  `commit({id:'landing',…})` on a healthy record writes a real row member at that key, seats it in `order` and reads it back — so
-  the hole was the seat and it is closed by the derivation, not by a guard over it.
-- **What this means for a client**: `read()`'s `landing` member is the DERIVATION, not a stored pointer — `'landing'` when the
-  landing entry is the shown tab, `''` on a record no legal act has left — so a client reads it as "which tab is the terminal" and
-  never composes it. The rows are the state; this is the one member of them that names the shown one.
-- **Two steps follow this row and each is appended here as it lands**: the refusal of an entry id equal to the one remaining
-  stored seat (`order`), and then the id move itself. **Neither is taken on this row's word**: each is measured on its own head.
-- **⟶ THE SEAT-NAME GUARD, appended when it landed (2026-11-02).** After the derivation `order` is the ONE stored seat, so an entry
-  id of `order` is unrepresentable exactly as `landing` was — and it was accepted as silently: measured with the guard removed,
-  `commit({id:'order',…})` was ANSWERED `{"status":"committed","repaired":true}` and the record **lost every tab** (the member write
-  overwrote the `order` array the whole family is seated from), while `remove('order')` was answered `committed` as the store's own
-  success over a name that is no member. **Both routes that take an id refuse it before any store act**, under `SEAT_NAME_REASON`
-  (`'seat-name'`) and `SEAT_NAME_MESSAGE`, and one crossing row reads the refusal at both entry points and the record byte-identical after.
-- **⟶ THE ID MOVED, appended when it landed (2026-11-02).** `TABS_LANDING_ID` is `'landing'` — `LANDING_ENTRY_KEY`, the literal
-  `TABS_LANDING_ADDRESS` is spelled from — and EXPORTED, because the renderer pass reads one spelling. `landingRow`, `mintRecord`,
-  `healRecord`, the crossing's rows, L1 §1 and its two `§5.U` posts, L2 §1/§2/§6 and L3 design §2 carry it; `TAB_CONTENT_FALLBACK`
-  did NOT move, `'landing'` naming no authored node. **`D-75`'s "held" clause is superseded here; its dated measurements stay
-  written as that head's own** (D-46). Measured: `order: ['landing']`, `read().landing` = `'landing'`, a commit under that id
-  updates ONE member in place, and `remove` of it as the last tab re-mints it.
+- **Why, in the collision this head measured** (a scratch profile with the five declarations batched, one fresh instance per arm). The family keys one member per tab in the SAME flat object as its seats, so with the entry spelled `'landing'` the composer wrote the row and then the seat STRING over it: the construction instant's own bytes read `{"landing":"landing","order":["landing"]}` and `read()` answered `rows: []`. **A HEALTHY record was worse** — the same `commit({id:'landing',…})` was ANSWERED `{status:'committed'}` and wrote `{"landing":"landing","order":["tab-1","landing"], …}` with **no `landing` row member**, so the record answered `committed` over a read naming a landing row it did not hold. **And a record carrying the landing ROW at that key, no string seat, passed all five pairs** and read `landing: 'tab-1'`: the seat, not the id, was the whole obstruction.
+- **Measured after it, the same arms on this head.** The construction write's own bytes were `{"order":["tabs-landing-page"],"tabs-landing-page":{…}}` with `read()` answering `landing: 'tabs-landing-page'`, and the same `commit({id:'landing',…})` on a healthy record wrote a real row member at that key, seated it in `order` and read it back — so the hole was the seat and it is closed by the derivation, not by a guard over it.
+- **What this means for a client**: `read()`'s `landing` member is the DERIVATION, not a stored pointer — `'landing'` when the landing entry is the shown tab, `''` on a record no legal act has left — so a client reads it as "which tab is the terminal" and never composes it. The rows are the state; this is the one member of them that names the shown one.
+- **⟶ THE SEAT-NAME GUARD, appended when it landed (2026-11-02).** After the derivation `order` is the ONE stored seat, so an entry id of `order` is unrepresentable exactly as `landing` was — and it was accepted as silently: measured with the guard removed, `commit({id:'order',…})` was ANSWERED `{"status":"committed","repaired":true}` and the record **lost every tab** (the member write overwrote the `order` array the whole family is seated from), while `remove('order')` was answered `committed` as the store's own success over a name that is no member. **Both routes that take an id refuse it before any store act**, under `SEAT_NAME_REASON` (`'seat-name'`) and `SEAT_NAME_MESSAGE`, and one crossing row reads the refusal at both entry points and the record byte-identical after.
+- **⟶ THE ID MOVED, appended when it landed (2026-11-02).** `TABS_LANDING_ID` is `'landing'` — `LANDING_ENTRY_KEY`, the literal `TABS_LANDING_ADDRESS` is spelled from — and EXPORTED, because the renderer pass reads one spelling. `landingRow`, `mintRecord`, `healRecord`, the crossing's rows, L1 §1 and its two `§5.U` posts, L2 §1/§2/§6 and L3 design §2 carry it; `TAB_CONTENT_FALLBACK` did NOT move, `'landing'` naming no authored node. **`D-75`'s "held" clause is superseded here; its dated measurements stay written as that head's own** (D-46). Measured: `order: ['landing']`, `read().landing` = `'landing'`, a commit under that id updates ONE member in place, and `remove` of it as the last tab re-mints it.
 
 ---
 
@@ -6483,3 +6281,19 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **RESIDUAL STILL NAMED AND NOT TAKEN**, all needing a pass of their own: `tests/pane-drag-compliance.test.ts:751`'s comment still says the zone domain is *"derived from `DEFAULT_ZONE_ID`, one id"*, and `:842`'s assertion message still says *"the one pane the app has"*; `src/shared/view-shape.ts:402` (`paneGeometryIn`'s block) still cites `renderer.ts:1700-1722` as the drag's read, a range that now holds other code; and the vocabulary block's *"one"* reader claim (`:102-104`) sits beside `zoneSizeOf`'s live read (`renderer.ts:985-994`), which no row owns yet.
 
 **ITS REGISTER IS `D-71` TO `D-294`** as prose, unchanged and extended by this row only. **This row records a cleanup that closed what it could, an over-length record brought back inside its ceiling without losing a fact, and the one red that is a ruling rather than a repair.**
+
+## D-296 — THE REGISTER'S FORM DEFECT IS CLOSED BY THE USER'S RULING: seven rows compressed to the ceiling with every quoted sentence kept, and `strata-lint` goes GREEN for the first time since `D-114` carried the red
+
+**Status:** ACTIVE · **Date:** 2026-11-16 · **Source (user, verbatim):** *"Compress outdated rows"* — the ruling `D-295` named as the only way out, since rows are append-only and never reworded (`D-47`, `D-46`) and no pass can shorten a standing row without one.
+
+**WHAT WAS COMPRESSED, AND BY HOW MUCH** — seven rows, each to its class ceiling, the register `6,485 → 6,283` lines (`−202`): **`D-68` 41 → 16**, **`D-70` 43 → 16**, **`D-71` 43 → 16**, **`D-73` 53 → 14**, **`D-74` 43 → 16**, **`D-75` 42 → 14**, **`D-76` 43 → 14**. **No row anywhere in the register now exceeds 40 lines**, so the file's own header — *"One section per decision, ≤ 40 lines each"* — is TRUE of the file for the first time.
+
+**WHAT WAS KEPT, STATED BECAUSE A COMPRESSION IS ONLY AS HONEST AS ITS EXCLUSIONS**: each row's `##` headline, its **Status/Date/Source** line, its Decision paragraph and every rule it states; every `D-n` cross-reference it makes; the measured readings that carry a rule rather than decorate one; and **every sentence another document quotes from it verbatim** — checked MECHANICALLY rather than by eye: 738 `*"…"*` phrases extracted from `docs/` and `strata/`, each tested against the seven rows before and after, **zero lost**. `D-71`'s *"a reservation, `off: true`, no function"* and *"a listener and a constraint do not share one"*, `D-70`'s user-sourced pair, `D-73`'s *"any changes should be handled by a repair"* and *"Unused '@ts-expect-error' directive"*, `D-75`'s *"The landing entry id is `'landing'`…"* and *"violated a re-run"*, and `D-68`'s *"documented nowhere a consumer can read it"* and *"no successor queued"* all stand byte-identically.
+
+**WHAT WAS CUT**: re-listed enumerations whose substance the Decision paragraph already states, measurement narrative that re-derives the same conclusion twice, and the standing-cost paragraphs whose arms are named elsewhere — never a rule, never a reading a later row cites as its ground. **Every row keeps its own voice on the facts that made it a decision**; what is gone is `D-1`'s "history" a register row was never meant to carry, since git holds the as-filed text and this row names the authority under which it moved.
+
+**THE AUTHORITY, NAMED BECAUSE THIS ROW EDITS ROWS**: the register is append-only and a decision is never reworded (`D-47`); the ONLY authority that can touch a standing row is the user's, and this compression is taken on the user's own instruction, recorded here rather than performed silently (`D-46`'s supersede-by-pointer rule governs *what a row MEANS*, and no row's meaning moves — only its prose).
+
+**THE READINGS.** **`strata-lint` exits `0` — `174` checks, no failures**, discharging the standing `register` red `D-114` has carried verbatim since 2026-11-05; `strata-walkthrough.mjs refs` **resolved over `295` rows**; `strata-marks check` and the four legs unmoved (no code, test or document outside this register was touched).
+
+**ITS REGISTER IS `D-71` TO `D-295`** as prose, unchanged and extended by this row only. **This row records the one pass the corpus's own rules could not take, taken under the one authority that could, and a lint that now has nothing left to say.**
