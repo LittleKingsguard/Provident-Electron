@@ -214,11 +214,14 @@ guarantee is ONE-DIRECTIONAL**: a root with no declaration stays lawful, and `['
 (`tag: 'unpaired'`, and no declaration is the product — `D-145`, `D-132`). The object **declares and never registers**: it
 mints no entry, no handle and no store verb, so per-family routing is still the sink's (§2.5's table, `D-219`, `D-71`).
 
-**And the two relations are measured, one row each.** `tests/integration/store-view-record/declared-entries.test.ts`
-(`FH-1`) pins **entries ↔ published roots** — set equality both directions over the unfiltered publication, the equal count
-a duplicate cannot satisfy, and a falsifier that drives one comparator through an omission, a spurious entry, a duplicate
-and an address-tuple collision — which nothing measured before (`D-292`); `tests/integration/central-data/declared-root.test.ts`
-pins **declaration ↔ root**. Together they are why a fifth family cannot go missing from one list.
+**And the two relations are measured, one row each — and one row PER CROSSING.** `tests/integration/store-view-record/declared-entries.test.ts`
+(`FH-1`) and `tests/integration/store-tabs-record/declared-entries.test.ts` (`FH-2`) both pin **entries ↔ published roots**:
+set equality in both directions over the unfiltered publication, the equal count a duplicate cannot satisfy, and a falsifier
+that drives one comparator through an omission, a spurious entry, a duplicate and an address-tuple collision (`D-292`).
+`tests/integration/central-data/declared-root.test.ts` pins **declaration ↔ root**. Together they are why a fifth family
+cannot go missing from one list. **The two crossings' rows differ in strength and each says so**: the view record's
+four-address lists let the two directions differ in kind, while the tab record's 1 × 1 list makes the falsifier the
+load-bearing arm — a duplicate passes its set arms and reds only its count.
 
 **The tier is a declaration, and one of them is decided before your code runs.** Each family states its own tier in
 `viewDeclaredRoots()` — `file` persists, `mem` lives in the register, `temp` persists nowhere — and the guard refuses a
