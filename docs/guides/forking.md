@@ -187,12 +187,12 @@ envelope, and a red there is your figure moving, not a defect (D-26, D-43).
 
 ### 2.5 A record family of your own
 
-**The mechanism exists, and since `D-292` it is ONE object rather than four spellings you keep in step by hand.** A family
-is an **address**, a **tier**, an **entry** the delivery carries and — where an invariant holds it — a **constraint
-declaration** that repairs; `viewFamily(spec)` mints exactly that (`src/main/view-record/index.ts:1349`), `VIEW_FAMILIES`
-is the tuple the app's own publications project over (`:1374`), and the three exports you spread are those **projections** —
-`viewConstraintDeclarations` (`:1414`), `viewDeclaredRoots` (`:1455`) and `createViewDelivery` (`:1555`) — with the boot the
-only place they meet (`D-219`).
+**The mechanism exists, and since `D-292` its DECLARATION HALF is one object rather than two spellings you keep in step by
+hand.** A family is four things: an **address**, a **tier**, an **entry** the delivery carries, and — where an invariant
+holds it — a **constraint declaration** that repairs. **The object owns the root and the declaration and NOT the entry**, and
+that split is the whole of what you need here: one spec (`src/main/view-record/index.ts:1349`) projects both the root
+(`viewDeclaredRoots`, `:1455`) and the declaration (`viewConstraintDeclarations`, `:1414`), while the entry comes from the
+delivery's own address array — which is why the third list in the paragraph below is the one that bites.
 
 **A family is ONE spec, and TWO of the boot's three lists become its projections** (`D-292`). `src/main/view-record/index.ts`
 exports `viewFamily(spec)` and `VIEW_FAMILIES` (`:1349`, `:1374`): a spec is `{tag, address, tier}` and, for a family that
@@ -205,8 +205,11 @@ without a store. The object hands out `root` and `declaration | null`, and `view
 `createDataSurface`'s options (`:640`) are the projections above, while **`listeners:` is the DELIVERY's** — `[...tabsDelivery.entries, ...viewDelivery.entries]` (`:452`) — and the
 view delivery builds its entries from `VIEW_DECLARED_ADDRESSES` (`:1511-1516`), the module-private array that is deliberately
 **not** derived from the tuple (`:1507`): if it were, the entries↔roots row below would compare the tuple with itself. **So a
-family of your own gets a root and a declaration from its spec, and its ENTRY you supply yourself** — §3.4 is that shape —
-and `createViewDelivery(sink)` will not carry your address, because it is closed to this app's four (`:1555`).
+family of your own gets a root and a declaration from its spec, and its ENTRY comes from the delivery's own address array** —
+the module-private `VIEW_DECLARED_ADDRESSES` (`:1511-1516`), which you add your address to in the same edit that adds your
+spec; the two rows below red if you add one and not the other, and `createViewDelivery(sink)` will not carry an address that
+array does not name (`:1555`). **§3.4 is the different case**: a source that is NOT the record, which has no construction to
+adopt its entries at all.
 
 **The arms are `tag`-discriminated, and that is what makes the omission a compile error.** A `paired` spec requires `id` and
 `body`; an `unpaired` spec declares them as **optional `never`**. Without the tag, a paired family that forgot its `body`
