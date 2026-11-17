@@ -187,11 +187,12 @@ envelope, and a red there is your figure moving, not a defect (D-26, D-43).
 
 ### 2.5 A record family of your own
 
-**The mechanism exists and no page said where it is, so this section is the state rather than a proposal.** A family is
-an **address**, a **tier**, an **entry** the delivery carries and — where an invariant holds it — a **constraint
-declaration** that repairs. Every one of those is a separate export you spread, not a factory you call: the view record
-exports `viewConstraintDeclarations` (`src/main/view-record/index.ts:1414`), `viewDeclaredRoots` (`:1455`) and
-`createViewDelivery` (`:1555`), and the app's own boot is the only place they meet (`D-219`).
+**The mechanism exists, and since `D-292` it is ONE object rather than four spellings you keep in step by hand.** A family
+is an **address**, a **tier**, an **entry** the delivery carries and — where an invariant holds it — a **constraint
+declaration** that repairs; `viewFamily(spec)` mints exactly that (`src/main/view-record/index.ts:1349`), `VIEW_FAMILIES`
+is the tuple the app's own publications project over (`:1374`), and the three exports you spread are those **projections** —
+`viewConstraintDeclarations` (`:1414`), `viewDeclaredRoots` (`:1455`) and `createViewDelivery` (`:1555`) — with the boot the
+only place they meet (`D-219`).
 
 **A family is ONE spec, and TWO of the boot's three lists become its projections** (`D-292`). `src/main/view-record/index.ts`
 exports `viewFamily(spec)` and `VIEW_FAMILIES` (`:1349`, `:1374`): a spec is `{tag, address, tier}` and, for a family that
@@ -199,9 +200,9 @@ holds an invariant, `id` plus a **body factory** — `(getStore) => body`, defer
 without a store. The object hands out `root` and `declaration | null`, and `viewConstraintDeclarations` (`:1414`) and
 `viewDeclaredRoots` (`:1455`) are **projections** over that tuple — so a declaration cannot be published without its root.
 
-**The THIRD list is not the object's, and it is the one that bites a fork.** The boot spreads three lists at that one
-construction: `constraints:` and the `data` surface's `declaredRoots:` are the projections above (`src/main/main.ts:437`,
-`:640`), while **`listeners:` is the DELIVERY's** — `[...tabsDelivery.entries, ...viewDelivery.entries]` (`:452`) — and the
+**The THIRD list is not the object's, and it is the one that bites a fork.** Three lists are spread, at **two** calls:
+`constraints:` at the store's one construction (`src/main/main.ts:437`) and the `data` surface's `declaredRoots:` at
+`createDataSurface`'s options (`:640`) are the projections above, while **`listeners:` is the DELIVERY's** — `[...tabsDelivery.entries, ...viewDelivery.entries]` (`:452`) — and the
 view delivery builds its entries from `VIEW_DECLARED_ADDRESSES` (`:1511-1516`), the module-private array that is deliberately
 **not** derived from the tuple (`:1507`): if it were, the entries↔roots row below would compare the tuple with itself. **So a
 family of your own gets a root and a declaration from its spec, and its ENTRY you supply yourself** — §3.4 is that shape —
@@ -309,6 +310,12 @@ its first** — and the defect is recorded where it was fixed: *"the empty array
 a surface that can build a store is a surface one caller away from a second one (D-80, D-101) — so your family's wiring
 lives **beside the boot**, in the one construction, and never inside a surface. **You provide** the family: its address,
 its tier, its declaration, its placeholder and its channel.
+
+**Read the two layer pages before you write one.** `docs/L2/view-record/family-object.md` is the object's contract at its
+boundary and `docs/L3/view-record/family-object.md` is its structure, signatures and guardrails (`FG-1`…`FG-9`) — and two
+facts you need live only there: **your spec joins the app's own exported `VIEW_FAMILIES` tuple**, and **both rows are an
+independence census and not an agreement proof**: they red when a constant is dropped from or duplicated in either list, and
+they cannot catch one wrong address spelled in both (`D-53`).
 
 **Five checks that say a new family is wired**, from this section alone and before anything else is trusted: (1) a write
 at its address commits, and a leaf write under it is **delivered**; (2) a member the parse cannot state is **refused**,
