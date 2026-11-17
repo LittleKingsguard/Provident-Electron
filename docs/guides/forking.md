@@ -190,15 +190,22 @@ envelope, and a red there is your figure moving, not a defect (D-26, D-43).
 **The mechanism exists and no page said where it is, so this section is the state rather than a proposal.** A family is
 an **address**, a **tier**, an **entry** the delivery carries and — where an invariant holds it — a **constraint
 declaration** that repairs. Every one of those is a separate export you spread, not a factory you call: the view record
-exports `viewConstraintDeclarations` (`src/main/view-record/index.ts:1292`), `viewDeclaredRoots` (`:1334`) and
-`createViewDelivery` (`:1439`), and the app's own boot is the only place they meet (`D-219`).
+exports `viewConstraintDeclarations` (`src/main/view-record/index.ts:1414`), `viewDeclaredRoots` (`:1455`) and
+`createViewDelivery` (`:1555`), and the app's own boot is the only place they meet (`D-219`).
 
-**A family is ONE spec, and the two lists are its projections** (`D-292`). `src/main/view-record/index.ts` exports
-`viewFamily(spec)` and `VIEW_FAMILIES` (`:1349`, `:1374`): a spec is `{tag, address, tier}` and, for a family that holds an
-invariant, `id` plus a **body factory** — `(getStore) => body`, deferred because `viewDeclaredRoots()` publishes without a
-store. The object hands out `root` and `declaration | null`, and the two publications you spread into `constraints:` and
-`listeners:`' own declarations (`viewConstraintDeclarations`, `viewDeclaredRoots`, `:1414`, `:1455`) are **projections**
-over that tuple — so a declaration cannot be published without its root.
+**A family is ONE spec, and TWO of the boot's three lists become its projections** (`D-292`). `src/main/view-record/index.ts`
+exports `viewFamily(spec)` and `VIEW_FAMILIES` (`:1349`, `:1374`): a spec is `{tag, address, tier}` and, for a family that
+holds an invariant, `id` plus a **body factory** — `(getStore) => body`, deferred because `viewDeclaredRoots()` publishes
+without a store. The object hands out `root` and `declaration | null`, and `viewConstraintDeclarations` (`:1414`) and
+`viewDeclaredRoots` (`:1455`) are **projections** over that tuple — so a declaration cannot be published without its root.
+
+**The THIRD list is not the object's, and it is the one that bites a fork.** The boot spreads three lists at that one
+construction: `constraints:` and the `data` surface's `declaredRoots:` are the projections above (`src/main/main.ts:437`,
+`:640`), while **`listeners:` is the DELIVERY's** — `[...tabsDelivery.entries, ...viewDelivery.entries]` (`:452`) — and the
+view delivery builds its entries from `VIEW_DECLARED_ADDRESSES` (`:1511-1516`), the module-private array that is deliberately
+**not** derived from the tuple (`:1507`): if it were, the entries↔roots row below would compare the tuple with itself. **So a
+family of your own gets a root and a declaration from its spec, and its ENTRY you supply yourself** — §3.4 is that shape —
+and `createViewDelivery(sink)` will not carry your address, because it is closed to this app's four (`:1555`).
 
 **The arms are `tag`-discriminated, and that is what makes the omission a compile error.** A `paired` spec requires `id` and
 `body`; an `unpaired` spec declares them as **optional `never`**. Without the tag, a paired family that forgot its `body`
@@ -239,7 +246,7 @@ invariant holds and no repair supplies (D-145, D-101).
   absence is the product rather than a gap (D-145, D-132);
 - omit the **root**, and two things stop: `data`'s guard cannot refuse a second version of your address at another tier
   (`src/main/data/types.ts:180-212`, D-101), and — the sentence that matters — *"a root the array omits is a write the
-  renderer NEVER HEARS"* (`src/main/view-record/index.ts:1391`, D-137).
+  renderer NEVER HEARS"* (`src/main/view-record/index.ts:1507`, D-137).
 
 The count is asserted rather than promised: `tests/integration/central-data/declared-root.test.ts` pins the union root
 for root, so a family in one list and not the other is a red rather than a surprise (D-26, D-43).
@@ -284,7 +291,7 @@ filters on what it read, never on what it was handed. **The shape is the client'
 its own copy of a value is a cache the design forbids (D-92).
 
 **If you want per-family routing, take the sink — that is the expected use.** The sink is the caller's
-(`createViewDelivery(sink)` is exported, `:1439`), this app's own sink already routes on the address it is handed
+(`createViewDelivery(sink)` is exported, `:1555`), this app's own sink already routes on the address it is handed
 (`src/main/main.ts:308`), and it is the only half of the delivery an address reaches (D-92).
 
 **The pre-window hold — the one delivery a bare `webContents.send` loses.** A delivery fires **at the construction**,
@@ -390,7 +397,7 @@ re-read**, in that order:
 
 **The two halves are yours to supply.** A source declares the addresses it will announce, mints
 `{address, handle, listener}`-shaped entries against them where it binds a record, and **calls its own sink** — the same
-two halves `createViewDelivery` has (`src/main/view-record/index.ts:1439-1479`). **There is no construction to adopt
+two halves `createViewDelivery` has (`src/main/view-record/index.ts:1555-1595`). **There is no construction to adopt
 those entries**, which is why the ready/flush moment below is yours to state and not the boot's.
 
 **Copy the pattern this tree already uses rather than inventing one.** Three deliveries for something that is not the
@@ -1152,7 +1159,7 @@ and most of them were also **run**, against this tree, at this head:
 | §2.5 the delivery's contract — sink address, subscriber arity, order, containment | **run**: a real `provident-storeroom` + `createViewDelivery` + `createViewRecord` over a scratch profile — the sink was handed `["panes","pane-a","collapsed"]`, `["zones","top","collapsed"]` and `["panes","pane-a","status"]` (the **leaf**, never the root) while a rest-parameter subscriber and a zero-parameter subscriber were both called at arity `0`; the order was `handler` then `sink` on every delivery; and a subscriber that threw left its siblings served |
 | §2.5 the creation's pre-window deliveries | **run**: the same probe — the construction's repairs delivered `['panes']`, `['zones']` and `['theme']` before any window existed and with no subscriber registered |
 | §2.5 the value admission, the declaration ids and the placeholders | **read**: `paneOf`'s member-by-member refusals (`src/main/view-record/index.ts:576-600`), `panesMustStand`/`zonesMustStand`'s two arms (`:1014-1110`), the three id constants (`:119`, `:163`, `:166`) and the defaults in `src/shared/view-shape.ts`; the `1.5` refusal itself is §8.2's **run** row |
-| §3.4 the source's two halves | **read**: `createViewDelivery`'s entries-and-sink pair (`src/main/view-record/index.ts:1439-1479`) |
+| §3.4 the source's two halves | **read**: `createViewDelivery`'s entries-and-sink pair (`src/main/view-record/index.ts:1555-1595`) |
 | §2.5 the family object and its two rows | **run**: `tests/unit/store-view-record/family-object.test.ts` (`FH-3` — both projections of one spec, the explicit `null`, the deferred body factory, five refused literals carried as `@ts-expect-error`, two admitted controls, and a must-compile narrowing read) and `tests/integration/store-view-record/declared-entries.test.ts` (`FH-1`, the entries↔roots row); the tag-versus-untagged difference is a `tsc` reading recorded in `D-292` |
 | §2.5 the two lists and the price of each omission | **read** + the row that owns the count: `src/main/main.ts:437`, `:452`, `src/main/storeroom.ts:101`, `:119-120`, and `tests/integration/central-data/declared-root.test.ts`'s union equality |
 | §3.4 the channel pattern and the lockstep rule | **read**: the three clients' headers, `src/main/preload.ts`'s bridge literal, and `crossing.test.ts:890-903`'s lockstep row |
