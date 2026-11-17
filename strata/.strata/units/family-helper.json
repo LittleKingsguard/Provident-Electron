@@ -1,0 +1,37 @@
+{
+  "unit": "family-helper",
+  "layer": "L2",
+  "stage": "design",
+  "artifacts": [
+    "L1-design"
+  ],
+  "assumptions": [
+    {
+      "id": "ASM-FH-1",
+      "text": "The family object is ADDITIVE: one declaration object projects both the published root and the constraint declaration, and no delivery signature moves (D-292).",
+      "alternative": "The delivery-level constructor DLV-2 clause 4 literally describes, refused for its cost rows and because it makes a gating arm unexpressible.",
+      "status": "reviewed"
+    },
+    {
+      "id": "ASM-FH-2",
+      "text": "The guarantee is ONE-DIRECTIONAL: a declaration cannot be published without its root, while a root with no declaration stays lawful and must stay expressible, so the unpaired arm is an explicit member (D-292, D-145).",
+      "alternative": "Total enforcement, which would require re-pairing ['drag'] and is barred by D-145.",
+      "status": "reviewed"
+    },
+    {
+      "id": "ASM-FH-3",
+      "text": "Where the object lives is the design's to decide, with the recorded costs of a new src file (pins 52 -> 53, an L1 map row, a boundary entry) against an existing module's ownership fit (D-292 iv).",
+      "alternative": "A home fixed at L0, which would put a module decision above the layer that owns the map.",
+      "status": "reviewed"
+    },
+    {
+      "id": "ASM-FH-4",
+      "text": "The boundary union is extended to the two delivery pages BEFORE either is edited, or B-1 reds by construction (D-30, D-292 v).",
+      "alternative": "Editing first and re-graining the boundary after, which would take a knowingly false red.",
+      "status": "reviewed"
+    }
+  ],
+  "streaks": {},
+  "rebuildEligible": false,
+  "updated": "2026-11-17T00:32:58.069Z"
+}

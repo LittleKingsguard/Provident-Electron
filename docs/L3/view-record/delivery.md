@@ -65,6 +65,8 @@
 | `VD-6` | **NO TIMER, NO POLL, NO RETRY, NO WRITE ON A READ** anywhere this pass touches: the sink is called once per delivery and the consumer re-reads | `D-82` clause 4, `D-92` |
 | `VD-7` | **NO ADDRESS IS SPELLED OUTSIDE THIS MODULE**: the entries are built from the four constants, and no consumer — including `main.ts` — names a root to this module | `D-53`, `D-101` |
 
+- **AND THE FAMILY OBJECT DECLARES AND NEVER REGISTERS** (`H-8`; `docs/L3/view-record/family-object.md`): it mints no entry, no handle and no id, runs no store verb and offers no second registration route — so `VD-1` and `VD-4` stand UNBROKEN rather than merely unmentioned, and the entries above are still this page's and the construction's, built before `createProfileStore` and from the four constants (`D-219`, `D-129`, `D-71`, §1–§2).
+
 ## 7. The rows that move, with their files and their owners
 
 | Row | Its file | What moves |
