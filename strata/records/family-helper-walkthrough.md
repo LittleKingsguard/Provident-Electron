@@ -1,31 +1,28 @@
-# family-helper-walkthrough — run 1, verdict **STALE** (blind runner, staged root `/tmp/fh-walkthrough`, 2026-11-16)
+# family-helper-walkthrough — run 4, verdict **PASS** (blind runner, staged root `/tmp/fh-walkthrough-4`, 2026-11-16)
 
-**Staging** (`strata/walkthrough.md` §3): `strata/`, `docs/` (all three layer scopes and the fork guide), `src/`, the built `dist/`, the root pointers `README.md`/`AGENTS.md`/`package.json`, three path listings and an empty `work/`. **`tests/`, `scripts/` and `node_modules/` deliberately absent**, so a claim needing a test's content is `unverifiable` and never falsified (D-44).
+**Staging** (`strata/walkthrough.md` §3, read for scope this time): **the documents the unit owns and hands out** — `docs/L1/family-helper.md`, `docs/L2/view-record/family-object.md`, `docs/L2/store-tabs-record/interface.md`, `docs/L3/view-record/family-object.md`, `docs/L3/view-record/delivery.md`, `docs/guides/forking.md` — plus `strata/`, `src/`, the built `dist/`, the three root pointers, listings and an empty `work/`. **Excluded by the rule, not by convenience**: `tests/`, `scripts/`, `node_modules/`, and other modules' design pages this unit does not touch (`docs/L2/view-record/interface.md`, `docs/L3/view-record/design.md`), whose staleness is pre-existing and not this unit's to answer — run 3 staged all of `docs/` and imported exactly that noise.
 
-## The scenario set (11 steps, authored at exit from the documentation and `brief.md`, never from the source)
+## The scenario set (11 steps, authored at exit from the documentation and `brief.md`)
 
-`1` declare a family (spec = tag + address + tier, + id and a body factory) · `2` forget the body (compile error, and why the tag carries it) · `3` declare a family with no invariant (the unpaired arm, and the precedent) · `4` get it into the boot's construction (which lists are projections, which exports produce them) · `5` prove no family went missing (the entries↔roots row, and what it does NOT prove) · `6` the contract (IN/OUT, the unpaired arm's explicit empty value) · `7` structure and signatures before writing code (§2 and the guardrails) · `8` locate the exports in `src/` at the cited positions · `9` what the object deliberately does not do (and where routing belongs) · `10` the ruling behind the form (`D-292`, and the alternative not taken) · `11` hand it on (one entry point reaching both layer pages and both rows).
+`1` declare a family (spec = tag + address + tier, + id and a body factory) · `2` forget the body (a compile error, and why the tag carries it) · `3` declare a family with no invariant (the unpaired arm, and the precedent) · `4` get it into the construction (**which lists are projections and which are not**, and how a new family's listener is reached) · `5` prove no family went missing (the entries↔roots rows, and what each does not prove) · `6` the contract (IN/OUT, the unpaired arm's explicit `null`) · `7` structure, signatures and guardrails before writing code · `8` locate the exports at the cited positions · `9` what the object does not do, and where to go instead · `10` the ruling and the alternative not taken · `11` one entry point reaching the contract, the layer pages and the rows.
 
 ## Report
 
-| step | action | citation | outcome | guessed |
-|---|---|---|---|---|
-| 1 | §2.5, L2 §1, `src:1288-1397` | `forking.md` §2.5 | satisfied | no |
-| 2 | §2.5, L2 §2, the two arm interfaces | §2.5 | satisfied (the `tsc` measurement is `unverifiable` in the root) | no |
-| 3 | §2.5, L2 §1, `VIEW_FAMILIES`' fourth member | §2.5 | satisfied | no |
-| 4 | §2.5, then `main.ts:437`/`:452`/`:640`, `createViewDelivery` | §2.5 | **stale** | **yes** |
-| 5 | §2.5, §11, L1 §5, L2 §4 | L1 §5 `FH-1` | satisfied (row content `unverifiable`: `tests/` absent) | no |
-| 6 | L2 §1/§2, L1 §4, L3 §2 | L2 §1 | satisfied | no |
-| 7 | L3 §2-§5 | L3 §2, `FG-1` | **stale** on the page's status | no |
-| 8 | grep of `src/` exports | §2.5 | satisfied — `:1349`, `:1374` exact | no |
-| 9 | §2.5, L3 `FG-1`, L1 §1 | §2.5 | satisfied (one cite stale) | no |
-| 10 | `D-292`, `D-291` | `D-292` | satisfied | no |
-| 11 | `README.md` → guide; every link in §2.5/§11 | — | **doc-gap** | **yes** |
+| steps | outcome | guessed |
+|---|---|---|
+| `1` `2` `3` — the spec, the arms, the unpaired precedent | satisfied; `src:1297-1330`, `:1349`, `:1396` corroborate name for name | no |
+| `4` — the three spread lists | satisfied **without overclaim**: `constraints:`/`declaredRoots:` are projections, `listeners:` is the delivery's own private array, and the guide tells a fork to add its address there in the same edit as its spec | no |
+| `5` — the rows | satisfied; both `FH-1` and `FH-2` named with their limits and the "independence census, not an agreement proof" caveat | no |
+| `6` `7` — contract, structure, guardrails | satisfied; the L3 `§2` block reproduces `src:1297-1339` exactly and `FG-1` holds at the landing | no |
+| `8` — the exports | satisfied — **exact**: `viewFamily` `1349`, `VIEW_FAMILIES` `1374`; every other offset lands too, and `dist/main/main.mjs:37711` carries the object | no |
+| `9` `10` `11` — the limits, the ruling, the hand-on | satisfied; `D-292` states the form, the row beside it and the alternative not taken | no |
 
-**`docs-stale` (4).** (i) **`forking.md` §2.5's *"the two lists are its projections"*** — `constraints:` is projected (`main.ts:437`) but **`listeners:` is the delivery's**, built from the module-private `VIEW_DECLARED_ADDRESSES` (`src:1511-1516`), which the L3 page requires to stay un-derived (`FG-6`), and `viewDeclaredRoots()` is spread into the data surface's `declaredRoots` (`main.ts:640`), not into `listeners:`. (ii) The same section's `:1292`/`:1334`/`:1439`/`:1391`/`:1439-1479` offsets, which are `1414`/`1455`/`1555`/`1507`/`1555-1595` after `H-1`. (iii) `docs/L3/view-record/family-object.md`'s header and §6 still call the object **UNLANDED**. (iv) `docs/L1/family-helper.md` §1/§3's offsets into the changed file no longer land.
-**`docs-insufficient` (2).** No document states how a fork's family reaches `listeners:` at all, or that `createViewDelivery` is closed to the four addresses; and no entry point links the two layer pages (§2.5/§11 name the rows and the ruling, not the pages).
-**`undocumented` (3).** The third spread site (`declaredRoots:`, `main.ts:640`); that `createViewDelivery(sink)` cannot carry a fifth address; and what `declaration(getStore)` answers for the `id: undefined` escape (`null`, from the tag test at `:1351-1353`).
+**`docs-insufficient` — empty. `docs-stale` — empty. `undocumented` — empty.**
 
-**Routing** (`strata/walkthrough.md` §5): (i)(ii) and the L0-owned documents to **L0**; (iii) to **L3**; (iv) to **L1**; the two `docs-insufficient` findings split the same way — the listener gap is L0's to state and L1's to design around, the entry-point gap is L0's.
+**Notes only, not contradictions**: `paneOf` cited at `:576` (declared `:544`, so the reader lands inside its arms — the same start §11 uses); the three id constants cited as `:119`/`:163`/`:166` in list order though the lines are panes/theme/zones; §11's `:1014-1110` covering `panesMustStand` whole and `zonesMustStand`'s head. **`D-292` carries pre-`H-1` offsets** that no longer land (`:1395-1400` vs `:1334-1341`); the ruling is unaffected and the register is L0's — recorded to `D-293` rather than reworded here (`D-46`).
 
-**§11 of the guide claimed `FH-1`/`FH-3` were `run`, and `tests/` is absent from this root by construction**: the claim is `unverifiable` here, not falsified — the readings are the loop's own (`d0aef4b`: `2,980 passed / 2 skipped of 2,982` over `149` files).
+**The three runs, in one line each.** Run 1 **STALE**: the guide claimed "the two lists are its projections", five offsets were pre-`H-1`, and L3 still called the object unlanded. Run 2 **STALE**: the opener still described the pre-`H-1` shape, and no entry point reached the two layer pages. Run 3 **STALE**: the sentence written to fix run 2's opener had the object *minting the entry*. **Each finding was real and each was mine**, and the fact that bit three times is the one the unit exists to state: **the entry belongs to the delivery, never to the declaration half** (`D-292`, `docs/guides/forking.md` §2.5).
+
+**Unverifiable here, never falsified**: the rows' content, the four legs and §11's `run` rows (`tests/` absent by the staging rule). The readings are the loop's own: `2,984 passed / 2 skipped of 2,986` over `149` files at `c92ad9a`, `typecheck` 0, `typecheck:tests` 0, `build` 0, `strata-marks check` exit 0.
+
+**Out of this unit and routed rather than taken** (run 3 saw them because its root was too wide; they are real): `docs/L2/view-record/interface.md` and `docs/L3/view-record/design.md` describe the landed width/height wire and the receipt reader as owed, and one states two pane ids where the tree names three — `store-view-record`'s L2/L3 owe that currency pass, and it is not this unit's document.

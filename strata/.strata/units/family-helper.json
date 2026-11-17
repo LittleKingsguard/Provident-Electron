@@ -1,9 +1,12 @@
 {
   "unit": "family-helper",
   "layer": "L2",
-  "stage": "design",
+  "stage": "done",
   "artifacts": [
-    "L1-design"
+    "L1-design",
+    "L2-design",
+    "L3-design",
+    "L4-implementation"
   ],
   "assumptions": [
     {
@@ -33,5 +36,5 @@
   ],
   "streaks": {},
   "rebuildEligible": false,
-  "updated": "2026-11-17T00:32:58.069Z"
+  "updated": "2026-11-17T02:42:18.558Z"
 }
