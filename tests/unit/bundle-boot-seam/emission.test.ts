@@ -8,17 +8,28 @@
 // rows A-1..A-5 ask whether the arrangement holds *as a whole* — the artifact, its module system, the
 // package's derivation, the preload, the harness's name. Each row here asks one question of one
 // symbol: which module system the `main` field's NAME selects; which single arm of `build` emits that
-// path and in what format; whether `build:watch` carries the same decision; whether the preload arm is
-// still the declared text and its artifact still CJS; whether the four arms this unit may not touch
-// are still the declared text; and whether the emission set is exactly five artifacts. No row spawns
-// Electron, opens a transport or calls a tool, and no row re-asserts an L1 expectation (L1 §6, D-27).
+// path and in what format — and whether that arm keeps BOTH of the things it must keep external, the
+// container's `electron` and the ESM-only `provident-storeroom` (`D-297`); whether `build:watch` carries
+// the same decision; whether the preload arm is still the declared text and its artifact still CJS;
+// whether the four arms this unit may not touch are still the declared text; whether the emission set is
+// exactly five artifacts; and — `U-9`, the post-sweep row — whether the built entry carries the package
+// as an IMPORT rather than as bytes. No row spawns Electron, opens a transport or calls a tool, and no
+// row re-asserts an L1 expectation (L1 §6, D-27).
 //
-// RED-FIRST, AND IT IS THE EVIDENCE (D-14, examiner.md §3): authored before the arrangement lands. At
-// this head U-1, U-2, U-3 and U-6 answer red — the `main` field names `dist/main/main.cjs`, the
-// `build` and `build:watch` arms emit it `--format=cjs`, and `dist/main/` carries the retired name —
-// while U-4 and U-5 answer green and must STAY green: they are the guardrail that no L4 invention
-// reaches the preload or the two sibling bundles (D-18, ASM-L2-5, ASM-L2-6). No row is skipped,
-// conditionally disabled or softened to reach a colour.
+// RED-FIRST, AND IT IS THE EVIDENCE (D-14, examiner.md §3): U-1..U-6 were authored against the head
+// BEFORE the arrangement landed — the one exception is `U-9` below, authored post-sweep over a flag
+// already in the tree, so it carries no arrival colour and states its own history in place. ON ARRIVAL
+// U-1, U-2, U-3 and U-6 answered red: that head named the entry `dist/main/main.cjs`, emitted `build`
+// and `build:watch` at `--format=cjs` to that name, and left `dist/main/` carrying it. ALL FOUR ARE
+// GREEN AT THIS HEAD, and the arrangement is what cleared them — the `main` field names
+// `dist/main/main.mjs`, both build keys emit `--format=esm --outfile=dist/main/main.mjs`, no arm emits
+// `main.cjs`, and `dist/main/` carries no `main.cjs` at all. U-2's second external,
+// `--external:provident-storeroom`, landed in the tree after that first landing and is asserted here
+// from `D-297`; it is green at this head too. U-4 and U-5 answered green on arrival and must STAY
+// green: they are the guardrail that no L4 invention reaches the preload or the two sibling bundles
+// (D-18, ASM-L2-5, ASM-L2-6). No row is skipped, conditionally disabled or softened to reach a
+// colour — and a red-first paragraph describing a head the tree had left behind would be the same
+// class as a row with no reading under it.
 //
 // THE BUILD HAS ONE CLAIMANT: this file builds only when the artifact set is absent, and it builds it UNDER THE
 // HOST-WIDE LIVE-BOOT LOCK the booting batteries hold (`D-227`, cure shape (2)) — one claimant at a time, host-wide, so
@@ -94,6 +105,40 @@ async function artifact(file: string, label: string): Promise<string> {
     await sleep(100)
   }
   throw new Error(`${label}: the build produced no artifact at ${file} — ${problem} after ${READ_MS} ms`)
+}
+
+/** **A CO-OWNED ARTIFACT READ THE WAY `D-74` DEMANDS**, whose `A-1`..`A-4` are this module's own precedent: PRESENT,
+ *  NON-EMPTY, and **UNCHANGED ACROSS TWO POLLS** before a single byte is judged.
+ *
+ *  **Why the bound is here and not a bare `existsSync`+read**: this entry is CO-OWNED. Every builder in this suite writes
+ *  `dist/` under one host-wide lock and `npm run clean` REMOVES it (`D-227`, the lock above), so a bare read can land on a
+ *  half-written entry, or on one build's bytes while another build is replacing them — `D-74` measured exactly that:
+ *  `A-1`..`A-4` red `2 of 4 runs` under a concurrent build and `0 of 16` once the read was bounded. Two polls one interval
+ *  apart is the cheap form of "not being written": a file still growing cannot present the same bytes twice.
+ *
+ *  **And the bound re-acquires ABSENCE ONLY, never a content fault** (`D-74`): the assertions the caller makes are judged on
+ *  the bytes this function RETURNS, so a stable entry that carries the wrong shape reds at once instead of being waited out.
+ *  A row that retried a content fault could not fail, which is worth less than no row. */
+async function stableArtifact(file: string, label: string): Promise<string> {
+  const started = Date.now()
+  let previous: string | null = null
+  let problem = 'it does not exist'
+  while (Date.now() - started < READ_MS) {
+    try {
+      if (statSync(file).size > 0) {
+        const bytes = readFileSync(file, 'utf8')
+        if (previous !== null && previous === bytes) return bytes
+        previous = bytes
+        problem = 'it changed between two polls'
+      } else {
+        problem = 'it exists and is empty'
+      }
+    } catch {
+      problem = 'it does not exist'
+    }
+    await sleep(100)
+  }
+  throw new Error(`${label}: no STABLE artifact at ${file} — ${problem} after ${READ_MS} ms`)
 }
 
 /** One `scripts` key's arms, in the declared order, trimmed (`design.md` §2). */
@@ -301,7 +346,7 @@ describe('bundle-boot-seam · package.json, E-1 — the emitted name decides the
     ).toBe(DECLARED_MODULE_SYSTEM)
   })
 
-  it('U-2 · exactly ONE `build` arm emits the entry, and it is the ESM arm on `node` with `electron` external (design.md §2; signatures.md §3; E-1)', () => {
+  it('U-2 · exactly ONE `build` arm emits the entry, and it is the ESM arm on `node` with `electron` and `provident-storeroom` external (design.md §2, §4 `G-8`; signatures.md §3; E-1; D-297)', () => {
     expect(buildFailure).toBeNull()
     const declared = manifest.main.replace(/^\.\//, '')
     const mainArms = armsOf('build').filter((arm) => arm.includes('src/main/main.ts'))
@@ -310,6 +355,25 @@ describe('bundle-boot-seam · package.json, E-1 — the emitted name decides the
     expect(flagOf(arm, 'format'), `the entry's arm carries --format=${String(flagOf(arm, 'format'))}, not the declared ESM`).toBe('esm')
     expect(flagOf(arm, 'platform'), 'the entry is built for node, exactly as before the arrangement').toBe('node')
     expect(arm, '`electron` stays external: the container supplies it').toMatch(/--external[=:]electron\b/)
+    // **AND `provident-storeroom` STAYS EXTERNAL, ASSERTED EXACTLY AS `electron` IS** — beside it in the same arm, on the same
+    // question (`interface.md` §1's "the external is the ONLY thing the arrangement adds, at two sites"), because the flag has
+    // no build-time author: the package is **ESM-only** (`"type": "module"`, `exports: {".": {types, import}}`, no
+    // `main`/`require`/`default`), so **dropping it is NOT a build failure** — esbuild exits `0` and silently inlines the
+    // package's source (`D-297`'s 213,948 bytes; re-measured at this head with a two-line probe importing `storeCreate`:
+    // **212,018 bytes, fifteen package-path comments, a `var import_meta = {}`**, and **165 bytes** with the flag), while a CJS
+    // arm that KEEPS the package external dies in Node's resolver instead: `Error [ERR_PACKAGE_PATH_NOT_EXPORTED]: No "exports"
+    // main defined in …/node_modules/provident-storeroom/package.json` at the installed `1.11.0`, whose `await import` succeeds
+    // (`interface.md` §1, §3 P-5/P-10..P-12; `design.md` §2, §4 `G-8`).
+    // THE RULE'S OWNERS: the finding is upstream-owned and recorded rather than patched (`D-5`), `D-297` is its record, and
+    // the property it protects is `design.md` §4 `G-8`'s non-self-contained artifact. `U-9` reads the EMITTED entry, so this
+    // arm-text assertion and that artifact assertion fail independently; this one fails before any build runs.
+    expect(
+      arm,
+      '`provident-storeroom` stays external: the package is ESM-only (its `exports` map carries `types` and `import` and no ' +
+        '`require`), so dropping this flag INLINES it silently at exit 0 — measured: 212,018 bytes, fifteen package-path ' +
+        'comments and a `var import_meta = {}` (D-297) — and a CJS arm that keeps it external instead dies with ' +
+        '`ERR_PACKAGE_PATH_NOT_EXPORTED` (interface.md §1, P-5/P-10; design.md §4 `G-8`; D-297, D-5)',
+    ).toMatch(/--external[=:]provident-storeroom\b/)
     expect(flagOf(arm, 'outfile'), 'the arm emits the path the `main` field names, not merely the same basename in another directory').toBe(declared)
     // And the retired name is emitted by no arm at all: replacement, never a second artifact beside it.
     expect(armsOf('build').filter((other) => other.includes('main.cjs')), 'an arm still emits the retired name').toEqual([])
@@ -362,5 +426,73 @@ describe('bundle-boot-seam · package.json, E-1 — the emitted name decides the
     ).toEqual(['battery-host.mjs', 'preload.cjs', 'standalone.mjs', basename(manifest.main)].sort())
     expect(readdirSync(DIST_RENDERER).sort(), 'dist/renderer carries an artifact the arrangement does not declare').toEqual(['index.html', 'renderer.js'])
     expect(existsSync(RETIRED), 'the retired artifact survives a build that no longer emits it').toBe(false)
+  })
+
+  // **THE POST-SWEEP ROW, AND WHY IT IS A ROW AND NOT A LINE INSIDE `U-2`**: it is authored AFTER D-30's rework sweep, so it
+  // carries no `rework` marker and GATES (D-40) — and the two questions are independent, so they must be able to red
+  // separately: `U-2` reads the arm's TEXT (a flag that was never landed), this one reads the EMITTED BYTES (a flag that is
+  // there and did not take effect). **THE ROW IS THE PAGE'S NOW, AND IT IS CITED THERE**: `docs/L3/bundle-boot-seam/design.md`
+  // §7's table declares **nine** rows — `U-1`..`U-6` and this one here, `U-7` and `U-8` in `derivation.test.ts` — and states
+  // `U-9`'s goal, its three assertions and the `stableArtifact` read that fronts them; §1's site table and
+  // §4 `G-8` name it as the artifact grain of the same decision `U-2` reads on the arm, and §1 says the subtraction is read
+  // on the artifact rather than on the arm. That is **`D-297`'s routed residual, landed** (the designer's write, not L3's).
+  // **The corpus follow-up is half-discharged, and which half is named here so the other one is not lost** (D-1's
+  // one-writer rule keeps L3 out of both): `strata/marks.json` HAS been regenerated in this worktree (`node
+  // scripts/strata-marks.mjs index`) — this row's `scenario` stands in `marked` beside its `// strata:gates` carve-out, and
+  // the readings moved by exactly that one gating site in one more file and that one carve-out (D-26) — while
+  // `strata/brief.md` §6's census cell has NOT moved and still reads the figures dated to its last regen: that cell is what
+  // this row still owes.
+  // strata:gates — the row is authored after the sweep, so it is new evidence and gates (D-40); inside a `marked-file` file this carve-out is the instrument's only form for that (D-30)
+  it('U-9 · the built entry does NOT inline `provident-storeroom`: the package stands only as an import specifier (design.md §2, §4 `G-8`; interface.md §1, §7 A-3; D-297, D-74)', async () => {
+    // **THIS ROW EXISTS BECAUSE A DOWNSTREAM FORK FOUND THE HOLE FIRST** (`D-297`, `D-5`): `U-2` pins the ARM'S TEXT, and
+    // text is all the arm can be trusted for — a flag that is present and ineffective (a second invocation, an esbuild
+    // config, a `--define` re-inlining the package) leaves `U-2` green, and esbuild reports NOTHING. So this row reads what
+    // the tree actually emitted, at the grain the failure is silent at, and states the fork's own reading: with the flag the
+    // package is a bare SPECIFIER (two sites at this head — `import { storeCreate } from "provident-storeroom";` and its
+    // aliased twin `import { storeCreate as storeCreate2 } from "provident-storeroom";`); without it the same emission carries
+    // the package's SOURCE with every inlined file named by its path in a comment. Both arms
+    // were re-measured this session at this head, and the three assertions below are the MIRROR of that measurement:
+    // `--format=esm` without the flag → 1,661,743 bytes, **15** package-path comments, **no** import specifier, no
+    // placeholder; with the flag → two specifier sites, 0 comments, 0 placeholders (`interface.md` §1, §7 A-3; `D-297`).
+    //
+    // THE READ IS BOUNDED AND TWO-POLL STABLE, AND THAT IS THIS ROW'S OWN REASON, NOT A HABIT (`D-74`; `A-1`..`A-4` are this
+    // module's precedent): `dist/main/main.mjs` is CO-OWNED — every builder here writes `dist/` under the host-wide live-boot
+    // lock and `npm run clean` removes it — so the entry can be half-written or being replaced at the instant this row reads
+    // it, and `D-74` measured a bare read red `2 of 4 runs` under a concurrent build. The bound re-acquires ABSENCE only; the
+    // three assertions below are judged on the returned bytes, so an artifact that is STABLY wrong reds at once.
+    const bytes = await stableArtifact(mainEntry, 'U-9')
+
+    // (i) THE PACKAGE STANDS, AND IT STANDS AS A SPECIFIER — the shape `--external:provident-storeroom` emits on THIS
+    // artifact, whose declared module system is ESM (`U-1`, `U-2`; a CJS emission would answer `require("provident-storeroom")`
+    // instead, and that is the arrangement moving rather than this row's silence) — and the only shape in which the package's
+    // own module context (its `createRequire(import.meta.url)`, its manifest read beside its own entry) stays where the
+    // package derives it (`interface.md` §1, P-12).
+    expect(
+      bytes,
+      'the built entry carries no `provident-storeroom` import specifier: either the arm lost the flag and esbuild INLINED the ' +
+        'package at exit 0 — which is silent, and is the fork\'s failure — or this artifact predates the flag and must be ' +
+        'rebuilt, or it is not the ESM emission the `main` field declares (interface.md §1; design.md §2, §4 `G-8`; D-297)',
+    ).toMatch(/^import\b[^\n]*\bfrom\s*["']provident-storeroom["']|^import\s*["']provident-storeroom["']/m)
+
+    // (ii) NO INLINE TRACE. esbuild names every file it inlines by its path (`// node_modules/<pkg>/<file>`), so ONE comment
+    // naming the package is the package's bytes inside the artifact — the fifteen the dropped-flag probe carried are this
+    // assertion's target, and an artifact that carries NONE of them carries no package source at all.
+    expect(
+      bytes.match(/\/\/[^\n]*node_modules\/provident-storeroom[^\n]*/g) ?? [],
+      'the entry names the package by PATH, which is esbuild’s comment for a file it INLINED: the package was bundled into ' +
+        'the emission instead of resolved at load (D-297; the measured inlined probe carries fifteen of these)',
+    ).toEqual([])
+
+    // (iii) THE PLACEHOLDER THAT MARKS A SHIMMED MODULE CONTEXT, and the assertion that bites on a **CJS** emission: under
+    // `--format=cjs` esbuild rewrites the inlined package's `import.meta` to `var import_meta = {}` (the measured probe's
+    // 212,018-byte arm carries it), while under `--format=esm` it keeps `import.meta` real — so on THIS arm (i) and (ii) are
+    // the ones that red and here the placeholder is the second fingerprint of the same failure. A real ESM artifact carries
+    // `import.meta.url` (A-2 owns the placeholder at the integration grain, P-14 the `--define` alternative), and its absence
+    // is what lets the package's derivation run at the package's own URL (P-12).
+    expect(
+      bytes,
+      'the entry carries `var import_meta = {}`, the placeholder esbuild writes when it SHIMS a module it inlined; the ' +
+        'package’s derivation must run at the package’s own URL, not a shimmed one (interface.md §1 P-12; A-2)',
+    ).not.toMatch(/\bvar\s+import_meta\b/)
   })
 })

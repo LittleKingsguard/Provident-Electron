@@ -1,7 +1,7 @@
 # L3 — `bundle-boot-seam`: the declared signatures and the landing sites
 
-- **Layer:** L3 · **Unit:** `bundle-boot-seam` · **Branch:** `strata` (D-6) · **Rev:** 3 · **Artifact:** `l3-signatures-regrain`
-- **Status:** DECLARED NAMES AND STUBS ONLY — structure, pseudocode and guardrails are `design.md`; this file carries every name the implementation must expose or land, and the exact text it lands on (D-1 §4). Rev 2 carries L2's decided arm: the main emission is `--external:provident-storeroom` **in both build keys**, and the artifact that text produces is **not self-contained** — §3 states that requirement as `G-8` (`interface.md` §1, §5; `persistence.md` §3). Rev 3 corrects the three offsets this file cited into `src/main/main.ts` to **site names** (D-41) and replaces its restated suite count with a cite of the table that owns it (D-26)
+- **Layer:** L3 · **Unit:** `bundle-boot-seam` · **Branch:** `strata` (D-6) · **Rev:** 4 · **Artifact:** `l3-signatures-regrain`
+- **Status:** DECLARED NAMES AND STUBS ONLY — structure, pseudocode and guardrails are `design.md`; this file carries every name the implementation must expose or land, and the exact text it lands on (D-1 §4). Rev 2 carries L2's decided arm: the main emission is `--external:provident-storeroom` **in both build keys**, and the artifact that text produces is **not self-contained** — §3 states that requirement as `G-8` (`interface.md` §1, §5; `persistence.md` §3). Rev 3 corrects the three offsets this file cited into `src/main/main.ts` to **site names** (D-41) and replaces its restated suite count with a cite of the table that owns it (D-26). Rev 4 moves this file's own battery count to the **nine** rows `design.md` §7 now declares — its rev 4's `U-9`, the row over the emitted entry, included — and cites that table beside the count (D-297)
 - **Contract:** every name below is a name `docs/L2/bundle-boot-seam/interface.md` §1/§4/§5 or `docs/L1/bundle-boot-seam.md` §8 already declares — the `main` field, one emission arm in two keys, the entry's derivation and E-5's two harness constants. No name is added and none is dropped (`interface.md` §7 `A-1`..`A-5`; D-1)
 - **Ceiling:** 150 lines, class max (D-1) · **Citations:** `P-n` is `interface.md` §2's probe answer on this seat; the two harness files are read and never edited (D-5, D-3)
 
@@ -80,7 +80,7 @@ const here = dirname(fileURLToPath(import.meta.url))
 
 ## 6. The commands L4 runs, verbatim
 
-**The one command that must go green** — the layer's own battery, all eight rows, no skip (`design.md` §4; D-14):
+**The one command that must go green** — the layer's own battery, all nine rows, no skip — seven in `emission.test.ts` (`U-1`..`U-6`, `U-9`), two in `derivation.test.ts` (`U-7`, `U-8`), the split as `design.md` §7's table declares it (`design.md` §4, §7; D-14):
 
 ```sh
 npx vitest run tests/unit/bundle-boot-seam

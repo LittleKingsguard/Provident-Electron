@@ -16,7 +16,7 @@
     },
     "unit": {
       "files": 23,
-      "sites": 167
+      "sites": 168
     }
   },
   "marked": [
@@ -696,12 +696,17 @@
       "file": "tests/ui-leg-contract.test.ts",
       "scenario": "L-1 (§2 items 1+3) — scripts/electron-ui.mjs exists and `npm run ui` carries the pinned shape",
       "reason": "the script key set is a loop instrument, not module machinery (D-38)"
+    },
+    {
+      "file": "tests/unit/bundle-boot-seam/emission.test.ts",
+      "scenario": "U-9 · the built entry does NOT inline `provident-storeroom`: the package stands only as an import specifier (design.md §2, §4 `G-8`; interface.md §1, §7 A-3; D-297, D-74)",
+      "reason": "the row is authored after the sweep, so it is new evidence and gates (D-40); inside a `marked-file` file this carve-out is the instrument's only form for that (D-30)"
     }
   ],
   "readings": {
     "gating": {
-      "files": 53,
-      "sites": 390
+      "files": 54,
+      "sites": 391
     },
     "onNotice": {
       "files": 105,
@@ -711,6 +716,6 @@
       "files": 9,
       "sites": 76
     },
-    "carveOut": 9
+    "carveOut": 10
   }
 }

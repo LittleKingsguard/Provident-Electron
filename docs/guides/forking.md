@@ -1109,6 +1109,43 @@ runtime's own `{"status":"rejected"}` and not the MCP tool's envelope. A live re
 pixels and the drag's felt behaviour are §7's rows and their owners' measurements (D-244, D-249, D-261, D-272, D-280,
 D-284, D-285), restated and cited rather than re-derived (D-178).
 
+### 8.9 Your main bundle stops being external, and the BUILD STILL SUCCEEDS
+
+**The attempt.** A fork edits its build to drop the external flag — often to force the package into a self-contained main, or
+because a CJS main was chosen for the container:
+
+```sh
+esbuild src/main/main.ts --bundle --platform=node --format=cjs --outfile=dist/main/main.cjs
+#      note: no --external:provident-storeroom, and format=cjs
+```
+
+**What actually happens.** **The build EXITS 0 and silently inlines an ESM-only package.** Measured in this tree, from a
+two-line probe that imports `storeCreate`: the CJS arm without the flag emits **213,948 bytes with fifteen package-path
+comments and a `var import_meta = {}`**, and answers nothing about it; the same probe with the flag emits **154 bytes** and a
+real external import. The output is now a package's source, rewritten into a module system it was not built for — and at boot
+a CJS arm that keeps the package *external* instead dies in Node's resolver:
+
+```
+Error [ERR_PACKAGE_PATH_NOT_EXPORTED]: No "exports" main defined in …/node_modules/provident-storeroom/package.json
+```
+
+measured at this tree's installed `provident-storeroom@1.11.0`, whose manifest is `"type": "module"` with
+`exports: {".": {types, import}}` — **no `main`, no `require`, no `default`** — while `await import('provident-storeroom')`
+succeeds (`D-297`, `D-5`, upstream-owned).
+
+**Why.** The package is **ESM-only by its own manifest**, and this app's main entry is ESM for that reason: `package.json`'s
+`"main"` names `dist/main/main.mjs` and the build arm carries `--format=esm --external:provident-storeroom`
+(`tests/unit/bundle-boot-seam/emission.test.ts`'s `U-2`, `D-297`). esbuild inlines what it is not told to externalise and
+prints no warning, so **the failure is a runtime one that a green build cannot see** — the trap `D-74` names for co-owned
+artifacts, in its worst form.
+
+**Instead.** **Keep the entry ESM and keep the package external** — copy this app's arm verbatim, and copy `U-2`'s arms into
+your own tests so a fork cannot regress it. Every measured workaround on a CJS main was refused upstream and in the fork that
+asked: a subpath import, a manifest shim, `createRequire`, `require.resolve` and `--experimental-require-module` all fail at
+the **exports map** before any loader runs, and the one route that answers — an absolute path — is unlawful in a shipped
+bundle. **A CJS main therefore needs the PACKAGE to publish a `require` condition**; that is an upstream request, never a
+fork shim (`D-5`, `D-52`).
+
 ---
 
 ## 9. What a fork must NOT copy
@@ -1168,6 +1205,7 @@ and most of them were also **run**, against this tree, at this head:
 | §8.5 the status-only `commitPane` | **run**: `{"status":"committed"}` and `read()` unchanged; `{ size: 40 }` the same; the lawful leaf write beside it committed and was carried |
 | §8.6 hand-written DOM | **run under the layout-less DOM shim** through `Runtime.applyCommand`/`renderedHtmlResult()`/`markdown()`: the hand-written id answers `{"status":"rejected"}`, the markdown omits it, the rendered fragment carries it when it was appended under the mount and omits it outside; **not run against a spawned app** |
 | §8.7 the `css.style` replace | **run under the same shim**: `{"status":"applied","dirtied":["node-2"]}` and the authored `overflow-x: auto` gone from the fragment; the object spelling's `style="{"height":"120px"}"` measured here, its live-DOM "writes nothing" arm is D-203's |
+| §8.9 the dropped external and the CJS main | **run**: a two-line probe importing `storeCreate` — the CJS arm without `--external:provident-storeroom` emitted **213,948 bytes with fifteen package-path comments and a `var import_meta = {}` at exit 0**, the same probe with the flag emitted **154 bytes**; and `require('provident-storeroom')` answered `ERR_PACKAGE_PATH_NOT_EXPORTED` while `await import(...)` succeeded, both at this tree's installed `1.11.0`. Not run: a *working* CJS main on any package version, because none exists (`D-297`) |
 | §8.8 the writes that commit but are wrong | **run**: each answer in that table is a measured one, from the same scratch profile |
 | §2.5 the delivery's contract — sink address, subscriber arity, order, containment | **run**: a real `provident-storeroom` + `createViewDelivery` + `createViewRecord` over a scratch profile — the sink was handed `["panes","pane-a","collapsed"]`, `["zones","top","collapsed"]` and `["panes","pane-a","status"]` (the **leaf**, never the root) while a rest-parameter subscriber and a zero-parameter subscriber were both called at arity `0`; the order was `handler` then `sink` on every delivery; and a subscriber that threw left its siblings served |
 | §2.5 the creation's pre-window deliveries | **run**: the same probe — the construction's repairs delivered `['panes']`, `['zones']` and `['theme']` before any window existed and with no subscriber registered |
