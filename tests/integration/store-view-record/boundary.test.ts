@@ -1700,6 +1700,30 @@ const DECLARED_SCOPE: readonly string[] = [
   //    L2's battery and the object's home is view's, so that page transcribes a delivery this unit does not touch.
   //    Declaring it would CLAIM a write this unit does not make, and a claim is not cheaper than a gap; **any LATER pass
   //    that edits it owes the extension FIRST**, exactly as this one owed its own (`H-5`, `D-146`, `D-3`).
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── THE CURRENCY PASS'S ONE PATH OUTSIDE THIS UNIT'S OWN SCOPES — `docs/L1/app-layout.md`, AND IT IS DECLARED HERE BECAUSE
+  //    **THIS UNION IS THE WORKTREE'S EDIT SET AND NOT ONE UNIT'S** (`D-146`). **THE PATH IS ANOTHER LAYER'S AND ANOTHER
+  //    UNIT'S**: it is the `app-layout` L1 design page, authored by L1 for that unit, and NO block of this union has ever
+  //    carried it as an ENTRY — the path's only mention above is a COMMENT (the `app-layout` battery's own entry, which names
+  //    *"`docs/L1/app-layout.md` rev 5 §5"* as its rows' subject) and a comment declares nothing.
+  //    **AND THAT UNIT'S OWN ROW CANNOT DECLARE IT, WHICH IS WHY THE ENTRY IS THIS ONE'S**: `strata/.strata/units/
+  //    app-layout.json` reads `stage: done` at this head and `D-213` records that unit's close, so the pass writing this page
+  //    now is not that unit's — it is THIS one's, the `store-view-record` L2/L3 currency pass `D-293` (ii) names, whose edit
+  //    set is this union. **A path is declared by the seat that WRITES it** (`D-146`), and `B-1` reads
+  //    `git status --porcelain --untracked-files=all` over the WHOLE repository, where a page another unit authored and this
+  //    pass corrected is an undeclared edit like any other until an entry names it.
+  //    **WHAT THE CORRECTION IS.** §7's `OWED-5` (line 114) keeps its question as asked — *"no `src/` byte moved when the
+  //    member split"* — while this repo's own propagation pass moved exactly that wire (`D-206`: the axis-named member
+  //    through `src/main/view-record/index.ts` and `src/shared/view-shape.ts`, then `src/renderer/view-client.ts` and
+  //    `src/renderer/renderer.ts`, then the demo's stub and the bundle its generator rebuilds). **A SETTLED ROW WHOSE PREMISE
+  //    THE TREE FALSIFIED IS `D-46`'s STALE-PROSE CLASS**, so the row is re-grained IN PLACE — its question kept as asked,
+  //    its `D-191` settlement kept, and the clause that says what moved and what did not brought onto the tree that stands —
+  //    and this entry is the edit that re-grain is. **NOTHING ELSE OF THAT PAGE MOVES**: no `OWED` item is added or settled,
+  //    no `AL` row and no step is re-scoped, and its `150`-line ceiling is not touched.
+  //    **AND THIS IS THE PATH'S ONLY SPELLING HERE**: the union carries no second `docs/L1/app-layout.md` and no prefix that
+  //    would admit a page dropped beside it — `B-1`'s own set assertion refuses the duplicate, which is the difference
+  //    between a write and a claim.
+  'docs/L1/app-layout.md',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

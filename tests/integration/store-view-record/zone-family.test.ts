@@ -474,7 +474,8 @@ describe('view-record · the zone family, clause 4 — the write census, and no 
     // how many ROOT writes stand and which routes are not among them; this pair states WHICH FORM took the pane route's
     // root write's place, so a `commitPane` that went back to composing the family — or one that stopped writing at all —
     // reds here rather than passing a count that only says "not a root write". The form is the module's own:
-    // `[VIEW_PANES_ADDRESS[0], id, member]`, one leaf per supplied member, `size` then `bounds`.
+    // `[VIEW_PANES_ADDRESS[0], id, member]`, one leaf per supplied member — the ONE supplied axis member, `width` or
+    // `height`, and never a `size` (`D-189`, `D-191`, `D-206`) — then `bounds`.
     expect(/\.write\(VIEW_PANES_ADDRESS, PANES_TIER/.test(module), 'no whole-family write at the pane root remains in the module either: `composePanes` is DELETED WHOLE').toBe(false)
     expect(/\[VIEW_PANES_ADDRESS\[0\] as string, id, member\]/.test(module), 'and the pane route writes ONE LEAF PER SUPPLIED MEMBER at that form, the zone route\'s form one family over').toBe(true)
     // AND THE ROUTE HAS A HANDLER AT THE BRIDGE'S OWN SITE, which is what makes it an IPC route rather than a member

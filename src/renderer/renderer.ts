@@ -689,10 +689,15 @@ export interface PaneGestureReading {
  *   (v) the CURSOR write: the handle's own style member, with the declaration the module
  *       resolved (never a vocabulary of the wiring's own).
  *  The `commit` seam is `createPaneDrag`'s `release`, and **THE APP HANDS IT NO SINK** (`D-129`; design §5): the
- *  seam's THIRD ARGUMENT IS DELETED, so the turn makes ONE `commitPane(DEFAULT_PANE_ID, {size})` across the
- *  crossing and then its own ending — no sink write, no preview write, no style write, no handler dispatch and
- *  no rebind. **THE READ-OUT THE SINK USED TO AUTHOR IS `renderPaneSize`'s NOW**, painted from the DELIVERY that
- *  carries the record's stored size (returned below and called by the shape's one subscription body), while
+ *  seam's THIRD ARGUMENT IS DELETED, so the turn makes ONE `commitPane(<the pane the gesture's key names>,
+ *  {<the one member that pane's own `zone` makes ADJUSTABLE>: final})` across the crossing and then its own ending —
+ *  no sink write, no preview write, no style write, no handler dispatch and no rebind. **THE ACT CARRIES THAT PANE'S
+ *  OWN ID AND ITS OWN SINGLE AXIS MEMBER, AND NEVER A `size`** (`D-189`, `D-191`): `height` for `pane-a`, the
+ *  stage-resident pane, and `width` for `pane-menus`, whose `zone` is `top` — each supplied as ONE member that
+ *  `commitPane` lands as the leaf at that member's own name, so the member the moves wrote at `temp` and the member
+ *  the release commits are ONE member and nothing is translated on the wire. **THE READ-OUT THE SINK USED TO AUTHOR
+ *  IS `renderPaneSize`'s NOW**, painted from the DELIVERY that carries the record's stored size (returned below and
+ *  called by the shape's one subscription body), while
  *  `release`'s `R3` keeps its position and its signature for `demo/pane-drag-demo/demo.ts` — a realm with no
  *  crossing and no delivery to paint from (`D-118`). A clamped gesture figure written into a rendered node
  *  beside `['panes']` at `file` was the SECOND AUTHORITY; the record wins every arm the two can disagree in. */

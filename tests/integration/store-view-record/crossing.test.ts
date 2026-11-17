@@ -659,8 +659,10 @@ describe('view-record · clause 4 — every write path is an IPC route or a cons
     // `['panes', id]` REPLACES the pane whole, which is exactly the erasure the per-member leaves remove.
     expect(/\.write\(VIEW_PANES_ADDRESS, PANES_TIER/.test(module), 'no whole-family write at the pane root remains in the module').toBe(false)
     // **AND THE POSITIVE CONTROL IS THE FORM THAT DOES STAND**: `commitPane` writes ONE LEAF PER SUPPLIED MEMBER at
-    // `[VIEW_PANES_ADDRESS[0], id, member]` — `size` carrying the scalar, then `bounds` carrying the PAIR (`ASM-13`) — so
-    // the absence above is about the ROOT write and not about a route that writes nothing at all. The zone route's own
+    // `[VIEW_PANES_ADDRESS[0], id, member]` — the ONE SUPPLIED AXIS MEMBER carrying the scalar, `width` or `height` and
+    // never a `size` (the member's name is its axis, `D-189`, `D-191`, `D-206`), then `bounds` carrying the PAIR
+    // (`ASM-13`) — so the absence above is about the ROOT write and not about a route that writes nothing at all. At most
+    // one axis member is supplied, so the first leaf is one of the two and not both. The zone route's own
     // form is asserted in the same way one bullet down, which is the re-grain `D-152` gave that route.
     expect(/\[VIEW_PANES_ADDRESS\[0\] as string, id, member\]/.test(module), 'the pane route writes one leaf per supplied member').toBe(true)
     // **AND THE ZONE ROUTE WRITES NO WHOLE FAMILY AT ALL** (`D-151`): `composeZones` left with the composition, so the route
