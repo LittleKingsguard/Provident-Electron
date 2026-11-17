@@ -1,9 +1,7 @@
 # L2 — `store-tabs-record`: the interface
 
-- **Layer:** L2 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 9 — **rev 9 moves NOTHING at the crossing: design rev 16
-  separates the record's PRIVATE composer into a named drop (`rowsSeatedUnder`) and the assembly that keeps the name `composeRecord`
-  (design §11), so no route, `reason`, address, tier, export or answer moves, §2 stands byte-for-byte and §5's table stands — one sentence joins §5's composition paragraph and moves none of those**;
-  rev 8 re-grained §2 and §5 to the CREATION as a WRITE at design rev 15 (`commit` ONE row at the leaf, the seat repair APPENDING it, `repaired` against the creation expectation — the mirror of rev 7's ONE `delete` with its delete-only expectation; D-157, D-156, D-83, D-70); rev 6 took §5's composer judgement (D-139, D-135, D-73); rev 5 the write paths after D-142, rev 4 the client role.
+- **Layer:** L2 · **Unit:** `store-tabs-record` · **Branch:** `strata` (D-6) · **Rev:** 10 — **rev 10 adds ONE sentence to §1 — the root↔entries pair is `FH-2`'s, and this family is NOT `family-helper`'s object (`docs/L1/family-helper.md` §6, D-292) — and trades two histories and one clause for the room; no route, `reason`, address, tier, export or answer moves and §2 stands byte-for-byte**;
+  rev 9 moved nothing at the crossing (design rev 16's private-composer drop, D-155); rev 8 re-grained §2 and §5 to the CREATION as a WRITE at design rev 15 — each act judged against its OWN expectation, stated in §2 (D-157, D-156, D-83, D-70); rev 6 took §5's composer judgement (D-139, D-135, D-73); rev 5 the write paths after D-142, rev 4 the client role.
 - **Inputs:** `docs/L3/store-tabs-record/design.md` rev 16 §3–§8, §10 and §11; `docs/L1/focus-retirement.md` §2, §3 and §6 `E-11`; D-159 (the creation landing these clauses now state), D-158, D-157
   (the removal landing), D-156, D-155 (the composer judgement design §11 cuts one element out of), D-142 (the settled shape `(b)`, a transparent passthrough), D-136, D-141, D-140, D-137, D-129, D-103, D-105, D-101, D-94, D-83, D-76,
   D-70, D-62, D-3; D-26/D-43 (a count, a path or a stage is read from its owner); D-41 (a source cite names its site, never an offset).
@@ -31,7 +29,9 @@ active, else `order`'s first row reading active, else `null`, which `read()` spe
 `order` and one member per tab and **no witness member at all**, and `exactly-one-active` (§4) is what makes the derivation
 total — the id of the row reading active IS the shown tab, and a second spelling is exactly what `['focus']` was and why it
 goes (D-76, D-140, D-142). **THE RECORD IS ONE ROOT AT ONE TIER**: `tabsDeclaredRoots` publishes `['tabs']`/`file` and nothing
-else, which is what admits a `file`-tier write there and refuses any other tier (§5, D-101).
+else, which admits a `file`-tier write there and refuses every other (§5, D-101) — **and that pair is MEASURED**: `FH-2`
+(`tests/integration/store-tabs-record/declared-entries.test.ts`) compares this one root against the delivery's one entry at it, while
+**the family is NOT `family-helper`'s object** and stays hand-spelled — no shared notion of a family, and this root deduplicated by construction rather than by six entries (`docs/L1/family-helper.md` §6, D-292).
 
 ## 2. The bridge member and its four routes
 
