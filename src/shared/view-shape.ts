@@ -98,22 +98,32 @@ export interface ViewPaneGeometry {
  *  the record never stores it. The four painted words are therefore exactly these three plus that one derived word. */
 export const PANE_STATUS_WORDS: readonly string[] = ['busy', 'waiting', 'done']
 
-/** **ONE ZONE, AS THE DRAG'S TWO ZONE TURNS READ IT (D-91) — AND ITS FOUR MEMBERS ARE THE FROZEN STORE'S, MEASURED, NOT
- *  THIS FILE'S INVASION.** The render turn reads a zone's `size` and `display` for its layout call
- *  (`renderer.ts:1799-1805`) and `candidatesFor` reads its opaque `slot` and its caller-measured `distance`
- *  (`:1935-1941`); those four are the whole family, every one of them at `mem`, and **EACH IS INDIVIDUALLY OPTIONAL**,
- *  which is measured rather than supposed: the tree's own writers seed `size`+`display` for three zones and `slot` alone
- *  for the third, and its two zone batteries write `slot`+`distance` with no `size` and no `display` at all. So a zone
- *  record names the members it has and this vocabulary carries no member the writer did not supply.
+/** **ONE ZONE, AND ITS FOUR MEMBERS ARE THE FROZEN STORE'S, MEASURED, NOT THIS FILE'S INVASION (D-91) — OF WHICH TWO
+ *  HAVE NO READER LEFT.** `size` and `display` keep one, and it is the **LAYOUT PAINT** rather than a render turn:
+ *  `renderer.ts`'s `driveLayoutRegions` (`:5250`) reads a zone's `held.size` at `:5261-5262` and its `held.display` at
+ *  `:5292` and writes both into the four authored nodes' `css.style` through `applyCommand` (`D-185`). **`slot` AND
+ *  `distance` ARE CARRIED AND UNREAD**: their only reader was `candidatesFor`, DELETED with the candidate production and
+ *  the render turn it fed and given NO SUCCESSOR (`D-168`) — so the two citations this docblock used to carry, a
+ *  render-turn layout call at `:1799-1805` and `candidatesFor` at `:1935-1941`, name neither turn at this head.
+ *  `src/shared/relocate.ts` declares that seam and has NO `src/` importer (`D-111`), so no consumer under `src/`
+ *  reads `slot` or `distance` for a decision: the sites that touch them COPY them, member by member (`zoneIn` below,
+ *  `view-client.ts`'s `zoneOfWire`), or admit them at the crossing's boundary. Those four are the whole family, every
+ *  one of them at `mem`, and **EACH IS INDIVIDUALLY OPTIONAL**, which is measured rather than supposed: the tree's own
+ *  writers — the placeholder and the creation repair, ONE spelling through `defaultZoneRecord` — state `size` ALONE for
+ *  all four declared zones and name no `display` and no `slot` (`D-233`'s item (4)), while its zone batteries write
+ *  `slot`+`distance` with no `size` and no `display` at all. So a zone record names the members it has and this
+ *  vocabulary carries no member the writer did not supply.
  *
  *  **`slot` IS OPAQUE AND `size`/`distance`/`display` ARE NOT.** The flow's own contract calls the slot the caller's
- *  opaque token — `candidatesFor` hands it through as `candidate` and this module never interprets it — so it is admitted
- *  by the crossing's boundary domain and carried as `unknown`. `size` is the zone's stored FIXED DIMENSION — its HEIGHT
- *  for `top`/`bottom` and its WIDTH for `left`/`right`, the axes the paint writes it on (`D-233`, `D-185`), so the figure
- *  means the length of the one axis the zone FIXES and nothing else — whose `0` IS THE CALLER'S MINIMIZE MARKER (the
- *  composition's `DRAG_MINIMIZE_MARKER`) and which is never negative; `distance` is the
- *  caller's own measure of how far a candidate is, finite and otherwise uninterpreted; `display` is the zone's state word,
- *  and the tree's only two spellings are strings (`'normal'`, `'minimized'`) handed to a layout call that compares them.
+ *  opaque token — `candidatesFor` was its one hand-through, as `candidate`, and that turn is DELETED (`D-168`, `D-111`),
+ *  so nothing hands the slot on to a reader now and this module never interpreted it — it is admitted by the crossing's
+ *  boundary domain and carried as `unknown`. `size` is the zone's stored FIXED DIMENSION — its HEIGHT for `top`/`bottom`
+ *  and its WIDTH for `left`/`right`, the axes the paint writes it on (`D-233`, `D-185`), so the figure means the length of
+ *  the one axis the zone FIXES and nothing else — whose `0` IS THE CALLER'S MINIMIZE MARKER (the composition's
+ *  `DRAG_MINIMIZE_MARKER`) and which is never negative; `distance` is the caller's own measure of how far a candidate
+ *  is, finite and otherwise uninterpreted, and at this head nothing under `src/` reads it at all; `display` is the
+ *  zone's state word, a string the paint writes AS THE RECORD STATES IT (`renderer.ts:5292`) and compares never, so this
+ *  tree spells no word of its own beside the record's.
  *
  *  **`collapsed` IS THE FIFTH MEMBER, BOOLEAN, OPTIONAL, AND ITS ABSENCE IS A DERIVATION RATHER THAN A DEFAULT**
  *  (`design-zone-collapse.md` §1). It is written by the ZONE's own control and by a drop into a collapsed zone, and by

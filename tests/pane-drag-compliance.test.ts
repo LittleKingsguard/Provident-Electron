@@ -80,12 +80,17 @@
  *                                    RECEIVED pair through AS STORED (§2.1 A, §0 ruling 9)
  *     move(gestureId, preview)     — **THE DRAG'S VALUE IS AN ADDRESS** (2026-11-08): `preview` is
  *                                    the affordance's `PreviewState` and ONE
- *                                    `view.commitDrag(DEFAULT_PANE_ID, {size: preview.value})` is
- *                                    sent per call — NOTHING when `value` is not a finite
- *                                    non-negative number. `['drag']` at `temp` is the storage.
+ *                                    `view.commitDrag(DEFAULT_PANE_ID, {height: preview.value})`
+ *                                    is sent per call — the member is the pane's ADJUSTABLE axis
+ *                                    member and its NAME is the axis (`D-189`, `D-190`: `pane-a`
+ *                                    is the stage pane, so the member is `height`) — NOTHING when
+ *                                    `value` is not a finite non-negative number. `['drag']` at
+ *                                    `temp` is the storage.
  *     release(gestureId, final, sink) — the RELEASE terminal (valid end AND invalid reset), in ONE
  *                                    ORDER: the sink, then ONE
- *                                    `view.commitPane(pane, {size: final})`, then its OWN
+ *                                    `view.commitPane(pane, {height: final})` — one leaf per
+ *                                    supplied member at its own name, no composer and no
+ *                                    whole-family write (`D-154`, `D-191`) — then its OWN
  *                                    `view.clearDrag()` ending the temp reading (SINK-2, §2.1 C/§2.5)
  *     cancel(gestureId)            — THE ONE ABANDON TERMINAL (pointercancel/cancel): AT MOST ONE
  *                                    `view.clearDrag()` per gesture, never a throw, no `commitPane`,
@@ -233,8 +238,9 @@ interface PaneDragSurface {
   cancel(gestureId: string): void
   /** **THE GHOST TURN — THE SHAPE'S ONE DELIVERY CALLS IT, AND IT IS THE DELIVERY'S ONLY DRAG
    *  TURN** (`D-138`, `D-144`, `D-168`). `previewOf` IS DELETED AND THIS IS WHY: the drag's
-   *  in-process value became an ADDRESS — `['drag']` at `temp`, one member per pane id, each
-   *  `{size}` — so the storage is the view record and the ghost's declaration is a READ of that
+   *  in-process value became an ADDRESS — `['drag']` at `temp`, one member per pane id, each the
+   *  ADJUSTABLE axis member's own name (`{height}` on this fixture, `D-189`, `D-190`) — so the
+   *  storage is the view record and the ghost's declaration is a READ of that
    *  address, painted on the pane element the backing carries. */
   renderGhost(): void
 }
@@ -493,11 +499,21 @@ function stored(register: RegisterDouble, name: string): RegisterRead {
  *
  *   · **THE CREATION STATE IS THE REPAIR'S AND NOT AN EMPTY MAP.** `panes-must-stand` writes the MEASURED DEFAULT for the
  *     one pane the app has at the store's creation (`src/main/view-record/index.ts`'s `repairPanes`), so the family stands
- *     at `{pane-a: {size: 100, bounds: {min: 0, max: 200}}}` before any caller writes — which is why `pane-a` is the
- *     RECORD arm and any other id is the DEFAULT arm.
- *   · **`commitPane` COMPOSES THE WHOLE FAMILY THE WAY THE CROSSING'S ROUTE DOES** (`composePanes`): the named pane takes
- *     the members supplied, each missing one falling to what that pane stands at and then to the measured default, and
- *     every other pane the family holds is kept — one act cannot erase a sibling's geometry.
+ *     at `{pane-a: {width: 100, height: 100, bounds: {min: 0, max: 200}}}` before any caller writes — which is why
+ *     `pane-a` is the RECORD arm and any other id is the DEFAULT arm.
+ *   · **THE ROUTE `commitPane` SPEAKS IS ONE LEAF PER SUPPLIED MEMBER AT THAT MEMBER'S OWN NAME, AND IT COMPOSES NOTHING**
+ *     (`D-154`): `['panes', id, 'width']`, `['panes', id, 'height']`, `['panes', id, 'bounds']` — `composePanes` is DELETED
+ *     whole and its tombstone stands in `src/main/view-record/index.ts`. There is no whole-family write on this path, no
+ *     copy of the family taken, and no sibling a leaf could reach. **AT MOST ONE AXIS MEMBER, AND THAT ONE THE MEMBER THE
+ *     PANE'S OWN `zone` MAKES ADJUSTABLE** (`D-189`, `D-191`): both axis members in one act is refused `malformed-geometry`,
+ *     and so is a member the `zone` does not free — the judge is `src/main/view-record/index.ts:1657-1693`, the leaf loop is
+ *     `:1722-1731` — while a member the act does not name is NOT WRITTEN AT ALL and keeps standing, which is what leaves a
+ *     `top` pane's stored `height` alive through a width commit. **THE DOUBLE REACHES THAT SAME FAMILY BY MERGING ONCE**:
+ *     the members supplied go over what the pane stands at and then the measured default, every other pane the family
+ *     holds is kept, and the act is pushed to `calls` — so what a row reads back is what the route's leaves leave, and one
+ *     act cannot erase a sibling's geometry. **THE ONE ARM WHERE THE DOUBLE IS MORE PERMISSIVE IS A PANE ITS FAMILY DOES
+ *     NOT HOLD**: it mints one from the measured default where the record REFUSES an id it does not declare
+ *     `undeclared-pane`, so no row here may read that arm as the route's.
  *   · **EVERY WRITE REFILLS THE SHAPE AND FIRES THE DELIVERY SYNCHRONOUSLY.** The real delivery is asynchronous; a node row
  *     that had to await a microtask to read back what it just wrote would be measuring the event loop rather than the
  *     composition. The real asynchronous path is driven in `tests/integration/store-view-record/client.test.ts` (C-3/C-5).
@@ -538,8 +554,9 @@ interface PaneCrossing {
    *  `undeclared-zone` rather than silently creating a zone. */
   readonly zoneCalls: ZoneRouteCall[]
   /** **THE DRAG ROUTE'S LOG — EVERY `commitDrag(paneId, geometry)` THE COMPOSITION SENT, IN ORDER.** The drag's value is
-   *  an ADDRESS now (`['drag']` at `temp`, one member per pane id, each `{size}`), so the per-move write is a ROUTE CALL
-   *  and this log is where a row reads it: the member the call named and the geometry it carried. */
+   *  an ADDRESS now (`['drag']` at `temp`, one member per pane id, each the ADJUSTABLE axis member's own name — `{height}`
+   *  on this fixture, `D-189`/`D-190`), so the per-move write is a ROUTE CALL and this log is where a row reads it: the
+   *  member the call named and the geometry it carried. */
   readonly dragCalls: { readonly id: string; readonly geometry: unknown }[]
   /** **EVERY `clearDrag()` THE COMPOSITION SENT — one entry per call.** The erase is the family's end at the store, so the
    *  count is what "at most one per gesture" is measured on, and the log is what "not even at the release" was measured on
@@ -633,8 +650,9 @@ function crossingOf(key?: object): PaneCrossing {
   // placeholder's memberless arm must seed `{}` for the declared id itself — both arms answer alike, so no row here depends
   // on the gap.
   let zones: Record<string, HeldZone> = {}
-  // **THE DRAG FAMILY'S ADDRESS** — `['drag']` at `temp`, ONE MEMBER PER PANE ID, each `{size}`. `null` is the family's
-  // absence, which is the state before any gesture wrote and the state every erase turn leaves.
+  // **THE DRAG FAMILY'S ADDRESS** — `['drag']` at `temp`, ONE MEMBER PER PANE ID, each the ADJUSTABLE axis member's own
+  // name — `{height}` on this fixture (`D-189`, `D-190`). `null` is the family's absence, which is the state before any
+  // gesture wrote and the state every erase turn leaves.
   let dragFamily: Record<string, HeldDragMember> | null = null
   const handlers: Array<() => void> = []
   const calls: PaneRouteCall[] = []
@@ -665,11 +683,10 @@ function crossingOf(key?: object): PaneCrossing {
     theme: { token: null, attribute: null, declaration: { name: null, value: '', removal: true } },
     source: { panes: 'record', zones: 'record', theme: 'record' },
   })
-  // **THE LITERAL IS BUILT AS A PLAIN OBJECT AND CAST ONCE** (`ViewClientBridge` declares FIVE members today —
-  // `read`, `commitPane`, `commitZones`, `commitTheme`, `onChanged` — and the drag pair `commitDrag`/`clearDrag` arrives
-  // with the record's own implementation). The cast keeps this harness compiling on BOTH sides of that landing: before it,
-  // the two members are this file's own additions to a literal the interface does not yet name; after it, the interface
-  // declares them and the literal satisfies it member for member.
+  // **THE LITERAL IS BUILT AS A PLAIN OBJECT AND CAST ONCE**, AND **THE DRAG PAIR HAS LANDED** (`D-132`):
+  // `ViewClientBridge` declares all SEVEN — `read`, `commitPane`, `commitZones`, `commitTheme`, `commitDrag`, `clearDrag`,
+  // `onChanged` — so the two drag members are the interface's own and no longer this file's additions to a literal it does
+  // not name, and the literal satisfies it member for member.
   const bridge = {
     read: async (): Promise<unknown> => reading(),
     commitPane: async (id: string, geometry: unknown): Promise<unknown> => {
@@ -693,8 +710,9 @@ function crossingOf(key?: object): PaneCrossing {
     },
     // **THE DRAG ROUTE — `commitDrag(paneId, geometry)` WRITES THE FAMILY WHOLE AT `['drag']`/`temp`.** The record's route
     // composes nothing with what stands: the drag's value IS the address, and one write is one member, so the family holds
-    // `{[id]: {size}}` and the last write wins. A non-finite size is DROPPED rather than stored (the store's own admission,
-    // and the reason a hostile preview can never reach it: the composition sends nothing at all for one).
+    // `{[id]: {height}}` on this fixture and the last write wins. A non-finite figure is DROPPED rather than stored (the
+    // store's own admission, and the reason a hostile preview can never reach it: the composition sends nothing at all for
+    // one).
     commitDrag: async (id: string, geometry: unknown): Promise<unknown> => {
       const carried = (geometry ?? null) as { readonly width?: unknown; readonly height?: unknown } | null
       dragCalls.push({ id, geometry })
@@ -713,9 +731,9 @@ function crossingOf(key?: object): PaneCrossing {
       dragFamily = null
       return { status: 'committed' }
     },
-    // **THE FOCUS ROUTE IS NOT ON THIS BRIDGE ANY MORE** (`D-142`, `E-12`): `ViewClientBridge` declares the four
-    // surviving routes (`read`, `commitPane`, `commitZones`, `commitTheme`) and the push, so a `commitFocus` member
-    // here would be an excess member on the very interface this literal is typed by.
+    // **THE FOCUS ROUTE IS NOT ON THIS BRIDGE ANY MORE** (`D-142`, `E-12`): `ViewClientBridge` declares the surviving
+    // routes (`read`, `commitPane`, `commitZones`, `commitTheme` and the drag pair `commitDrag`/`clearDrag`) and the push,
+    // so a `commitFocus` member here would be an excess member on the very interface this literal is typed by.
     // **THE APPEARANCE ROUTE** (D-97): present so the member set matches the bridge's. This file
     // drives no appearance act — the fixture's record stands at the placeholder, which names no attribute to apply.
     commitTheme: async (): Promise<unknown> => ({ status: 'committed' }),
@@ -1447,8 +1465,8 @@ describe('§3.1 M-5 — a valid release commits the SINK\'S value once — the t
     const { w, crossing } = compose()
     const sink = makeSink()
     const clamped = 240
-    w.move('g1', { value: 120 }) // the preview — the drag's value, which IS the address's `size`
-    // THE MOVE WROTE THE ADDRESS: `['drag']` at `temp`, one member for the composition's pane, `{size}` whole.
+    w.move('g1', { value: 120 }) // the preview — the drag's value, which IS the address's member (`height`, `D-189`/`D-190`)
+    // THE MOVE WROTE THE ADDRESS: `['drag']` at `temp`, one member for the composition's pane, `{height}` whole.
     expect(crossing.dragCalls, 'the move sends ONE `commitDrag` naming the pane, carrying the preview\'s value').toEqual([
       { id: DEFAULT_PANE_ID, geometry: { height: 120 } },
     ])
@@ -1770,8 +1788,9 @@ describe('REGISTER P-PD-SM-3 (S-PD-REASSERT-1) — the abandon terminal / reasse
    * The as-filed readings were `unqualified-read` (a tier-qualified `resolve` of the FILE original that "reasserted") and
    * `receipt-event-reading` (a `commit`/`remove` receipt's event). The readings that replaced them when the preview was
    * closure state were `closure-read`/`store-census` — and the CLOSURE went with the value: the drag's value is an
-   * ADDRESS now (`['drag']` at `temp`, one member per pane id, each `{size}`), so what the four states describe is the
-   * address's own state machine — standing, ended, never-written, ended-twice — read two honest ways:
+   * ADDRESS now (`['drag']` at `temp`, one member per pane id, each the adjustable axis member's own name — `{height}`
+   * here, `D-189`/`D-190`), so what the four states describe is the address's own state machine — standing, ended,
+   * never-written, ended-twice — read two honest ways:
    *
    *   · **`route-log`** — the `dragCalls`/`clears` sequence the state produced, in order: the ONE `commitDrag` a move sends
    *     and the ONE `clearDrag` an erase sends. That is the successor of "the write the reassert exposed".

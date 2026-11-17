@@ -46,7 +46,7 @@
 // @source a334e345cc61c48ba095269a0e04cf81825e452b8f913afaf66a92b3c0c8a356 src/shared/gutter-affordance.ts
 // @source 260559b259261d0a6826037788a74ed5b1180bac213c9ac459f8acbd0c7a6ab3 src/shared/gutter.ts
 // @source 40138fcc97cf13306712cc8ebf36a081302915b240ec87ff76cbafb83f898194 src/shared/overlay.ts
-// @source 4580b1283775f9ab9a9ce7817c38f4fd4a195f7a21b9e9277d2d3fd8058549a4 src/shared/view-shape.ts
+// @source f3737a33d154ca3e60be03f714338dc3b23591f64f577a64f90c7ae41d4724f2 src/shared/view-shape.ts
 // @end-sources
 // src/shared/gesture-session.ts
 var POINTER_TYPES = Object.freeze({
