@@ -255,7 +255,10 @@ export const THEME_STALE_MESSAGE =
 /** **THE FAMILIES' OWN TIERS, EACH NAMED ONCE.** A value's tier is the address's (`guide §3.1`), and these
  *  constants are the whole of what says which — so no read, no write and no repair of this module spells a tier
  *  literal, and a family cannot half-move to the other tier. **FOUR CONSTANTS AND FOUR FAMILIES**: the drag root's word is
- *  the fourth, and the union below is derived from all of them (D-132). */
+ *  the fourth, and the union below is derived from all of them (D-132). **AND THE FAMILY TUPLE READS THEM AND SPELLS NONE
+ *  OF ITS OWN** (`D-292`, `D-53`): each spec's `tier` is the constant its own family names here, exactly as its `address`
+ *  and `id` are the constants above, so the tier a root publishes and the tier that family's own repair writes are one
+ *  spelling rather than two. */
 const PANES_TIER = 'file'
 const ZONES_TIER = 'mem'
 /** **THE APPEARANCE FAMILY'S TIER — `file`, THE USER'S RULING ON DURABILITY** (`D-98`; `mem` was `D-97`'s and is
@@ -269,7 +272,9 @@ const DRAG_TIER = 'temp'
 /** **THE TIER UNION THIS MODULE USES, DERIVED FROM THE TIER CONSTANTS AND NOT RE-SPELLED FROM THE PACKAGE'S `Tier`.** The
  *  package's own domain is `'mem' | 'file' | 'temp'`; this module needs those words and needs them to be
  *  assignable to `write`'s `tier` position, so the type is taken from the constants themselves — one spelling of each
- *  word in this file, and a fourth family would have to add its constant rather than widen a table. */
+ *  word in this file, and a fourth family would have to add its constant AND its spec rather than widen a table. **AND THE
+ *  ALIAS STAYS MODULE-PRIVATE**: a family spec names its tier as `ViewDeclaredRoot['tier']`, which is this alias read off
+ *  the published root, so no caller and no row needs a second authority for the domain (`D-101`, `D-292`). */
 type ViewTier = typeof PANES_TIER | typeof ZONES_TIER | typeof THEME_TIER | typeof DRAG_TIER
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -1280,21 +1285,136 @@ const repairTheme = (getStore: () => Store | null) => (context: unknown): ViewRe
   return writeWholeValue(getStore)(context, VIEW_THEME_ADDRESS, THEME_TIER, whole)
 }
 
+/** **ONE FAMILY'S ADDRESS AND TIER ARE SPELLED ONCE, IN ONE SPEC, AND BOTH PUBLICATIONS READ THAT ONE SPEC** (`D-292`):
+ *  the root — a `ViewDeclaredRoot`-shaped VALUE — and the constraint declaration — a `ViewConstraintDeclaration`-shaped
+ *  PROJECTION — are one declaration read twice, so a pair cannot be published without its root and cannot be published at
+ *  an address its own root does not carry. The tier is named as `ViewDeclaredRoot['tier']` rather than through the
+ *  module-private alias, because the spec's domain IS the published root's (`D-101`).
+ *
+ *  **THE PAIRED ARM CARRIES ITS `id` AND ITS BODY FACTORY, AND BOTH ARE REQUIRED** (`D-292`): `body` is
+ *  `(getStore) => body` and is called INSIDE `declaration(getStore)` — once per call and never at module scope — because a
+ *  body built at module scope would close over a handle that does not exist yet (`D-124` (iii), `D-219`). */
+export interface ViewPairedFamily {
+  readonly tag: 'paired'
+  readonly address: readonly string[]
+  readonly tier: ViewDeclaredRoot['tier']
+  readonly id: string
+  readonly body: (getStore: () => Store | null) => (context: unknown) => ViewConstraintAnswer
+}
+
+/** **THE UNPAIRED ARM — A ROOT WITH NO DECLARATION, WHICH IS LAWFUL AND STAYS EXPRESSIBLE** (`D-145`, `D-132`): `['drag']`
+ *  at `temp` is declared and unpaired by ruling, because no invariant holds a gesture transient and a placeholder for an
+ *  absence that IS the product would be the repair of nothing.
+ *
+ *  **ITS TWO PAIRED MEMBERS ARE OPTIONAL `never`, AND THE `?` IS LOAD-BEARING RATHER THAN STYLISTIC** (`D-292`, `D-72`):
+ *  a REQUIRED `never` could not be satisfied by this arm at all, so the optionality is what lets the arm exist — and the
+ *  `never` closes the CARRIAGE, refusing an `id` or a body by the MEMBER'S TYPE rather than by a literal's freshness,
+ *  which is the arm excess-property checking never reaches. **AND ITS ONE NAMED ESCAPE IS AN EXPLICIT `undefined`**
+ *  (`id: undefined` compiles where optional-property exactness is off, `tsconfig.tests.json`): stated rather than hidden,
+ *  and no projection can act on it, because `undefined` is the one value the arm's `null` discipline separates from a
+ *  declaration. */
+export interface ViewUnpairedFamily {
+  readonly tag: 'unpaired'
+  readonly address: readonly string[]
+  readonly tier: ViewDeclaredRoot['tier']
+  readonly id?: never // the `?` is LOAD-BEARING: a REQUIRED `never` could not be satisfied at all
+  readonly body?: never
+}
+
+/** **THE SPEC IS A DISCRIMINATED UNION ON AN EXPLICIT TAG, AND BOTH HALVES OF THE REFUSAL ARE EPC-INDEPENDENT**
+ *  (`D-292`): the TAG closes the OMISSION — a paired literal that dropped its body is missing a member its own arm
+ *  requires and is not the other arm, whose tag is a different literal, so no member set of the union admits it — and the
+ *  `never` above closes the CARRIAGE. A union without the tag compiles that very literal clean, because excess-property
+ *  checking reads the union's WHOLE member set, which is the reading `ViewConstraintAnswer`'s `repair?: never` already
+ *  answers at its own site. */
+export type ViewFamilySpec = ViewPairedFamily | ViewUnpairedFamily
+
+/** **ONE FAMILY, DECLARED ONCE: A `root` THAT IS A VALUE AND A `declaration` THAT IS A PROJECTION** (`D-292`).
+ *  **THE ASYMMETRY BETWEEN THE TWO HALVES IS THE ORDER AND NOT A TASTE**: `root` is read with no store because the
+ *  delivery is built BEFORE the store is bound (`D-219`'s holder order), while a body reads nothing at the registration
+ *  instant (`D-124` (iii)) — so the half that needs a store is handed one and the half that does not is not. */
+export interface ViewFamily {
+  readonly root: ViewDeclaredRoot
+  declaration(getStore: () => Store | null): ViewConstraintDeclaration | null
+}
+
+/** **THE FACTORY, AND THE BODY FACTORY IT IS HANDED IS NEVER CALLED HERE** (`D-124` (iii), `D-292`): a spec's `body` is
+ *  called INSIDE `declaration(getStore)`, once per call, so neither this function nor `.root` builds one and nothing
+ *  closes over a store that does not exist yet.
+ *
+ *  **`declaration` ANSWERS `null` WHEN UNPAIRED — never `undefined`, never `{}`, never an absent member**: `null` is a
+ *  value a projection must TEST, while an absent or empty arm is one `.filter` from being dropped silently (`D-292`,
+ *  `D-145`). **AND `root` IS BUILT ONCE, HERE, as the VALUE both publications read**: its address and its tier are the
+ *  spec's own, copied and never re-spelled. */
+export function viewFamily(spec: ViewFamilySpec): ViewFamily {
+  const root: ViewDeclaredRoot = { address: spec.address, tier: spec.tier }
+  if (spec.tag !== 'paired') {
+    return { root, declaration: (): null => null }
+  }
+  const paired: ViewPairedFamily = spec
+  return {
+    root,
+    declaration(getStore: () => Store | null): ViewConstraintDeclaration {
+      return { address: paired.address, id: paired.id, constraint: paired.body(getStore) }
+    },
+  }
+}
+
+/** **THE TUPLE — ONE DECLARATION PER FAMILY, AND THE TWO PUBLICATIONS BELOW ARE ITS PROJECTIONS** (`D-292`, `D-53`):
+ *  every `address`, `id` and `tier` here is the EXISTING constant above, so this list re-spells nothing and a family that
+ *  moves address, id or tier moves in ONE place. **THE UNPAIRED ARM IS AN EXPLICIT MEMBER AND NOT AN OMISSION**:
+ *  `['drag']` at `temp` stands here with its tag saying so, so the lawful root outlives its absent declaration instead of
+ *  dropping out of the publication (`D-145`, `D-132`).
+ *
+ *  **IT IS EXPORTED AS PART OF THE CONTRACT AND NOT AS A TEST CONVENIENCE** (`D-292`, `D-3`): a row that measures the
+ *  object's contract must read the object's own declaration set, and a module-private tuple would leave that claim
+ *  measured by nothing. **AND IT MINTS NO ENTRY, NO HANDLE AND NO STORE VERB**: the one registration per address is the
+ *  DELIVERY's (`VIEW_DECLARED_ADDRESSES`, adopted at the construction), so this object DECLARES and never registers
+ *  (`D-219`, `D-129`, `D-71`). */
+export const VIEW_FAMILIES: readonly ViewFamily[] = [
+  viewFamily({
+    tag: 'paired',
+    address: VIEW_PANES_ADDRESS,
+    tier: PANES_TIER,
+    id: VIEW_PANES_MUST_STAND_ID,
+    body: panesMustStand,
+  }),
+  viewFamily({
+    tag: 'paired',
+    address: VIEW_ZONES_ADDRESS,
+    tier: ZONES_TIER,
+    id: VIEW_ZONES_MUST_STAND_ID,
+    body: zonesMustStand,
+  }),
+  viewFamily({
+    tag: 'paired',
+    address: VIEW_THEME_ADDRESS,
+    tier: THEME_TIER,
+    id: VIEW_THEME_MUST_STAND_ID,
+    body: themeMustStand,
+  }),
+  viewFamily({ tag: 'unpaired', address: VIEW_DRAG_ADDRESS, tier: DRAG_TIER }),
+]
+
 /** **THE BATCHED DECLARATIONS, COLLECTED BY THE BOOT** (D-65's first act; D-87's second set; D-91's third family). The boot gathers these
  *  beside the tab record's six and constructs the central store ONCE with the whole batch, so a constraint is a
  *  DECLARATION here rather than a constructor call, and the two modules' ids stand in ONE namespace without a repeated
- *  spelling. **THE ORDER IS THE DEPENDENCY ORDER OF THE THREE FAMILIES AND NOTHING MORE**: no pair's subject is
- *  another's, so the panes pair stands first only because its root is the one the app writes most.
+ *  spelling. **IT IS A PROJECTION OF `VIEW_FAMILIES` AND SPELLS NO ADDRESS, ID OR BODY OF ITS OWN** (`D-292`): every
+ *  element is a PAIRED spec's `declaration(getStore)`, and the unpaired spec's explicit `null` is dropped HERE — at the
+ *  projection, which must test it — rather than by the spec that answered it (`D-145`). **THE ORDER IS THE TUPLE'S, AND
+ *  THE TUPLE'S IS THE DEPENDENCY ORDER OF THE THREE FAMILIES AND NOTHING MORE**: no pair's subject is another's, so the
+ *  panes pair stands first only because its root is the one the app writes most.
  *
  *  **THE RETURN IS TYPED** where the package's own licence would admit `void` (`D-72`): every element is a
- *  `ViewConstraintDeclaration`, so a body or a repair that answers nothing is a COMPILE ERROR here. **THREE ROWS STAND,
- *  AND THE FOURTH LEFT WITH ITS FAMILY**, nothing having been re-ordered in its place (`D-142`). */
+ *  `ViewConstraintDeclaration`, so a body or a repair that answers nothing is a COMPILE ERROR here — and this projection
+ *  cannot answer one, because a paired spec's `body` is required and a root with no declaration carries no spec
+ *  declaration to publish. **THREE ROWS STAND, AND THE FOURTH LEFT WITH ITS FAMILY**, nothing having been re-ordered in
+ *  its place (`D-142`); the root that family still publishes is the tuple's UNPAIRED member, and `viewDeclaredRoots()`
+ *  alone answers it (`D-145`, `D-132`). */
 export function viewConstraintDeclarations(getStore: () => Store | null): readonly ViewConstraintDeclaration[] {
-  return [
-    { address: VIEW_PANES_ADDRESS, id: VIEW_PANES_MUST_STAND_ID, constraint: panesMustStand(getStore) },
-    { address: VIEW_ZONES_ADDRESS, id: VIEW_ZONES_MUST_STAND_ID, constraint: zonesMustStand(getStore) },
-    { address: VIEW_THEME_ADDRESS, id: VIEW_THEME_MUST_STAND_ID, constraint: themeMustStand(getStore) },
-  ]
+  return VIEW_FAMILIES.map((family) => family.declaration(getStore)).filter(
+    (declaration): declaration is ViewConstraintDeclaration => declaration !== null,
+  )
 }
 
 /** **ONE DECLARED ROOT AS ANOTHER MODULE READS IT — THE ADDRESS AND THE FAMILY'S OWN TIER** (`D-101`). The tier
@@ -1307,22 +1427,23 @@ export interface ViewDeclaredRoot {
 }
 
 /** **THE THREE PAIRED ROOTS `viewConstraintDeclarations` DECLARES, EACH WITH THE TIER IT IS DECLARED AT, PLUS THE ONE ROOT
- *  THAT IS DECLARED AND UNPAIRED** (`D-101`, `D-132`).
+ *  THAT IS DECLARED AND UNPAIRED — AS A PROJECTION OF `VIEW_FAMILIES`, IN THE TUPLE'S ORDER** (`D-101`, `D-132`, `D-292`).
  *
- *  **IT IS NOT A SECOND SPELLING OF THE ADDRESSES**: every `address` below is the exported constant the batch
- *  above uses, and every `tier` is the constant that batch's own pair writes at — so a family that moves tier
- *  moves here without a word, and `tests/integration/central-data/declared-root.test.ts`'s set row refuses the
- *  day one of the two lists gains an entry the other does not have (`D-101`). **THE FOURTH ENTRY IS THE DRAG ROOT AND IT
- *  HAS NO PAIR BEHIND IT, WHICH IS LAWFUL RATHER THAN AN OMISSION**: no invariant holds a `temp` reading, and a repair whose
- *  subject is "no drag has started" could only mint a placeholder for data whose ABSENCE is the product — so the entry is
- *  the whole of it, and what it buys is the family's ONE judgement, which is the tier's (`declaredTierLedger` keys on the
- *  roots it is HANDED rather than on the batch, so a `file` or `mem` write at `['drag']` is refused `declared-tier` ahead
- *  of any store verb).
+ *  **IT SPELLS NO ADDRESS AND NO TIER OF ITS OWN**: every element is one spec's `root`, a VALUE built once at module scope
+ *  from the exported constants above, so a family that moves address or tier moves in ONE place and the two publications
+ *  cannot disagree about what a family is — while `tests/integration/central-data/declared-root.test.ts`'s set row still
+ *  refuses the day one of the two lists gains an entry the other does not have (`D-101`). **THE UNPAIRED ROOT IS A MEMBER
+ *  OF THE TUPLE AND NOT AN OMISSION FROM IT**: the fourth entry is the drag root and it has no pair behind it, which is
+ *  LAWFUL RATHER THAN MISSING — no invariant holds a `temp` reading, and a repair whose subject is "no drag has started"
+ *  could only mint a placeholder for data whose ABSENCE is the product — so the entry is the whole of it, and what it buys
+ *  is the family's ONE judgement, which is the tier's (`declaredTierLedger` keys on the roots it is HANDED rather than on
+ *  the batch, so a `file` or `mem` write at `['drag']` is refused `declared-tier` ahead of any store verb).
  *
- *  **THE TWO LISTS ARE ONE EDIT** (`D-142`, `D-101`): a declaration and its entry leave in the same hunk, because an
- *  entry outliving its declaration hands the guard a tier for a family that is gone, and a declaration outliving its
- *  entry leaves the family standing undeclared with no root for the guard's sentence to name. **AND AN ENTRY WITHOUT A
- *  DECLARATION IS THE ONE LAWFUL ASYMMETRY**, stated here so a reader does not read the rule as forbidding it.
+ *  **THE TWO HALVES ARE ONE DECLARATION AND NOT TWO LISTS** (`D-292`, `D-142`, `D-101`): a spec carries its root and its
+ *  declaration together, so neither can leave without the other — an entry outliving its declaration would hand the guard
+ *  a tier for a family that is gone, and a declaration outliving its entry would leave the family standing undeclared with
+ *  no root for the guard's sentence to name. **AND AN ENTRY WITHOUT A DECLARATION IS THE ONE LAWFUL ASYMMETRY**, which the
+ *  tuple states by its `tag` rather than by a missing member, so a reader does not read the rule as forbidding it.
  *
  *  **ITS CALLER IS THE `data.*` SURFACE, AND THE REASON IS ONE DEFECT.** While the surface wrote a tier of its
  *  own, a `data.write` at a root this file declares at one tier created a version of it at the other:
@@ -1332,12 +1453,7 @@ export interface ViewDeclaredRoot {
  *  NO crossing declares is admitted to the store verb and judged by the store's own constraints and nothing else, which
  *  is the arm the deleted address is measured at. */
 export function viewDeclaredRoots(): readonly ViewDeclaredRoot[] {
-  return [
-    { address: VIEW_PANES_ADDRESS, tier: PANES_TIER },
-    { address: VIEW_ZONES_ADDRESS, tier: ZONES_TIER },
-    { address: VIEW_THEME_ADDRESS, tier: THEME_TIER },
-    { address: VIEW_DRAG_ADDRESS, tier: DRAG_TIER },
-  ]
+  return VIEW_FAMILIES.map((family) => family.root)
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
