@@ -497,10 +497,13 @@ function stored(register: RegisterDouble, name: string): RegisterRead {
  *  seed `mem.layout.pane.<id>.size` on the frozen store and read a commit back off it is measuring machinery that is gone.
  *  This double stands the crossing in for both halves:
  *
- *   · **THE CREATION STATE IS THE REPAIR'S AND NOT AN EMPTY MAP.** `panes-must-stand` writes the MEASURED DEFAULT for the
- *     one pane the app has at the store's creation (`src/main/view-record/index.ts`'s `repairPanes`), so the family stands
- *     at `{pane-a: {width: 100, height: 100, bounds: {min: 0, max: 200}}}` before any caller writes — which is why
- *     `pane-a` is the RECORD arm and any other id is the DEFAULT arm.
+ *   · **THE CREATION STATE IS THE REPAIR'S AND NOT AN EMPTY MAP — AND HERE IT IS THE DOUBLE'S ONE-PANE SHAPE OF IT.** The
+ *     APP's `panes-must-stand` repair (`src/main/view-record/index.ts`'s `repairPanes`, over `viewPanesPlaceholder`) writes
+ *     the MEASURED DEFAULT for **EVERY declared pane**, and `DECLARED_PANE_IDS` carries THREE at this head (`D-183`
+ *     one → two, `D-258` two → three). **THIS HARNESS MODELS ONE OF THEM** — `DEFAULT_PANE_ID`'s record alone, which is
+ *     this fixture's own choice and no claim about the app — so the family here stands at
+ *     `{pane-a: {width: 100, height: 100, bounds: {min: 0, max: 200}}}` before any caller writes — which is why `pane-a`
+ *     is the RECORD arm and any other id is the DEFAULT arm.
  *   · **THE ROUTE `commitPane` SPEAKS IS ONE LEAF PER SUPPLIED MEMBER AT THAT MEMBER'S OWN NAME, AND IT COMPOSES NOTHING**
  *     (`D-154`): `['panes', id, 'width']`, `['panes', id, 'height']`, `['panes', id, 'bounds']` — `composePanes` is DELETED
  *     whole and its tombstone stands in `src/main/view-record/index.ts`. There is no whole-family write on this path, no
@@ -637,18 +640,21 @@ function crossingOf(key?: object): PaneCrossing {
   let family: Record<string, HeldPane> = {
     [DEFAULT_PANE_ID]: defaultGeometryFor(DEFAULT_PANE_ID),
   }
-  // **THE ZONE FAMILY'S CREATION PLACEHOLDER NAMES EVERY DECLARED ID WITH AN EMPTY RECORD** (`D-151`, `D-152`; `D-91`'s
-  // "the family that names no zone" is SUPERSEDED BY POINTER and stands unrewritten, `D-46`): `zones-must-stand` repairs to
-  // `viewZonesPlaceholder()` = `{'zone-1': {}}` — one entry per id in `DECLARED_ZONE_IDS`, derived from `DEFAULT_ZONE_ID` in
-  // `src/shared/view-shape.ts` (ONE id at this head) — so a DECLARED zone nothing has written answers a MEMBERLESS zone
-  // (`{id}`) rather than `null`, and `null` now answers only an id the record does not declare. **NOTHING ON THIS COMPOSITION
-  // READS THE ZONE FAMILY ANY MORE** (`D-168`: `candidatesFor` and `renderZone` were its two readers and both are DELETED —
-  // the read keeps its owner, `store-view-record`'s `view.zoneOf`, which the rows drive on the CLIENT), so a zone `size`/
-  // `display` has no consumer to be `undefined` for (`D-152` (b)'s answer stands, unread). A row that wants a zone WITH
-  // members seeds it, and that seed is a DELIVERY and not this composition's write. **THE `let zones` BELOW SEEDS NO ZONE**
-  // (measured, not repaired): it stands `{}` where the repair now creates `{'zone-1': {}}`, so a row wanting the
-  // placeholder's memberless arm must seed `{}` for the declared id itself — both arms answer alike, so no row here depends
-  // on the gap.
+  // **THE ZONE FAMILY'S CREATION STATE IS THE APP'S REPAIR; THE `{'zone-1': {}}` SHAPE IS THIS FIXTURE'S VOCABULARY AND
+  // NEVER A CLAIM ABOUT THE APP.** The app's `zones-must-stand` repairs `viewZonesPlaceholder()`, which names the FOUR
+  // declared ids — `top`/`bottom`/`left`/`right` (`DECLARED_ZONE_IDS`, widened one → four at `D-181`) — and STATES each
+  // one's declared default `size` from `DEFAULT_ZONE_SIZES` (`D-233`'s item (4), `D-234`), while `DEFAULT_ZONE_ID`
+  // (`'zone-1'`) is RETIRED whole at `D-192` because `zone-1` is not one of the four. **HERE `ZONE_ID = 'zone-1'` IS THIS
+  // FILE'S OWN id and `{}` IS THIS DOUBLE'S OWN record shape**, so the memberless record a row reads back off this
+  // harness's family is the harness's word for a zone it was not seeded with, and no such reading is a statement about the
+  // app's four. (`D-151`/`D-152` close the id domain; `D-91`'s *"the family that names no zone"* is SUPERSEDED BY POINTER
+  // and stands unrewritten, `D-46`.) **NOTHING ON THIS COMPOSITION READS THE ZONE FAMILY ANY MORE** (`D-168`:
+  // `candidatesFor` and `renderZone` were its two readers and both are DELETED — the read keeps its owner,
+  // `store-view-record`'s `view.zoneOf`, which the rows drive on the CLIENT), so a zone `size`/`display` has no consumer to
+  // be `undefined` for (`D-152` (b)'s answer stands, unread). A row that wants a zone WITH members seeds it, and that seed
+  // is a DELIVERY and not this composition's write. **THE `let zones` BELOW SEEDS NO ZONE** (measured, not repaired): it
+  // stands `{}` where the app's repair writes its four declared records, so a row wanting this harness's memberless arm
+  // must seed `{}` for `ZONE_ID` itself — the arm answers alike either way, so no row here depends on the gap.
   let zones: Record<string, HeldZone> = {}
   // **THE DRAG FAMILY'S ADDRESS** — `['drag']` at `temp`, ONE MEMBER PER PANE ID, each the ADJUSTABLE axis member's own
   // name — `{height}` on this fixture (`D-189`, `D-190`). `null` is the family's absence, which is the state before any
@@ -947,7 +953,7 @@ describe('§3.3 I-3 — the comparator stays pure', () => {
 })
 
 describe('§3.2 F-5 — a release with NO preview data commits NOTHING but a normal file write', () => {
-  it('F-5: ONE `commitPane(pane, {size})` with no lower copy to clear, never a refusal, never a removal, never a second write — the sink\'s record and the route log agree at 1, the drag address was never written, the release ends it ONCE, and the doubled store sees ZERO acts (`D-93`: the construction-time bootstrap of `mem.layout`/`temp.drag`/`file.settings` is deleted)', () => {
+  it('F-5: ONE `commitPane(pane, {height})` with no lower copy to clear, never a refusal, never a removal, never a second write — the sink\'s record and the route log agree at 1, the drag address was never written, the release ends it ONCE, and the doubled store sees ZERO acts (`D-93`: the construction-time bootstrap of `mem.layout`/`temp.drag`/`file.settings` is deleted)', () => {
     const { w, register, crossing } = compose()
     // **THE CONSTRUCTION ISSUED NOTHING** — this is the assertion the deleted bootstrap used to fail: three roots were
     // `commit`/`clear`-declared before the first turn, and the double's census would have read 6.
@@ -1461,7 +1467,7 @@ describe('§3.1 M-4 — the SHAPE\'S DELIVERY registers nothing, and NO ZONE TUR
 })
 
 describe('§3.1 M-5 — a valid release commits the SINK\'S value once — the two readings AGREE at 1', () => {
-  it('M-5: the sink\'s own record reads 1 and stats().sinkCalls reads 1 (they AGREE), the crossing received exactly ONE `commitPane(pane, {size: final})` whose value EQUALS the sink\'s argument, the move before it WROTE THE ADDRESS (`commitDrag` at `{size: 120}`), and the release ends that reading with ONE `clearDrag` — the reconcile that used to refresh a second tier OUTSIDE the gesture count has no second tier to refresh', () => {
+  it('M-5: the sink\'s own record reads 1 and stats().sinkCalls reads 1 (they AGREE), the crossing received exactly ONE `commitPane(pane, {height: final})` whose value EQUALS the sink\'s argument, the move before it WROTE THE ADDRESS (`commitDrag` at `{height: 120}`), and the release ends that reading with ONE `clearDrag` — the reconcile that used to refresh a second tier OUTSIDE the gesture count has no second tier to refresh', () => {
     const { w, crossing } = compose()
     const sink = makeSink()
     const clamped = 240
@@ -2657,7 +2663,7 @@ describe('§2.1 A (`D-117`) — THE PRE-DRAG SIZE AND THE BOUNDS PAIR ARE `[\'pa
     w.release('gesture-1', 220, sink)
     expect(sink.record, 'the SINK was invoked exactly once, with the final value').toEqual([220])
     expect(sink.stats().sinkCalls, 'and it is NEVER RETIRED: ONE sink write per gesture end (E10/SINK-1)').toBe(1)
-    expect(crossing.calls, 'and the file commit is the ONE `commitPane` carrying `{size: 220}`').toEqual([
+    expect(crossing.calls, 'and the file commit is the ONE `commitPane` carrying `{height: 220}`').toEqual([
       { id: DEFAULT_PANE_ID, geometry: { height: 220 } },
     ])
     expect(crossing.dragCalls, 'the move before it wrote the address').toEqual([{ id: DEFAULT_PANE_ID, geometry: { height: 180 } }])

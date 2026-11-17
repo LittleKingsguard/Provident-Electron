@@ -362,7 +362,15 @@ function adjustableMemberOf(pane: ViewPaneGeometry): 'width' | 'height' {
  *  an `id` is the family's key rather than a member of the value. **`slot` IS CARRIED WITHOUT A BOUNDARY CHECK AND THE
  *  OTHER THREE ARE NOT**, which is not a gap: a slot is opaque to this whole module and the crossing refuses an
  *  inadmissible one at its WRITE, so a slot that arrived here crossed that gate — while `size`, `distance` and `display`
- *  are values a layout call compares, and a member this module cannot state is a member it must not hand on.
+ *  are admitted one member at a time and then CARRIED AS THE RECORD STATES THEM, which is the whole of this boundary's
+ *  office on them. **NOTHING HERE COMPARES A ZONE'S FIGURE OR ITS STATE WORD, AND THE PAINT DOES NOT EITHER** (`D-185`):
+ *  the layout paint WRITES the record's own figure and string — `renderer.ts`'s `driveLayoutRegions` reads `held.size` at
+ *  `:5260-5262`, composes it at `:5287` and writes `held.display` at `:5292`, and hands that whole value to a `state-slice`
+ *  through `paintStyle` (`:5195`) — and it compares neither: no figure is measured against an extent and no word against a
+ *  state. **`slot` AND `distance` ARE CARRIED AND UNREAD, WITH NO READER LEFT UNDER `src/`**: their only reader was
+ *  `candidatesFor`, DELETED with the candidate production and the render turn it fed and given NO SUCCESSOR (`D-168`), and
+ *  `src/shared/relocate.ts`, the seam that declares both, has no `src/` importer (`D-111`) — so nothing under `src/` reads
+ *  either for a decision; and a member this module cannot state is still a member it must not hand on.
  *
  *  **AND `collapsed` IS THE MEMBER THIS ADMISSION EXISTS FOR** (`design-zone-collapse.md` §9): this function drops every
  *  member it does not NAME, so a `['zones', <id>, 'collapsed']` the store admits and carries would never reach

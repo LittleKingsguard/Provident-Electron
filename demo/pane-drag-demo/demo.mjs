@@ -40,13 +40,13 @@
 // @source 917e7ac67ad1e3d63f9d9e833cab57febf79bdec751a2bd0b6680de26dc62198 src/renderer/secure-panels.ts
 // @source bbdfae90fd2190eb71c9f3b5b909b401f36be67872f88bd42820b1753608c8a4 src/renderer/security-client.ts
 // @source 36187d7cf2e011e13739b74d34acf313a5d5583b803982cab72eba5bed3121e8 src/renderer/tabs-client.ts
-// @source 66ebe19c4df7fa94001b82fb5278e3c996a31faf2838893c1562e92086d0755b src/renderer/view-client.ts
+// @source ce0a6d037f99a7b3bd7b12f4404b7d716ae3c5ecd18f8e5df9d571119c888e54 src/renderer/view-client.ts
 // @source d5633074121b32e8700ab228aeca808225f4387de163c0c8128e5dafd018e49d src/shared/demo-envelope.ts
 // @source 5b7830e578400652386405ccc2a56da623f5ad428f999eefdd4f0a4abde29754 src/shared/gesture-session.ts
 // @source a334e345cc61c48ba095269a0e04cf81825e452b8f913afaf66a92b3c0c8a356 src/shared/gutter-affordance.ts
 // @source 260559b259261d0a6826037788a74ed5b1180bac213c9ac459f8acbd0c7a6ab3 src/shared/gutter.ts
 // @source 40138fcc97cf13306712cc8ebf36a081302915b240ec87ff76cbafb83f898194 src/shared/overlay.ts
-// @source f3737a33d154ca3e60be03f714338dc3b23591f64f577a64f90c7ae41d4724f2 src/shared/view-shape.ts
+// @source f9c03e158bc01ec9d444df83c41f7f38054e3f8b8784268cee329a09ddf84b03 src/shared/view-shape.ts
 // @end-sources
 // src/shared/gesture-session.ts
 var POINTER_TYPES = Object.freeze({

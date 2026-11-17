@@ -444,19 +444,21 @@ export const paneGeometryIn = (
 
 /** **ONE ZONE OUT OF A READING — AND ITS MISSING ARM IS `null`, WHICH IS A MEASUREMENT AND NOT AN OVERSIGHT** (D-91).
  *  This function is `paneGeometryIn`'s counterpart and it deliberately does NOT answer a default record, because the zone
- *  family has **no measured placeholder for the derivation to give**: the frozen store held no zone default at all, a
- *  read that MISSed at its one tier answered `undefined`, the render turn handed that `undefined` straight to its layout
- *  call (`renderer.ts:1799-1805`), and `candidatesFor` answered `[]` (`:1935-1941`). So `null` here IS the answer the
- *  app's own paths give today for a zone nothing names, and **this derivation STILL answers no default of its own** — a
+ *  family has **no measured placeholder for the derivation to give**: the frozen store held no zone default at all and a
+ *  read that MISSed at its one tier answered `undefined`. At this head that absence is what the LAYOUT PAINT meets: a zone
+ *  this function answers `null` for, or one the record names with no `size`, is written NOTHING (`renderer.ts:5261-5262`,
+ *  `D-185`), and no arm beside the record composes a figure. So `null` here IS the answer the app's own paths give today
+ *  for a zone nothing names, and **this derivation STILL answers no default of its own** — a
  *  derivation answering `{size: 100}` would be a second authority beside the read, which is exactly the fault `D-91`
  *  refuses. **WHAT MOVED IS THE WRITER AND NOT THIS FUNCTION** (`D-233`'s item (4)): the creation repair no longer mints a
  *  memberless record — it writes every DECLARED zone id with its declared default `size` (`viewZonesPlaceholder`, one
  *  spelling) — and `D-91`'s *"the family that names no zone"* is SUPERSEDED BY POINTER and not reworded (`D-46`,
  *  `D-151`). So this derivation's two absent-looking arms are told apart by THIS function: a declared zone answers the
  *  record the family carries (`{id, size}` after a repair, `{id}` for the older memberless state), and `null` answers only
- *  for an id this record does not declare. **AND ITS OUTPUT DOES NOT MOVE WITH THE CLOSED DOMAIN OR WITH THE FIGURE**: the
- *  two zone readers' layouts are `undefined` on both arms and `candidatesFor` answers `[]` on both, so what moves is the
- *  VOCABULARY (and now the record's own members) and not a reader (`D-151` (b), (c)).
+ *  for an id this record does not declare. **AND ITS OUTPUT DOES NOT MOVE WITH THE CLOSED DOMAIN OR WITH THE FIGURE**: this
+ *  function COPIES and never composes — the paint writes the members the record states and writes nothing where it states
+ *  none (`renderer.ts:5261-5262`, `:5292`) — so what moves is the VOCABULARY (and now the record's own members) and not a
+ *  reader (`D-151` (b), (c)).
  *
  *  **PURE OVER A VALUE, AND IT COPIES**: the four members are handed out on a fresh record per call, so no caller holds
  *  the shape the client will replace on the next delivery — `defaultPaneGeometry`'s reason, applied to a family whose
