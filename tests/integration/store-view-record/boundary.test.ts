@@ -1724,6 +1724,40 @@ const DECLARED_SCOPE: readonly string[] = [
   //    would admit a page dropped beside it — `B-1`'s own set assertion refuses the duplicate, which is the difference
   //    between a write and a claim.
   'docs/L1/app-layout.md',
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-297` — THE ESM-ONLY PACKAGE FINDING, AND THE TWO `bundle-boot-seam` L3 PAGES THAT LANDED IT. **TWO PATHS JOIN THIS
+  //    UNION AND NEITHER IS ADMITTED BY A DIRECTORY OR A PREFIX**: a declared `docs/L3/bundle-boot-seam/` would admit every
+  //    page a later pass drops under it (`B-2`'s undeclared-sibling arm, this header's own refusal), so `design.md` and
+  //    `signatures.md` are named one by one, and neither is a prefix (`docs/L3/bundle-boot-seam/de` admits a name no pass
+  //    wrote). **THE UNION IS THE WORKTREE'S EDIT SET AND NOT ONE UNIT'S** (`D-146`): these are ANOTHER MODULE'S L3 scope and
+  //    ANOTHER LAYER'S pages — `docs/L3/<module>/` is written by its own layer only (`D-3`) — and they are declared here
+  //    because the reading that gates is `git status --porcelain --untracked-files=all` over the WHOLE repository (`B-1`,
+  //    `B-3`), in which a page this pass corrected is an undeclared edit like any other until an entry names it. **A path is
+  //    declared by the seat that WRITES it, in the same edit that dirties it and never after it** (`D-146`, `D-292` (v)).
+  //
+  //    **WHAT THE TWO PAGES BECOME, AND WHY THE FINDING IS THEIRS TO CARRY.** `provident-storeroom`'s own `exports` map is
+  //    `types` and `import` and no `require` — the package is **ESM-only** — and that is UPSTREAM-OWNED and RECORDED rather
+  //    than patched (`D-5`, `D-52`): the module's answer is a row that reds, not a shim. So the arm's decision widens and a
+  //    second question is separated from it, because the two fail INDEPENDENTLY and esbuild reports neither, exiting `0`:
+  //    **`U-2` stops reading `--external:electron` alone and pins BOTH externals on the `build` arm's TEXT** — a flag that
+  //    was never landed — **and `U-9` IS ADDED, the row over the EMITTED ENTRY** — a flag that is there and INEFFECTIVE, a
+  //    second invocation or a `--define` re-inlining the package with the arm's text still reading correctly. `D-297`
+  //    measured the trap: `213,948` bytes inlined with fifteen package-path comments and a `var import_meta = {}` at exit
+  //    `0`, against `154` bytes with the flag. **BOTH PAGES ARE THEN BROUGHT TO THE NINE ROWS THE BATTERY NOW DECLARES** —
+  //    seven in `tests/unit/bundle-boot-seam/emission.test.ts` (`U-1`..`U-6` and `U-9`), two in the sibling
+  //    `derivation.test.ts` (`U-7`, `U-8`), a file this pass does not write and no entry here claims — and `design.md`'s
+  //    `G-8` states the artifact's not-self-contained requirement on the emitted bytes, where `U-9` reads it, rather than
+  //    on the arm alone (`interface.md` §5, §9 `ASM-L2-8`; `persistence.md` §3).
+  //
+  //    **NO ASSERTION, NO MARKER AND NO ROW ID MOVES IN THIS FILE**: this block is two ENTRIES and nothing else — `B-1`'s
+  //    set assertion, `B-2`'s three controls and `B-3`'s reading are untouched, no `strata:marked` site is added or removed
+  //    (so `strata-marks.mjs check` stands as it stood), and no `D-n` id this file already cites is renumbered or reworded.
+  //    **AND THE BATTERY THE WIDENED ROW LANDS IN IS ALREADY DECLARED ABOVE** — `tests/unit/bundle-boot-seam/
+  //    emission.test.ts` has its own block, under `bundle-boot-seam`'s L3 battery — so the file `U-2` and `U-9` are read
+  //    off takes NO second spelling here: a duplicate path is the one thing `B-1`'s set assertion refuses, and that is the
+  //    difference between a write and a claim.
+  'docs/L3/bundle-boot-seam/design.md',
+  'docs/L3/bundle-boot-seam/signatures.md',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without
