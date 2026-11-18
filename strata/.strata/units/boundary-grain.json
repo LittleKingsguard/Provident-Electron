@@ -1,0 +1,37 @@
+{
+  "unit": "boundary-grain",
+  "layer": "L1",
+  "stage": "design",
+  "artifacts": [
+    "L1-design"
+  ],
+  "assumptions": [
+    {
+      "id": "ASM-BG-1",
+      "text": "The per-file rule stands: an entry is a FILE with its own reason, and B-2's three controls (the near-miss refusal, the directory refusal, the reading) stay exactly as they are.",
+      "alternative": "Declaring a class of path (any docs/L2|L3/<module>/ page a pass edits), refused because it would admit B-2(b)'s near-miss by construction and delete the row's only proof it can fail.",
+      "status": "open"
+    },
+    {
+      "id": "ASM-BG-2",
+      "text": "One reading still covers the WHOLE tree: a per-unit reading may sit beside it, but nothing may let an undeclared cross-module edit pass.",
+      "alternative": "Replacing the whole-repo reading with per-unit ones, which would let every cross-module page this session edited pass undeclared.",
+      "status": "open"
+    },
+    {
+      "id": "ASM-BG-3",
+      "text": "The unit's scope is the instrument: no src/ byte, no product behaviour, no module's claimed paths, no reworded D-n.",
+      "alternative": "Folding the grain change into a product unit, which would move two subjects in one landing.",
+      "status": "open"
+    },
+    {
+      "id": "ASM-BG-4",
+      "text": "The tax is measured rather than felt: six extensions in one session, 262 entries, 248 outside the owning module, each extension a delegation to another module's L2 for a one-line edit.",
+      "alternative": "Treating the friction as anecdotal, which is what D-298's and D-299's own passes each did once before this row counted it.",
+      "status": "open"
+    }
+  ],
+  "streaks": {},
+  "rebuildEligible": false,
+  "updated": "2026-11-18T06:47:03.765Z"
+}

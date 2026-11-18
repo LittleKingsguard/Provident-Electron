@@ -309,6 +309,13 @@
         "tests/unit/store-view-record/family-object.test.ts"
       ],
       "endpoints": 7
+    },
+    {
+      "name": "boundary-instrument",
+      "paths": [
+        "tests/e2e/boundary-grain/"
+      ],
+      "endpoints": 4
     }
   ]
 }
