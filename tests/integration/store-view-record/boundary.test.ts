@@ -35,8 +35,8 @@
  * (D-146, design §2). **THE RULE DID NOT MOVE**: an entry is still a FILE carrying its own reason, never a
  * directory, never a prefix, never a glob, and `B-2`'s three controls and `B-3`'s reading are byte-identical
  * (D-301, `ASM-BG-1`). **AND THE IMPORT IS A NAMED COUPLING, NOT AN ACCIDENT**: this gating row now reads a
- * path its own module does not claim, which `modules.md` §1 calls a boundary crossing — accepted because one
- * reader beats two, and the reader's own claim is L1's (design §5).
+ * path its own module does not claim, which `modules.md` §5 (*Enforcement, stated plainly*) calls a boundary
+ * crossing — accepted because one reader beats two, and the reader's own claim is L1's (design §5).
  *
  * **TWO OF `B-1`'S OLD ASSERTIONS RETIRED WITH THE LIST, AND WHAT THEY PROTECTED MOVED TO A FIXTURE**
  * (design §2, `E-7`): `toContain('src/main/view-record/index.ts')` and the `startsWith('src/main/')` arm
