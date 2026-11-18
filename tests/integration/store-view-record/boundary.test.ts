@@ -1866,6 +1866,68 @@ const DECLARED_SCOPE: readonly string[] = [
   //    `260` entries before this block and `261` after it, every one of them a distinct path — and the path below stood in
   //    no entry above, which is exactly the state `B-1` reports as an offender rather than letting it slide in.
   'tests/integration/central-data/seam-census.test.ts',
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // ── `D-299`'S CITATION RE-GRAIN — `docs/L2/bundle-boot-seam/behaviour.md`, AND IT JOINS THIS UNION AS ITS OWN ENTRY WITH
+  //    ITS OWN REASON, NEVER AS THE PREFIX `docs/L2/bundle-boot-seam/` (`interface.md` and `persistence.md` stand declared
+  //    above as their own entries, and a directory would admit this page and every page a later pass drops beside it — a
+  //    directory measures nothing, and `B-2`'s undeclared-sibling arm is what bites on a page nobody named). **AND THE
+  //    `D-298` BLOCK ABOVE NAMED THIS EXACT FILE AS THE ONE A PREFIX WOULD ADMIT**; it is now declared BY NAME instead,
+  //    which is the difference that block was drawing.
+  //    **THE UNION IS THE WORKTREE'S EDIT SET AND NOT ONE UNIT'S** (`D-146`): `docs/L2/<module>/` is written by its own
+  //    layer only (`D-3`), so this is ANOTHER module's L2 scope and ANOTHER layer's page — declared here because the
+  //    reading that gates is `git status --porcelain --untracked-files=all` over the WHOLE repository (`B-1`, `B-3`), in
+  //    which a page this pass corrected is an undeclared edit like any other until an entry names it. **A path is
+  //    declared by the seat that WRITES it, in the same edit that dirties it and never after it** (`D-146`, `D-297`,
+  //    `D-298`): this page was the ONE path of the worktree's ELEVEN that no entry named, which is `B-1` reporting an
+  //    offender rather than letting it slide in.
+  //
+  //    **THE MEASURED HEAD THIS BLOCK WAS WRITTEN AT, SO A READER RE-TAKES IT RATHER THAN TRUSTS IT**: the bare reading and
+  //    the `--untracked-files=all` reading answer the SAME ELEVEN paths (`demo/pane-drag-demo/demo.mjs`, this page,
+  //    `docs/L3/bundle-boot-seam/signatures.md`, `src/main/storeroom.ts`, `src/main/view-record/index.ts`,
+  //    `src/renderer/renderer.ts`, `src/shared/view-shape.ts`, `strata/platform.md`,
+  //    `tests/integration/central-data/seam-census.test.ts`, this file and `tests/pane-drag-compliance.test.ts`), all of them
+  //    ` M` worktree modifications with no untracked file among them — and TEN of the eleven already stood declared above,
+  //    so not one of those is re-listed: a second spelling of a path already in the union is the duplicate `B-1`'s own set
+  //    assertion refuses. **AND THE ROW WAS RED ON THIS TREE BEFORE THIS BLOCK EXISTED**: this page was the whole of its
+  //    offender list, which is the instrument working and not a defect. The union reads `261` entries before this block and
+  //    `262` after it, every one of them a distinct path.
+  //
+  //    **WHAT THE PASS IS.** `D-299`'s cleanup round took the residual that row had ROUTED rather than folded into its own
+  //    green — *"`docs/L2/bundle-boot-seam/behaviour.md` owes an offset re-grain into `src/main/mcp-server.ts` that this
+  //    pass never measured"* — and RE-MEASURED EVERY OFFSET THE PAGE CARRIED at this head, `3693af5`. Each cite that had
+  //    landed on other code is re-pointed and each decorative offset is replaced by the SITE it names (`D-41`); the two
+  //    sites that moved STRUCTURALLY are named by MEMBER rather than by line — the readiness prints stand in `bind()`,
+  //    not in `start()`'s body, and the package's derivations are `index.mjs`'s
+  //    `createRequire`/`ADDON_PATH`/`adoptModuleContext` block, whose version read is not in `index.mjs` at all. **THE
+  //    MEASUREMENT IS RE-TAKEN HERE RATHER THAN TRUSTED, PATH AND LINE**: `src/main/mcp-server.ts:1317` is the stdio
+  //    readiness print inside `bind()` (`:1309`), `:1354` the http one, `:1440`/`:1445`/`:1450`/`:1456` the four refusals
+  //    `handleHttp` opens with (404, 405 GET/DELETE, 405 other non-POST, 401), `:1465`/`:1466` the `503` `mcp-disabled`
+  //    pair, `:1488` the `408` `RequestBodyBoundExceeded` arm and `:1498` the generic `500`; and
+  //    `node_modules/provident-storeroom/index.mjs:104`/`:105`/`:107` are that derivation block, the `:94-97` rev 3 cited
+  //    being the entry's imports of its own `src/entry/*` parts.
+  //    **AND THE RE-MEASURE FORCED ONE CORRECTION, WHICH IS WHY THE PAGE MOVED AND NOT MERELY ITS NUMBERS**: rev 3 called
+  //    the HTTP answer set *"the four arms the battery asserts"*, and the battery asserts **one** of them — `B-6`'s GET on
+  //    `/mcp` answers `405` (`tests/e2e/bundle-boot-seam/boot-contract.test.ts:919`), the only HTTP-status assertion under
+  //    `tests/e2e/**` at this head — while a THIRD unasserted arm, the `408` above, also landed after rev 3. The row now
+  //    states the one arm asserted and the three arms outside it, so the page cannot be read as claiming a coverage the
+  //    battery does not carry (`D-46`, `D-43`).
+  //
+  //    **NO ASSERTION, NO MARKER AND NO ROW ID MOVES IN THIS FILE**: this block is ONE entry and its heading — `B-1`'s set
+  //    assertion, `B-2`'s three controls and `B-3`'s reading are untouched, no `strata:marked` site is added or removed
+  //    (so `strata-marks.mjs check` stands as it stood), and no `D-n` id this file already cites is renumbered or
+  //    reworded. **EVERY OTHER PATH THAT PASS WRITES IS ALREADY DECLARED ABOVE, AND EACH IS NAMED SO A READER CAN CHECK
+  //    THE CLAIM**: `src/main/storeroom.ts` (the constant's `13 → 14` re-grain and its docblock; `D-103`), the two
+  //    `docs/L2/bundle-boot-seam/` pages beside this one (`D-298`), `docs/L3/bundle-boot-seam/design.md` (`D-297`),
+  //    `docs/L2/central-data/persistence.md` (`D-101`), `docs/L3/central-data/design.md` (`D-101`),
+  //    `docs/L1/central-data-management.md` (`D-107`), `docs/L1/tier-readout.md` (`D-133`),
+  //    `tests/integration/central-data/seam-census.test.ts` (`SC-1`, the block above), `tests/e2e/central-data/
+  //    scenarios.test.ts` (`S-9`, `D-101`) and `strata/decisions.md`, `strata/brief.md` and `strata/marks.json` (`D-93`) —
+  //    so this block appends ONE path and no second spelling of one already in the union, which is the difference between
+  //    a write and a claim.
+  //    **AND IT CLAIMS NO END TO THIS LIST** (`D-146`): `D-299` counted this union's **fifth** extension this session and
+  //    `261` entries, `248` of them outside `store-view-record`'s own module — this is the SIXTH, and a pass that writes a
+  //    path RE-OPENS the union rather than contradicting it.
+  'docs/L2/bundle-boot-seam/behaviour.md',
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without

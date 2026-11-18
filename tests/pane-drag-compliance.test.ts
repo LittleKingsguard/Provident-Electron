@@ -636,7 +636,10 @@ function crossingOf(key?: object): PaneCrossing {
     const cached = crossingOfStore.get(key)
     if (cached !== undefined) return cached
   }
-  // THE CREATION REPAIR'S PLACEHOLDER — `panes-must-stand`'s own seed, present before any caller writes.
+  // THE CREATION REPAIR'S PLACEHOLDER, NARROWED TO THE ONE PANE THIS HARNESS MODELS — the app's `panes-must-stand` seed is
+  // `viewPanesPlaceholder()` over EVERY declared id, and `DECLARED_PANE_IDS` carries THREE at this head (`D-183` one → two,
+  // `D-258` two → three). The family below is `DEFAULT_PANE_ID`'s record ALONE because that is THIS FIXTURE's choice, which
+  // the crossing docblock above states and which no row here reads as the app's seed.
   let family: Record<string, HeldPane> = {
     [DEFAULT_PANE_ID]: defaultGeometryFor(DEFAULT_PANE_ID),
   }
@@ -747,10 +750,14 @@ function crossingOf(key?: object): PaneCrossing {
     // `composeZones` is DELETED — `commitZones` writes ONE LEAF PER SUPPLIED MEMBER (`['zones', id, 'slot']`,
     // `['zones', id, 'distance']`, `['zones', id, 'size']`, `['zones', id, 'display']`), so the members supplied are
     // written, the ones the caller did not supply are never touched and keep standing, and an id the record does not
-    // declare is REFUSED `undeclared-zone` rather than creating a zone — the id domain is CLOSED to `DECLARED_ZONE_IDS`
-    // (derived from `DEFAULT_ZONE_ID`, one id at this head) and the repair CREATES each declared record, which is what a
-    // leaf write needs standing under it. This double drives no row through it; it stands here so the member set matches
-    // the bridge's.
+    // declare is REFUSED `undeclared-zone` rather than creating a zone — the id domain is CLOSED to `DECLARED_ZONE_IDS`,
+    // the FOUR ids `top`/`bottom`/`left`/`right`, SPELLED rather than derived (widened one → four at `D-181`, and the
+    // spelling is `D-192`'s own settlement) — and the repair CREATES each declared record, each stating its declared `size`
+    // from `DEFAULT_ZONE_SIZES` (`D-233`'s item (4), `D-234`), which is what a leaf write needs standing under it.
+    // **`DEFAULT_ZONE_ID` IS RETIRED WHOLE AT `D-192`** — `'zone-1'` is not one of the four, and with `zone` an OPTIONAL
+    // pane member whose ABSENCE is the stage (`C-9`) there is no default zone left for such a constant to name — so
+    // nothing here is derived from it and nothing re-spells it. This double drives no row through it; it stands here so the
+    // member set matches the bridge's.
     commitZones: async (id: string, zone: unknown): Promise<unknown> => {
       const supplied = (zone ?? {}) as HeldZone
       zones = { ...zones, [id]: { ...(zones[id] ?? {}), ...supplied } }
@@ -839,7 +846,7 @@ describe('§3.1 M-2 — a MISS answers the DECLARED FALLBACK, never a silent def
     // MISS to ascend to. The declared fallback is the MEASURED DEFAULT — the figure `D-87` measured off the authored pane\'s
     // `props.size`, which the node NO LONGER CARRIES (`F11`, `D-129`) — and the read says which arm answered, so a
     // placeholder is never passed off as a record.
-    expect(Object.keys(crossing.family()), 'the creation repair minted the one pane the app has, and nothing else').toEqual([PANE_ID])
+    expect(Object.keys(crossing.family()), 'THIS FIXTURE\'S creation seed minted the ONE pane this harness models, and nothing else — the app declares THREE (`DECLARED_PANE_IDS`: `D-183` one → two, `D-258` two → three) and its repair mints all three, so the single-key family read here is the fixture\'s own narrowing and no claim about the app').toEqual([PANE_ID])
     expect(w.startSizeOf({ id: 'pane-unwritten' }, 'pane-unwritten'), 'the measured default, not `undefined` and not a refusal').toBe(DEFAULT_PANE_SIZE)
     expect(paneSourceOf(crossing, 'pane-unwritten'), 'and the read NAMES the arm that answered').toBe('default')
     expect(paneSourceOf(crossing, PANE_ID), 'while the pane the family names is the record\'s').toBe('record')
@@ -2654,10 +2661,10 @@ describe('§2.1 A (`D-117`) — THE PRE-DRAG SIZE AND THE BOUNDS PAIR ARE `[\'pa
     //     `renderPaneSize`) — and the release then ends the drag\'s OWN reading of the address.
     //     **SINK-1 IS RE-READ AND NEVER RETIRED**: the sink is the harness\'s own recorder, so the invocation is COUNTED
     //     rather than inferred from the route, and it is counted with TWO DRAG TURNS already run.
-    //     **THE STRUCTURE THAT MAKES THAT A MEASUREMENT**: `move(gestureId, preview)`, `rightClick(gestureId)` and
-    //     `cancel(gestureId)` take NO SINK ARGUMENT — the surface declares no sink on any of them (see the local
-    //     `PaneDragSurface` above, and `renderer.ts`\'s own exported interface) — so no drag turn can be handed one, and a
-    //     second sink write could only come from a second release.
+    //     **THE STRUCTURE THAT MAKES THAT A MEASUREMENT**: `move(gestureId, preview)` and `cancel(gestureId)` — the ONE
+    //     abandon terminal, `rightClick` having been this same call and DELETED at `D-168` — take NO SINK ARGUMENT, so no
+    //     drag turn can be handed one (see the local `PaneDragSurface` above, and `renderer.ts`\'s own exported interface),
+    //     and a second sink write could only come from a second release.
     const sink = makeSink()
     w.move('gesture-1', { value: 180 }) // a drag turn: no sink, and one write to the address
     w.release('gesture-1', 220, sink)

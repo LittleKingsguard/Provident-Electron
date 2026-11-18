@@ -3,9 +3,11 @@
 // THE THREE DATA SETS THIS MODULE EXISTS FOR, AND WHY THEY COULD NOT LEAVE THE FROZEN GRAPH STORE BEFORE IT DID
 // (`src/renderer/store-core-graph.ts`, the purge's last deletion): the app's PANE GEOMETRY — a pane's `width` and
 // `height` (`size` until `D-189` split it), its optional `bounds` and its optional `zone`, read at
-// `src/renderer/renderer.ts`'s `readPaneSize`/`readPaneBounds` and written at its `release` — the ZONE
-// FAMILY, the drag flow's four stored members per zone, read by the composition's render turn (`:1799-1805`) and by
-// `candidatesFor` (`:1935-1941`) — and the APPEARANCE RECORD, the mechanism's own answer for the setting the authored
+// `src/renderer/view-client.ts`'s `paneSizeOf`/`paneBoundsOf`, reached from `src/renderer/renderer.ts`'s `readPaneSize`/
+// `readPaneBounds` in `createPaneDrag`, and committed at its `release` through `commitPane` — the ZONE FAMILY, the drag
+// flow's stored members per zone (`size`, `display`, `slot`, `distance` and the collapse's `collapsed`), read by the layout
+// paint (`driveLayoutRegions`) and, for `size`, by `zoneSizeOf`, with `slot`/`distance` unread since `candidatesFor` left
+// (`D-168`, `D-111`) — and the APPEARANCE RECORD, the mechanism's own answer for the setting the authored
 // control produced (D-97, D-98). Nothing outside that store held any of them, so the store could not be deleted until
 // each had an address; this module is the address. **A FOURTH SET, THE FOCUS MIRROR, LEFT WITH `D-142`**: it was a SECOND
 // SPELLING of a fact `['tabs']` already owns, so the address table was three roots and every site it took with it is gone
@@ -351,8 +353,18 @@ export interface ViewRecordOptions {
 }
 
 /** **THE ROUTES A CLIENT NEEDS, AND FIVE OF THEM — one per act, and no act without one** (the appearance route is D-97's).
- *  The renderer reads a pane's geometry (`:1700-1722`), writes one (`:1823-1825`), reads a zone's four members twice
- *  (`:1799-1805`, `:1935-1941`) and commits the appearance act its authored control produced. `read` is ONE route
+ *  **THE RENDERER READS A PANE'S GEOMETRY THROUGH THE CLIENT'S OWN DERIVATION AND KEEPS NO SECOND POLICY OF ITS OWN**, and
+ *  the sites are named by SYMBOL rather than by offset because every offset this sentence used to carry had landed on other
+ *  code at this head (`D-41`: a site is cited by its name, and an offset is a dated reading that says so): the member is
+ *  `src/renderer/view-client.ts`'s `paneSizeOf`, answering `pane[adjustableMemberOf(pane)]` — the axis the pane's own
+ *  `zone` selects — and reached from `src/renderer/renderer.ts`'s `readPaneSize` inside `createPaneDrag` (the pair takes
+ *  the same two hops through `paneBoundsOf`/`readPaneBounds`); a pane's geometry is WRITTEN only by the layout paint
+ *  (`driveLayoutRegions` → `panePaintOf` → `paintStyle`, ONE `state-slice`) and by the drag's preview
+ *  (`drivePreviewPanePaints`, that same composition); a zone's `size` and `display` are read by that same paint, its
+ *  `collapsed` by `zoneCollapsedOf` (the paint's zone arm and the pane arm's effective collapse) and its `size` again by
+ *  `zoneSizeOf`, while `slot` and `distance` have NO reader left under `src/` at all (`D-168`, `D-111`); and the appearance
+ *  act is committed from the record the authored control produced, this module computing no declaration of its own
+ *  (`D-97`). `read` is ONE route
  *  because all three families are read at once by the one consumer, and `subscribe` is the push's fan-out — so no route of
  *  this module stands without an answer site, which is the defect `docs/L2/central-data/interface.md` §2 records against a
  *  bridge member nothing calls. **THE FOURTH ROUTE THAT STOOD HERE LEFT WITH ITS FAMILY AND NOTHING REPLACES IT** (`D-142`):

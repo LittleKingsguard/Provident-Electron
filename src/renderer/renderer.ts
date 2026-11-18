@@ -7058,7 +7058,12 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
  * `mem.layout.*` spelling under `src/`. **NO ZONE READ STANDS IN THIS CLOSURE ANY MORE**: its `zoneOf`/`zoneIdOf` had exactly
  * two readers, `renderZone` and `candidatesFor`, and both are DELETED (`D-168`), so the zone family's read keeps its owner —
  * `store-view-record`'s `view.zoneOf` at `['zones']`, whose derivation `driveLayoutRegions` reuses as `zoneIn` off the
- * reading it is handed. **THE FILE'S ONE CALLER OF THAT FAMILY IS THE PAINT** (`D-185`), and it is not this composition's.
+ * reading it is handed. **THE PAINT IS THE ONE CALLER THAT WRITES A ZONE'S MEMBERS** (`D-185`, `D-295`), and it is not this
+ * composition's — it writes the record's own figure and string and compares neither, while every other caller READS the
+ * shape: `zoneSizeOf` (`:985-994`) for a strip's start figure and `zoneBoundsOf`'s ceiling, `paneMoveZoneFigures` (`:3516`)
+ * for the four drops' boxes, `paneMoveZonesOf` (`:3153`) for the collapse derivation, and `reportMeasuredFigures` (`:5463`)
+ * through `zoneIn`. **NONE OF THEM COMPARES A FIGURE OR A WORD**: a gate tests the record's own member (stated, finite,
+ * non-negative), a derivation reads the record's own word, and no site holds either against a second one (`D-174`).
  *
  * **THE TEMP PREVIEW IS AN ADDRESS NOW, AND WHAT THE CLOSURE KEEPS IS ONE FLAG** (`D-132` superseding `D-90` by pointer;
  * `D-138`; design §5). It was `temp.drag.<gestureId>.placement` in the frozen store, and then a `Map` in this closure with
@@ -7078,11 +7083,12 @@ export function startOverlayApplication(runtime: Runtime, options?: OverlayAppli
  * produces none at all, so the two registrations answer two different signals and neither is a second consumer of the
  * other. **NO ZONE TURN STANDS ON THIS SURFACE TO BE CALLED**:
  * `renderZone` is DELETED from the surface, the app's only `source` is `domEventSource()` and carries no `layout` member,
- * and **NO LAYOUT PROJECTION IS RENDERED ANYWHERE IN THIS TREE**. **`['zones']` HAS A READER AGAIN, AND IT IS THE PAINT'S**
- * (`D-185`): the zone family's `size`/`display` are read by `driveLayoutRegions` above and written to the four authored
- * nodes' `css.style` through `applyCommand` — a record read and a render write, which revives no projection, no `layout`
- * member and no `renderZone` (`D-168`'s deletion stands whole). Every read is guarded: an absent client, an absent shape
- * and a throwing read all land the DECLARED degradation, and never a throw escapes a wiring turn (§3.2 F-8).
+ * and **NO LAYOUT PROJECTION IS RENDERED ANYWHERE IN THIS TREE**. **`['zones']` HAS A READER AGAIN, AND THE PAINT IS THE
+ * ONE THAT WRITES THE MEMBERS THE RECORD STATES** (`D-185`): the zone family's `size`/`display` are read by
+ * `driveLayoutRegions` above and written to the four authored nodes' `css.style` through `applyCommand` — a record read and
+ * a render write, which revives no projection, no `layout` member and no `renderZone` (`D-168`'s deletion stands whole).
+ * Every read is guarded: an absent client, an absent shape and a throwing read all land the DECLARED degradation, and never
+ * a throw escapes a wiring turn (§3.2 F-8).
  * **AND THE GHOST TURN (`renderGhost`) IS THE ONE TURN THE DELIVERY REACHES HERE** — it asks the address's own read
  * and paints the declared transient the address has no other way to show.
  * ══════════════════════════════════════════════════════════════════════════════════ */

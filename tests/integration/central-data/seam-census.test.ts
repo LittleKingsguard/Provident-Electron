@@ -7,8 +7,9 @@
 // `symbolCount` stood ONE BEHIND the package from `1.11.0` until this pass, on a figure no row measured live.
 //
 //   THE THREE READINGS THAT LET IT STAND, EACH A DIFFERENT HOLE:
-//     * `tests/e2e/central-data/scenarios.test.ts`'s `S-9` asserts `STOREROOM_DECLARED_SURFACE.symbolCount === 13`
-//       — **it reads the constant, so the constant is its own only witness**;
+//     * `tests/e2e/central-data/scenarios.test.ts`'s `S-9` asserts `STOREROOM_DECLARED_SURFACE.symbolCount === 14`,
+//       the declaration's figure at this pass's re-grain, with the BARE arm it is read at stated beside it — **it
+//       reads the constant, so the constant is its own only witness**;
 //     * `tests/storeroom-surface.test.ts`'s `S-1.1`/`S-1.2` DO pin the member list off a live
 //       `createProfileStore()` — but that file's line 1 is `strata:marked-file rework`, so under `D-30` it reports
 //       **on notice** and does not gate;
@@ -33,11 +34,13 @@
 //     subject is the CONSTRUCTED OBJECT, and a witness that read an artifact could only re-read a declaration.
 //
 // THE DECLARED REFERENCE'S OWN FIGURE IS **READ, NEVER SPELLED HERE** — the instruction this row was authored
-// under, and the whole of its design: `symbolCount` is being re-grained `13 → 14` by this module's L3 designer in
-// the same pass, so a `14` hardcoded below would be a THIRD copy of the figure and the row would agree with
-// itself exactly as `S-9` does. The count assertion therefore reads `STOREROOM_DECLARED_SURFACE.symbolCount`, and
-// **THE ROW REDS UNTIL THAT RE-GRAIN LANDS — naming the drift with both lists in the message.** That red is the
-// row doing its job, and it is the reading a reader should expect from this head.
+// under, and the whole of its design: `symbolCount` was re-grained `13 → 14` by this module's L3 designer in the
+// same pass, so a `14` hardcoded below would be a THIRD copy of the figure and the row would agree with itself
+// exactly as `S-9` does. The count assertion therefore reads `STOREROOM_DECLARED_SURFACE.symbolCount`, and
+// **THAT RE-GRAIN HAS LANDED: the constant reads `14`, `S-9` pins that same figure beside it, and this row is GREEN
+// at this head** — the `14` being the BARE construction's (no `constraints`, no `listeners`), the arm
+// `createProfileStore()` below drives, while an ARMED construction and any store after one `write` read `15`. The row
+// reds only on a package that moves the live set, and it names the drift with both lists in the message when it does.
 //
 // **THE DECLARED NAME LIST BELOW IS THIS ROW'S OWN CENSUS AND IS PROVED FROM THE INSTALLED BYTES, ONE INSTALL SITE
 // PER NAME** (`provident-storeroom@1.12.0`; a name asserted without a site would ship a red, which is worse than
@@ -54,7 +57,8 @@
 //                             `index.mjs:1902`.
 //   `registration-deliver`  · `src/entry/delivery.mjs:518`, `installRegistrationDelivery` (`:524`–`:532`), called
 //                             at `index.mjs:1910` — **the name `1.11.0`'s delivery work added and `1.12.0` did not
-//                             move**, i.e. the one the declared `13` was behind.
+//                             move**, i.e. the one the declaration's former `13` stood behind until this pass's
+//                             re-grain.
 //   `register-body`         · `src/entry/delivery.mjs:260`, `installRegistrationSeam` (`:273`–`:285`), called at
 //                             `index.mjs:2185`.
 //   `attempt-count`         · `src/entry/state.mjs:199`, installed by `installAttemptSeam` (`:741`).
@@ -172,8 +176,9 @@ describe('the seam’s declared census is witnessed on a LIVE instance, never on
     expect(sorted(atConstruction), `the symbol half, live, as a SET: ${census(atConstruction)}`)
       .toEqual(sorted(DECLARED_SYMBOLS))
     // **AND THE LIVE COUNT AGAINST THE DECLARED FIGURE — READ FROM THE CONSTANT AND NEVER SPELLED HERE.** This is
-    // the assertion that would have caught `1.11.0`'s addition at the release that made it, and the one that reds
-    // until this pass's `13 → 14` re-grain lands. **Naming the drift is the message's whole job.**
+    // the assertion that would have caught `1.11.0`'s addition at the release that made it, and the one that now
+    // holds the landed `14` — the constant's own figure, the same one `S-9` pins — against the live count.
+    // **Naming the drift is the message's whole job.**
     expect(atConstruction.length, `the live count IS the declared figure, and a package that moved the set reds here naming the member: ${census(atConstruction)}`)
       .toBe(STOREROOM_DECLARED_SURFACE.symbolCount)
 

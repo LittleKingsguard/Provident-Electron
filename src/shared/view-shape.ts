@@ -99,9 +99,17 @@ export interface ViewPaneGeometry {
 export const PANE_STATUS_WORDS: readonly string[] = ['busy', 'waiting', 'done']
 
 /** **ONE ZONE, AND ITS FOUR MEMBERS ARE THE FROZEN STORE'S, MEASURED, NOT THIS FILE'S INVASION (D-91) — OF WHICH TWO
- *  HAVE NO READER LEFT.** `size` and `display` keep one, and it is the **LAYOUT PAINT** rather than a render turn:
- *  `renderer.ts`'s `driveLayoutRegions` (`:5250`) reads a zone's `held.size` at `:5261-5262` and its `held.display` at
- *  `:5292` and writes both into the four authored nodes' `css.style` through `applyCommand` (`D-185`). **`slot` AND
+ *  HAVE NO READER LEFT.** `size` and `display` are both read, and **THE EXCLUSIVITY THIS BLOCK USED TO CLAIM IS FALSE**: it
+ *  said the two *"keep **one** [reader], and it is the **LAYOUT PAINT**"*, which holds for `display` and NOT for `size`.
+ *  **`display` DOES KEEP THAT ONE**, and it is the **LAYOUT PAINT** rather than a render turn: `renderer.ts`'s
+ *  `driveLayoutRegions` (`:5250`) reads a zone's `held.display` at `:5292` and writes it into the four authored nodes'
+ *  `css.style` through `applyCommand` (`D-185`). **`size` HAS THE PAINT AND LIVE READS OF THE SHAPE BESIDE IT**: the same
+ *  turn reads `held.size` at `:5261-5262` and composes it into that one write — it is the reader that WRITES the members to
+ *  the DOM — while `renderer.ts`'s `zoneSizeOf` answers `getViewClient().zoneOf(id).size` for a strip's start figure
+ *  (`seamsOfZones`' `startSizeOf`) and for that strip's bounds ceiling (`zoneBoundsOf`), and the pane-placement's drop
+ *  boxes ask the same figure at a grip's press (`paneMoveZoneFigures` → `paneMoveDropBoxOf`). **NEITHER IS A COMPARISON**:
+ *  the paint compares neither figure nor word against one of its own — it writes both exactly as the record states them
+ *  (`D-185`) — and `zoneSizeOf` is a read of the shape and nothing else. **`slot` AND
  *  `distance` ARE CARRIED AND UNREAD**: their only reader was `candidatesFor`, DELETED with the candidate production and
  *  the render turn it fed and given NO SUCCESSOR (`D-168`) — so the two citations this docblock used to carry, a
  *  render-turn layout call at `:1799-1805` and `candidatesFor` at `:1935-1941`, name neither turn at this head.
@@ -398,8 +406,10 @@ export const defaultPaneGeometry = (id: string): ViewPaneGeometry => ({
 
 /** **ONE PANE'S GEOMETRY OUT OF A READING, WITH THE MEASURED DEFAULT ANSWERING A PANE THE FAMILY DOES NOT NAME.** It is
  *  PURE over a value, so the crossing's route (`docs/L2/view-record/interface.md` §2), the renderer's shape
- *  (`src/renderer/view-client.ts`) and the store's own repair all read the SAME derivation: the drag's read at
- *  `renderer.ts:1700-1722` is this function's answer, never a second policy. **ITS ANSWER CARRIES `status: 'committed'`
+ *  (`src/renderer/view-client.ts`) and the store's own repair all read the SAME derivation: the drag's live read of a
+ *  pane's member is `src/renderer/view-client.ts`'s `paneSizeOf` — this function's answer, taken at `adjustableMemberOf`'s
+ *  member — reached from `renderer.ts`'s `readPaneSize` in `createPaneDrag`, which answers `view.paneSizeOf(id)`, so it is
+ *  this function's answer and never a second policy. **ITS ANSWER CARRIES `status: 'committed'`
  *  BECAUSE IT IS L2 §2's COMMITTED READING** (`docs/L2/view-record/interface.md` §2) and the crossing's own battery pins
  *  that spelling: a derivation that answered the same values without the member would be a second, quieter answer to one
  *  question — the same reason this file exists rather than two realm-local copies. */

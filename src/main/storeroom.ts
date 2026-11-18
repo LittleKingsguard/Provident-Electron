@@ -44,7 +44,14 @@
 // `installRegistrationDelivery`, in a call `storeCreate` makes ONCE, at the construction instant, so the
 // census instant below sees it. **`1.12.0` MOVES NEITHER LIST**: on the installed tree this header now
 // reads **14** own symbols at construction — beside its 15 string members — and **15** after one
-// `write`, the extra again being the store's own `Symbol(provident-storeroom.kernel)` growth.
+// `write`, the extra again being the store's own `Symbol(provident-storeroom.kernel)` growth. **THE
+// INSTANT IS SHARED BY EVERY CONSTRUCTION PATH AND THE FIGURE IS NOT**, so that `14` is stated with its
+// ARM and never as universal: it is the **BARE** `createProfileStore()`'s — no `constraints` and no
+// `listeners`, the construction `SC-1` drives — while a construction **ARMED** with a batched constraint
+// reads **15 AT THAT SAME INSTANT**, its registration path installing that same `kernel` slot before
+// `storeCreate` answers, and the app's own boot store is exactly that armed call (`src/main/main.ts`'s
+// one construction, nine declarations). **`symbolCount`'s docblock below is where that reading is kept**,
+// and this header defers to it rather than deriving the figure a second time.
 // **WHAT `1.9.2` ADDED IS IN NEITHER LIST, AND ITS ABSENCE FROM BOTH IS THE WHOLE OF THE
 // NARROWING BELOW**: a passing act's record now answers with the commit's log, carried
 // NON-ENUMERABLY, so it moves no name and no symbol — see `commitLog`, the one declared reader.
