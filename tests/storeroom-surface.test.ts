@@ -54,38 +54,75 @@ describe('S-1 — the seam module is what the app imports', () => {
     + ' without a repo change', () => {
     const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as
       { dependencies: Record<string, string> }
-    // **`1.11.0` IS THE PIN, AND THE PIN IS STILL A CARET RANGE** (`D-219`) — **THE REVIEWED PACKAGE MOVED `1.10.0` →
-    // `1.11.0` AND THE CARET IS WHAT LET IT LAND**: `1.11.0` is a MINOR, the caret admitted it, `package-lock.json` moved
-    // with it, and **no byte of this row had to be re-decided to let the install in** — which is exactly the property the
-    // row exists to assert, and the reason the claim below is written on the RANGE and never on a version number.
-    // **THE MINOR IS NOT A PATCH AND IT DID CARRY BEHAVIOUR CHANGES, SO THREE ROWS RE-GRAINED WITH IT AND THIS ONE DID NOT
-    // HAVE TO** (`node_modules/provident-storeroom/RELEASE-NOTES.md` §1.11.0: a `cfg.listeners[]` element now REQUIRES its
-    // `listener` — a two-member element is refused `AddressMalformed`, subject `listeners`, before any filesystem act — and
-    // a boot over a corrupt image now REFUSES at rank `22` `FileImageRefused` rather than opening a store over it). **THE
-    // MEMBER COUNTS ABOVE DID NOT MOVE WITH IT**: §1.11.0's own "what does not move" list keeps *"the instance's own
-    // member set stays fifteen"*, so `S-1.1` and `S-1.2` still read fifteen and `readTiered` sits THIRD in the instance's
-    // own order (measured on the installed `1.11.0`: `read`, `readLiteral`, `readTiered`, `write`, …).
+    // **`1.12.0` IS THE PIN, AND THE PIN IS STILL A CARET RANGE** (`D-219`) — **THE REVIEWED PACKAGE MOVED `1.11.0` →
+    // `1.12.0` AND THE CARET IS WHAT LET IT LAND**: `1.12.0` is a MINOR, the caret admitted it, `package-lock.json` moved
+    // with it, and **no byte of the claim below had to be re-decided to let the install in** — which is exactly the property
+    // the row exists to assert, and the reason the claim is written on the RANGE and never on a version number. **THE
+    // FIGURE IS RE-GRAINED HERE ON PURPOSE, BECAUSE A PIN THAT MOVES SILENTLY IS THE DEFECT THIS ROW EXISTS TO CATCH**
+    // (`D-298` — the row this re-grain belongs to, filed at L0 for this pin move; it is not yet in `strata/decisions.md`'s
+    // register, so it is cited as the row and not by offset, `D-41`).
+    // **THE PIN IS A REVIEWED PIN AND NOT A RESOLUTION FLOOR** (`D-41`'s site; `D-68` states it verbatim for the `^1.6.2`
+    // move — *"so the pin is a REVIEWED pin (D-41's site) and not a resolution floor"*). The caret landing a release is what
+    // the caret DOES; what this row asserts is what a reviewer ADOPTED. **So the reviewed package is `1.12.0` and the figure
+    // follows the review, never the resolver's discretion.**
+    // **THE REVIEW'S THREE MOVES ARE THE REASON THE FIGURE MOVES** — `node_modules/provident-storeroom/RELEASE-NOTES.md`
+    // §1.12.0, in its own words (its section head states the class: *"a MINOR — the `require` route into the one claimed
+    // realm: a third condition on the one `exports` arm, naming the SAME `./index.mjs`, and a floor that moves `>=18.0.0`
+    // → `>=22.12.0` on all six manifests — one line, two moves"*):
+    //   (1) **THE `require` CONDITION.** `exports["."]` gains `"require": "./index.mjs"` as the THIRD condition, AFTER
+    //       `types` AND `import`, naming the SAME ESM entry the `import` condition names — so **`require('provident-storeroom')`
+    //       NOW LOADS**, through Node's own `require(esm)` interop (§1.12.0's consumer list item 2: on `1.11.0` the map
+    //       resolved no arm for that specifier and the loader answered `ERR_PACKAGE_PATH_NOT_EXPORTED`). That is the finding
+    //       `D-297` recorded here as upstream-owned and refused to patch (`D-5`, `D-52`), answered upstream at this pin: a
+    //       ROUTE into the one claimed realm, not a second realm.
+    //   (2) **THE FLOOR, AND IT IS THE BREAKING HALF.** `"engines": { "node": ">=22.12.0" }` on the main manifest AND on the
+    //       five platform manifests (§1.12.0 item 3: *"THE FLOOR MOVES `">=18.0.0"` → `">=22.12.0"`, AND THAT IS THE
+    //       BREAKING HALF"*) — the one comparator set under which the declared route is true at every admitted version.
+    //       **NO ROW IN THIS MODULE ASSERTS THE PACKAGE'S OWN FLOOR**, which is why this move reds nothing below; it is said
+    //       here so that a later pass which wants the floor pinned ADDS a row and does not narrow this one.
+    //   (3) **THE ABSENCE OF A CJS BUILD.** No `main`, no `default`, no `.cjs`, no wildcard, no second subpath, no second
+    //       build, no dual-package hazard: *"the one file is reached by two of Node's specifiers for it"* (§1.12.0 item 4).
+    //       So nothing this tree ships changes shape for it — the app's entry is ESM (`D-297`'s answer to the fork) and the
+    //       `require` route is the package's to serve, not this repo's to shim.
+    // **AND NO MEMBER COUNT MOVED WITH `1.12.0`** — §1.12.0's "what does not move" list keeps *"the module namespace's one
+    // name (`storeCreate`)"*, *"the instance's own member set"*, *"every record, status and message"* and *"the `files`
+    // allowlist's seven rows"*; **re-verified here rather than assumed on the installed `1.12.0`**, so `S-1.1` and `S-1.2`
+    // still read fifteen and `readTiered` sits THIRD in the instance's own order (measured: `read`, `readLiteral`,
+    // `readTiered`, `write`, …).
     // **AND THIS ROW CARRIES A RANGE ASSERTION AND NO LOCKED-VERSION ASSERTION, DELIBERATELY — THEY ARE TWO DIFFERENT
-    // CLAIMS AND ONLY ONE OF THEM IS A PIN.** `package.json`'s `^1.11.0` is the REPO'S DECISION; the locked `1.11.0` in
+    // CLAIMS AND ONLY ONE OF THEM IS A PIN.** `package.json`'s `^1.12.0` is the REPO'S DECISION; the locked `1.12.0` in
     // `package-lock.json` (and in `node_modules/provident-storeroom/package.json`) is WHAT IS ON THIS DISK. A row that
     // pinned the latter would red on precisely the event this row exists to bless — a caret landing a later release
     // without a repo change — so the installed version is measured where it is the subject and where it can be measured
     // live: `S-1.1` and `S-1.2` above (the instance's own member census, from the constructed store) and the e2e `S-9`
-    // (`15` members over `13` symbols). **A future pass that WANTS the locked version pinned must add a SECOND row and
-    // say so; it must not narrow this one.**
-    // *What stood before, kept as the readings they were*: **`1.10.0` WAS THE PIN** (`D-134`) — the release whose ONE
+    // (that census's own two DECLARED figures, `15` members and `13` symbols — `S-9` reads the declaration, not a live
+    // enumeration). **AND A MEASUREMENT TAKEN HERE IS RECORDED BESIDE THOSE TWO RATHER THAN FOLDED INTO THEM — RESIDUAL,
+    // ROUTED, NOT THIS ROW'S SUBJECT**: a fresh construction on the installed `1.12.0` answers **`14` own symbols**
+    // (`getOwnPropertySymbols`, two of them enumerable) and **`15`** after the first `write`, where the census declares
+    // `13` at construction and `14` after a write — one behind on the same axis, on a figure whose last re-read was
+    // `1.10.0`'s and which no row measures live. **IT IS NOT `1.12.0`'s MOVE** (§1.12.0 lists no instance-member change
+    // and names no symbol), and the constant is `src/main/storeroom.ts`'s, which this layer never edits. **A future pass
+    // that WANTS the locked version pinned must add a SECOND row and say so; it must not narrow this one.**
+    // *What stood before, kept as the readings they were* (`D-46` — an offset is a date, not a claim): **`1.11.0` WAS THE
+    // PIN** (`D-219`), and its reading stands as the reading of that date: the MINOR the caret admitted, and **THE MINOR WAS
+    // NOT A PATCH AND DID CARRY BEHAVIOUR CHANGES, SO THREE ROWS RE-GRAINED WITH IT AND THIS ONE DID NOT HAVE TO**
+    // (`RELEASE-NOTES.md` §1.11.0: a `cfg.listeners[]` element now REQUIRES its `listener` — a two-member element is
+    // refused `AddressMalformed`, subject `listeners`, before any filesystem act — and a boot over a corrupt image now
+    // REFUSES at rank `22` `FileImageRefused` rather than opening a store over it). **AND THE MEMBER COUNTS DID NOT MOVE
+    // WITH IT**: §1.11.0's own "what does not move" list keeps *"the instance's own member set stays fifteen"*, so `S-1.1`
+    // and `S-1.2` read fifteen under it as well. **Before it, `1.10.0` WAS THE PIN** (`D-134`) — the release whose ONE
     // addition is the third read verb `readTiered`, which answers the durability tier at every node it returns, and
-    // **THE MEMBER COUNTS ABOVE DID MOVE WITH IT, WHICH `1.9.3`'s DID NOT**: the fourteen became fifteen and `readTiered`
-    // sits THIRD in the instance's own order (measured: `read`, `readLiteral`, `readTiered`, `write`, …), so `S-1.1` and
-    // `S-1.2` read fifteen. The figure moves here for the reason the row states: the pin follows the reviewed install,
-    // never the other way. **Before it, `1.9.3` WAS THE PIN** — the release that makes the kernel's TWO instants
+    // **THE MEMBER COUNTS DID MOVE WITH IT, WHICH `1.9.3`'s DID NOT**: the fourteen became fifteen and `readTiered` sits
+    // THIRD in the instance's own order (measured: `read`, `readLiteral`, `readTiered`, `write`, …), so `S-1.1` and `S-1.2`
+    // read fifteen. **Before it, `1.9.3` WAS THE PIN** — the release that makes the kernel's TWO instants
     // agree: the registration instant reads a returned outcome's `message` and `repair`, and a repair's return's
     // `ok`, as OWN members, exactly as the write's own evaluation reads them, so a member carried on a prototype
     // is a member neither instant reads — the divergence this repo filed as `ST-F1`, never patched here (`D-5`)
-    // and discharged upstream at that release (`D-109`). The figure moves here for the reason the row states: the
-    // pin follows the reviewed install, never the other way. **AND THE TWO MEMBER COUNTS ABOVE DID NOT MOVE WITH
+    // and discharged upstream at that release (`D-109`). **AND THE TWO MEMBER COUNTS ABOVE DID NOT MOVE WITH
     // IT** — `1.9.3` adds no name and no symbol, which is why `S-1.1` and `S-1.2` read the same fourteen (`D-109`).
-    expect(pkg.dependencies['provident-storeroom']).toBe('^1.11.0')
+    // In every one of those moves the figure moved for the reason this row states: the pin follows the reviewed install,
+    // never the other way.
+    expect(pkg.dependencies['provident-storeroom']).toBe('^1.12.0')
   })
 
   it('S-1.2 — the store `createProfileStore` returns IS a storeroom store, member for member', () => {

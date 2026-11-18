@@ -27,7 +27,7 @@ Ceiling: 60 lines.
   re-measured, this paragraph is not, and a count in a second place drifts at the next commit (D-26).
 - **Nine of the fourteen** script keys are verification legs — `test`, `typecheck`, `typecheck:tests`,
   `build`, `battery`, `divergence`, `ui`, `panes`, `mcp`; the five others are build/launch shims
-  (`package.json:8-22`). The four Electron legs build first, and `ui` and `panes` need a `DISPLAY`. Node `v24.20.0`;
+  (`package.json:8-22`). The four Electron legs build first, and `ui` and `panes` need a `DISPLAY`. Node `v24.20.0`, which is ABOVE the floor the consumed package declares — `provident-storeroom`'s `engines.node` is `>=22.12.0` since `1.12.0`, and a host below it is refused by the LOADER (`D-298`);
   devDependencies are Electron `^44.4.5`, esbuild `^0.28.2`, TypeScript `^5.5.0`, vitest `^5.0.1`, `@types/node` `^26.6.2` (`package.json:28-34`).
 - The repository is the sole workspace: this repo's `src/`, `tests/`, `scripts/` and `strata/`. The
   packages it consumes are read-only for every layer (D-5).

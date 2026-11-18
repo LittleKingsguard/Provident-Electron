@@ -1140,11 +1140,16 @@ prints no warning, so **the failure is a runtime one that a green build cannot s
 artifacts, in its worst form.
 
 **Instead.** **Keep the entry ESM and keep the package external** — copy this app's arm verbatim, and copy `U-2`'s arms into
-your own tests so a fork cannot regress it. Every measured workaround on a CJS main was refused upstream and in the fork that
-asked: a subpath import, a manifest shim, `createRequire`, `require.resolve` and `--experimental-require-module` all fail at
-the **exports map** before any loader runs, and the one route that answers — an absolute path — is unlawful in a shipped
-bundle. **A CJS main therefore needs the PACKAGE to publish a `require` condition**; that is an upstream request, never a
-fork shim (`D-5`, `D-52`).
+your own tests so a fork cannot regress it (the external is what makes the inlining above impossible, whatever module system
+your main uses). **And since `provident-storeroom@1.12.0` the CJS question is ANSWERED UPSTREAM**: the exports map gained a
+third condition — `"require": "./index.mjs"`, naming the same ESM entry the `import` condition names — so
+`require('provident-storeroom')` now loads through Node's own interop, measured here (on `1.11.0` the same specifier answered
+`ERR_PACKAGE_PATH_NOT_EXPORTED`; `D-297` recorded that as upstream-owned and `D-298` records the discharge). **Two conditions
+travel with it**, both from the release's own notes: **the node floor rises to `>=22.12.0`** — below it the loader refuses,
+and that is the move's breaking half — and **no CJS build appears**, so the one file is reached by two of Node's specifiers
+and there is no dual-package hazard. Every workaround a CJS main was tempted by stays refused: a subpath import, a manifest
+shim, `createRequire`, `require.resolve` and `--experimental-require-module` all fail at the **exports map** before any
+loader runs, and an absolute path is unlawful in a shipped bundle (`D-5`, `D-52`).
 
 ---
 
@@ -1205,7 +1210,7 @@ and most of them were also **run**, against this tree, at this head:
 | §8.5 the status-only `commitPane` | **run**: `{"status":"committed"}` and `read()` unchanged; `{ size: 40 }` the same; the lawful leaf write beside it committed and was carried |
 | §8.6 hand-written DOM | **run under the layout-less DOM shim** through `Runtime.applyCommand`/`renderedHtmlResult()`/`markdown()`: the hand-written id answers `{"status":"rejected"}`, the markdown omits it, the rendered fragment carries it when it was appended under the mount and omits it outside; **not run against a spawned app** |
 | §8.7 the `css.style` replace | **run under the same shim**: `{"status":"applied","dirtied":["node-2"]}` and the authored `overflow-x: auto` gone from the fragment; the object spelling's `style="{"height":"120px"}"` measured here, its live-DOM "writes nothing" arm is D-203's |
-| §8.9 the dropped external and the CJS main | **run**: a two-line probe importing `storeCreate` — the CJS arm without `--external:provident-storeroom` emitted **213,948 bytes with fifteen package-path comments and a `var import_meta = {}` at exit 0**, the same probe with the flag emitted **154 bytes**; and `require('provident-storeroom')` answered `ERR_PACKAGE_PATH_NOT_EXPORTED` while `await import(...)` succeeded, both at this tree's installed `1.11.0`. Not run: a *working* CJS main on any package version, because none exists (`D-297`) |
+| §8.9 the dropped external and the CJS main | **run**: a two-line probe importing `storeCreate` — the CJS arm without `--external:provident-storeroom` emitted **213,948 bytes with fifteen package-path comments and a `var import_meta = {}` at exit 0**, the same probe with the flag emitted **154 bytes**; `require('provident-storeroom')` answered `ERR_PACKAGE_PATH_NOT_EXPORTED` at the pinned `1.11.0` and **now loads at `1.12.0`**, where `await import(...)` was always open (both measured, `D-297`, `D-298`) |
 | §8.8 the writes that commit but are wrong | **run**: each answer in that table is a measured one, from the same scratch profile |
 | §2.5 the delivery's contract — sink address, subscriber arity, order, containment | **run**: a real `provident-storeroom` + `createViewDelivery` + `createViewRecord` over a scratch profile — the sink was handed `["panes","pane-a","collapsed"]`, `["zones","top","collapsed"]` and `["panes","pane-a","status"]` (the **leaf**, never the root) while a rest-parameter subscriber and a zero-parameter subscriber were both called at arity `0`; the order was `handler` then `sink` on every delivery; and a subscriber that threw left its siblings served |
 | §2.5 the creation's pre-window deliveries | **run**: the same probe — the construction's repairs delivered `['panes']`, `['zones']` and `['theme']` before any window existed and with no subscriber registered |

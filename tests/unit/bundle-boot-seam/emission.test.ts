@@ -357,22 +357,38 @@ describe('bundle-boot-seam · package.json, E-1 — the emitted name decides the
     expect(arm, '`electron` stays external: the container supplies it').toMatch(/--external[=:]electron\b/)
     // **AND `provident-storeroom` STAYS EXTERNAL, ASSERTED EXACTLY AS `electron` IS** — beside it in the same arm, on the same
     // question (`interface.md` §1's "the external is the ONLY thing the arrangement adds, at two sites"), because the flag has
-    // no build-time author: the package is **ESM-only** (`"type": "module"`, `exports: {".": {types, import}}`, no
-    // `main`/`require`/`default`), so **dropping it is NOT a build failure** — esbuild exits `0` and silently inlines the
-    // package's source (`D-297`'s 213,948 bytes; re-measured at this head with a two-line probe importing `storeCreate`:
-    // **212,018 bytes, fifteen package-path comments, a `var import_meta = {}`**, and **165 bytes** with the flag), while a CJS
-    // arm that KEEPS the package external dies in Node's resolver instead: `Error [ERR_PACKAGE_PATH_NOT_EXPORTED]: No "exports"
-    // main defined in …/node_modules/provident-storeroom/package.json` at the installed `1.11.0`, whose `await import` succeeds
-    // (`interface.md` §1, §3 P-5/P-10..P-12; `design.md` §2, §4 `G-8`).
-    // THE RULE'S OWNERS: the finding is upstream-owned and recorded rather than patched (`D-5`), `D-297` is its record, and
-    // the property it protects is `design.md` §4 `G-8`'s non-self-contained artifact. `U-9` reads the EMITTED entry, so this
-    // arm-text assertion and that artifact assertion fail independently; this one fails before any build runs.
+    // no build-time author: the package is **ESM-only** — it publishes NO CJS BUILD (`"type": "module"`; `exports["."]` carries
+    // `types`, `import` and, since `1.12.0`, `require`, all of them naming the one `./index.mjs`; no `main`, no `default`, no
+    // `.cjs`) — so **dropping the flag is NOT a build failure**: esbuild exits `0` and silently inlines the package's source
+    // (`D-297`'s 213,948 bytes; re-measured at this head with a two-line probe importing `storeCreate`: **212,018 bytes,
+    // fifteen package-path comments, a `var import_meta = {}`**, and **165 bytes** with the flag), and that inline is SILENT AT
+    // EITHER MODULE SYSTEM — **the external is the only thing that makes it impossible, and that is now the whole of what this
+    // assertion protects.**
+    // **THE `ERR_PACKAGE_PATH_NOT_EXPORTED` ARM IS THE READING OF ITS OWN DATE AND IS KEPT AS ONE** (`D-46`): at `1.11.0` —
+    // the pin at the time `D-297` was recorded — `exports["."]` carried `types` and `import` alone, so a CJS arm that KEPT the
+    // package external died in Node's resolver instead: `Error [ERR_PACKAGE_PATH_NOT_EXPORTED]: No "exports" main defined in
+    // …/node_modules/provident-storeroom/package.json`, while its `await import` succeeded (`interface.md` §1, §3
+    // P-5/P-10..P-12). **AT `1.12.0` THE EXPORTS MAP CARRIES `"require": "./index.mjs"` AND THAT ARM LOADS** — the THIRD
+    // condition, after `types` and `import`, naming the SAME ESM entry, served by Node's own `require(esm)` interop, with no
+    // CJS build appearing beside it (`RELEASE-NOTES.md` §1.12.0 items 2 and 4; `D-298`) — **so the CJS arm's death is no longer
+    // this assertion's warrant, and it is not needed: what `U-2` protects is that the package STAYS EXTERNAL and the entry
+    // STAYS ESM.**
+    // **AND THE SAME RELEASE MOVED THE PACKAGE'S FLOOR — `"engines": { "node": ">=22.12.0" }`, from `>=18.0.0`** — because
+    // `require(esm)` is unflagged only from `20.19.0`/`22.12.0` (`RELEASE-NOTES.md` §1.12.0 item 3). **NO ROW OF THIS MODULE
+    // PINS THAT FLOOR** — this repo's own runtime is `v24.20.0`, above it — so the figure is stated here, in the comment, and
+    // asserted nowhere: a later pass that wants it pinned ADDS a row and does not narrow this one.
+    // THE RULE'S OWNERS: the finding is upstream-owned and recorded rather than patched (`D-5`), `D-297` is its record,
+    // `D-298` records its discharge at this pin, and the property it protects is `design.md` §4 `G-8`'s non-self-contained
+    // artifact. `U-9` reads the EMITTED entry, so this arm-text assertion and that artifact assertion fail independently; this
+    // one fails before any build runs.
     expect(
       arm,
-      '`provident-storeroom` stays external: the package is ESM-only (its `exports` map carries `types` and `import` and no ' +
-        '`require`), so dropping this flag INLINES it silently at exit 0 — measured: 212,018 bytes, fifteen package-path ' +
-        'comments and a `var import_meta = {}` (D-297) — and a CJS arm that keeps it external instead dies with ' +
-        '`ERR_PACKAGE_PATH_NOT_EXPORTED` (interface.md §1, P-5/P-10; design.md §4 `G-8`; D-297, D-5)',
+      '`provident-storeroom` stays external: dropping this flag INLINES it silently at exit 0 — measured: 212,018 bytes, ' +
+        'fifteen package-path comments and a `var import_meta = {}` (D-297) — and the external is what makes that inline ' +
+        'impossible REGARDLESS of module system, which is the whole of what this assertion protects: the package stays ' +
+        'external and the entry stays ESM. (On `1.11.0`, the pin at the time D-297 was recorded, a CJS arm that kept it ' +
+        'external died with `ERR_PACKAGE_PATH_NOT_EXPORTED`; at `1.12.0` the exports map carries the `require` condition, ' +
+        'naming the same ESM entry, and that arm LOADS.) (interface.md §1, P-5/P-10; design.md §4 `G-8`; D-297, D-298, D-5)',
     ).toMatch(/--external[=:]provident-storeroom\b/)
     expect(flagOf(arm, 'outfile'), 'the arm emits the path the `main` field names, not merely the same basename in another directory').toBe(declared)
     // And the retired name is emitted by no arm at all: replacement, never a second artifact beside it.
@@ -463,10 +479,15 @@ describe('bundle-boot-seam · package.json, E-1 — the emitted name decides the
     const bytes = await stableArtifact(mainEntry, 'U-9')
 
     // (i) THE PACKAGE STANDS, AND IT STANDS AS A SPECIFIER — the shape `--external:provident-storeroom` emits on THIS
-    // artifact, whose declared module system is ESM (`U-1`, `U-2`; a CJS emission would answer `require("provident-storeroom")`
-    // instead, and that is the arrangement moving rather than this row's silence) — and the only shape in which the package's
-    // own module context (its `createRequire(import.meta.url)`, its manifest read beside its own entry) stays where the
-    // package derives it (`interface.md` §1, P-12).
+    // artifact, whose declared module system is ESM (`U-1`, `U-2`). **AND WHAT PUTS A CJS EMISSION OUTSIDE THIS ROW IS THAT
+    // DECLARATION, NOT A RESOLVER REFUSAL**: such an arm would answer `require("provident-storeroom")` instead, and **since
+    // `1.12.0` that shape LOADS** — `exports["."]` carries `"require": "./index.mjs"`, the third condition, naming the same
+    // ESM entry (`RELEASE-NOTES.md` §1.12.0 item 2; `D-298`; at `1.11.0`, the pin at the time `D-297` was recorded, it
+    // answered `ERR_PACKAGE_PATH_NOT_EXPORTED`) — so the exclusion is the arm's own `--format=esm` and never the shape's
+    // unavailability. **The external is what keeps the silent inline impossible at either module system, so these three terms
+    // do not rest on the CJS arm's death.** It is also the only shape in which the package's own module context (its
+    // `createRequire(import.meta.url)`, its manifest read beside its own entry) stays where the package derives it
+    // (`interface.md` §1, P-12).
     expect(
       bytes,
       'the built entry carries no `provident-storeroom` import specifier: either the arm lost the flag and esbuild INLINED the ' +

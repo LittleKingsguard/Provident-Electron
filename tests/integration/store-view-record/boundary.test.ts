@@ -1758,6 +1758,69 @@ const DECLARED_SCOPE: readonly string[] = [
   //    difference between a write and a claim.
   'docs/L3/bundle-boot-seam/design.md',
   'docs/L3/bundle-boot-seam/signatures.md',
+  // ── `D-298` — THE PIN MOVE THE `D-297` BLOCK ABOVE PREDATES, AND THE THREE PATHS IT DIRTIED WITH NO ENTRY NAMING THEM.
+  //    **THREE PATHS JOIN THIS UNION AND NOT ONE IS ADMITTED BY A DIRECTORY OR A PREFIX**: a declared
+  //    `docs/L2/bundle-boot-seam/` would admit `behaviour.md` and every page a later pass drops beside it (this header's own
+  //    refusal, `B-2`'s undeclared-sibling arm), and `strata/` is not a claim this union makes as a whole — every corpus file
+  //    stands as its own FILE entry above or is deliberately absent with its reason.
+  //    **THE UNION IS THE WORKTREE'S EDIT SET AND NOT ONE UNIT'S** (`D-146`): `docs/L2/<module>/` is written by its own layer
+  //    only (`D-3`), so the two `bundle-boot-seam` pages are ANOTHER module's L2 scope and `strata/platform.md` is the corpus's
+  //    own platform page — and they are declared here because the reading that gates is
+  //    `git status --porcelain --untracked-files=all` over the WHOLE repository (`B-1`, `B-3`), in which a page this pass
+  //    corrected is an undeclared edit like any other until an entry names it. **A path is declared by the seat that WRITES it,
+  //    in the same edit that dirties it and never after it** (`D-146`, `D-292` (v), `D-297`).
+  //
+  //    **THE MEASURED HEAD THIS BLOCK WAS WRITTEN AT, SO A READER RE-TAKES IT RATHER THAN TRUSTS IT**: the bare reading and the
+  //    `--untracked-files=all` reading answer the SAME TEN paths, and SEVEN already stand declared above — `package.json`
+  //    (`D-94`), `package-lock.json` and `tests/storeroom-surface.test.ts` (`D-103`), `strata/decisions.md` and
+  //    `strata/brief.md` (`D-93`), `docs/guides/forking.md` (the fork guide's own block) and
+  //    `tests/unit/bundle-boot-seam/emission.test.ts` (`D-297`) — so not one of those is re-listed: a second spelling of a path
+  //    already in the union is the duplicate `B-1`'s own set assertion refuses. **AND `B-1` WAS RED ON THIS TREE BEFORE THIS
+  //    BLOCK EXISTED, NAMING EXACTLY THE THREE AND NO OTHERS**: its offender list read
+  //    `["docs/L2/bundle-boot-seam/interface.md","docs/L2/bundle-boot-seam/persistence.md","strata/platform.md"]`, which is the
+  //    instrument working and not a defect. The union reads `257` entries before this block and `260` after it, every one of
+  //    them a distinct path.
+  //
+  //    **WHAT THE PIN IS, AND WHY ITS ANSWER BELONGS ON THESE THREE.** `provident-storeroom` `1.11.0 → 1.12.0` moves three
+  //    things: `exports["."]` gains `"require": "./index.mjs"` as the THIRD condition, naming the SAME ESM entry, so a CommonJS
+  //    host loads it through Node's own `require(esm)`; the floor rises `>=18.0.0` → `>=22.12.0`, below which the LOADER refuses
+  //    the module; and no CJS build, no `main` and no `default` appears, so no dual-package hazard is created
+  //    (`RELEASE-NOTES.md` §1.12.0; `D-298`). **Both L2 pages stated the `require`-LESS map in the present tense**, so each
+  //    present-tense claim becomes the dated reading it is with the discharge beside it — and each row keeps its force for THIS
+  //    repo's own reason and not the package's: the entry is ESM and the package external, so no `require` of it is emitted here
+  //    at all (`U-2`, `U-9`).
+  //    **`interface.md` reaches rev 4**: the rev block's two re-grained claims, §1's second bullet (*"what stands now at
+  //    `1.12.0`"* — the third condition, the raised floor, and the three things that do NOT appear), and §2's `P-5` row with
+  //    §3's CJS row, the last two re-read at the pin this tree carries. **NO arm, flag, field, battery row or census moves with
+  //    it**: what the CJS arm once stood on is now the floor's cost and not the map's (`D-297`, `D-298`, `D-5`).
+  'docs/L2/bundle-boot-seam/interface.md',
+  //    **`persistence.md` reaches rev 4 on one subject**: what the arrangement puts on disk, and what it must find there at run
+  //    time. §5's *"never emit a `require` of the package"* row and §7's no-new-finding bullet both stated that map in the
+  //    present tense; each now carries the reading of its own date (`1.11.0`, `D-297`) with the answer beside it (`1.12.0`,
+  //    `D-298`). **The exclusion stands, and its reason was never "it would fail"** — it is that the route is the package's to
+  //    serve and not this repo's to use, so a release that serves it changes the clarity and not the arrangement
+  //    (`interface.md` §1).
+  'docs/L2/bundle-boot-seam/persistence.md',
+  //    **`strata/platform.md` IS THE FIRST PLATFORM FACT THIS UNION HAS EVER CARRIED, AND THE ABSENCE IT BREAKS IS THE RECORD.**
+  //    Every block above that names this file names it DELIBERATELY ABSENT at `60/60` with *"no platform fact moves"*
+  //    (`D-107`, `D-109`, `D-112`, `D-113`, `D-114`, `D-115`, `D-124`) — and each of those stands as the reading of its own date
+  //    (`D-46`); this pin moves one, so the file is declared here for the first time. **THE SITE, MEASURED** (`D-41`: cite the
+  //    site and never a bare claim): §3 *This checkout*'s script-key paragraph, whose runtime sentence now records that
+  //    `provident-storeroom`'s `engines.node` is `>=22.12.0` since `1.12.0` and that a host below it is refused by the LOADER,
+  //    beside the `node v24.20.0` this tree drives, which is above it. **The file holds at exactly `60` of its `60`-line
+  //    ceiling** — the clause joins the line that already carried the runtime and nothing is spent. **AND THE CITATION
+  //    MISMATCH IS STATED RATHER THAN INHERITED**: `D-298`'s own prose and `strata/brief.md`'s packages row both call it *"the
+  //    runtime row in `platform.md` §2"*, while the site is §3 (§2 is *File walls*) — the tree wins over the citation (`D-41`),
+  //    this block cures neither sentence, and the correction belongs to the seats that own them.
+  'strata/platform.md',
+  //    **NO ASSERTION, NO MARKER AND NO ROW ID MOVES IN THIS FILE**: this block is three ENTRIES and their heading — `B-1`'s set
+  //    assertion, `B-2`'s three controls and `B-3`'s reading are byte-identical, no `strata:marked` site is added or removed (no
+  //    test file is added or removed and no `it(` row joins an indexed file, so `strata-marks.mjs check` stands as it stood), and
+  //    no `D-n` id this file already cites is renumbered or reworded. **`strata/modules.json` TAKES NO EDIT**: no module is
+  //    added, no path set changes and no `endpoints` figure moves — the map's paths are L1's claim and this row takes no edit to
+  //    say so (`D-3`, `D-41`). **AND IT CLAIMS NO END TO THIS LIST** (`D-146`): the reading that called `app-envelope`'s page
+  //    *"the last entry this union is owed"* stands as a reading at a date, and a release answering four present-tense claims is
+  //    one more pass that wrote paths — which RE-OPENS the union rather than contradicting it.
 ]
 
 /** **THE SET-SHAPE CLAIM, STATED AS ITS OWN TERM**: a duplicate path inflates a count without
