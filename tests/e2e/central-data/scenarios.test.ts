@@ -370,17 +370,41 @@ describe('central-data-management · the twelve L1 scenarios through their decla
     expect(text.includes('file.kept'), 'and the durable row is the one it does carry').toBe(true)
   })
 
-  it('S-9 · the package is never modified: the seam’s census stands at FIFTEEN members and THIRTEEN symbols, and the package is imported in exactly three files — the seam, the operator-settings instance and the tab record’s own instance — none of them under src/main/data/', () => {
+  it('S-9 · the package is never modified: the seam’s census stands at FIFTEEN members and FOURTEEN symbols, and the package is imported in exactly three files — the seam, the operator-settings instance and the tab record’s own instance — none of them under src/main/data/', () => {
     // **FIFTEEN AT `1.10.0`** (`D-134`): the third read verb `readTiered` is the first name that release has added since
-    // the seam was pinned, and the census is the row that makes a silent growth fail here rather than pass.
+    // the seam was pinned, and the census is the row that makes a silent growth fail here rather than pass. **THE
+    // MEMBER FIGURE IS UNMOVED AT THE INSTALLED `1.12.0`**, which is a reading rather than a carry-over: a fresh
+    // instance reads the same fifteen own string members, in the same order, and `1.12.0`'s one line is an `exports`
+    // condition (`D-298`), so no list moves here.
     expect(STOREROOM_DECLARED_SURFACE.memberCount, 'L1 §5 S-9 — the seam census row reads fifteen members').toBe(15)
     expect(STOREROOM_DECLARED_SURFACE.members.length, 'and the declared member list is that length, so a growth fails here rather than silently').toBe(15)
-    // **THE SYMBOL FIGURE MOVED WITH `1.9.1`: twelve at `1.9.0`, THIRTEEN at the installed tree, the thirteenth being
-    // `Symbol(provident-storeroom.registration-save)`** — the marker the release that rolls a refusing registration
-    // back mints at construction (measured 2026-11-03 on both installed trees, one fresh instance each; the two lists
-    // match member for member apart from it). The string list is unmoved, which is why the figure below is the only
-    // one this release moves here.
-    expect(STOREROOM_DECLARED_SURFACE.symbolCount, 'and thirteen own symbols at construction').toBe(13)
+    // **THE SYMBOL FIGURE MOVED TWICE SINCE THE SEAM WAS PINNED, AND THE FIGURE BELOW IS THE DECLARATION'S OWN — THE ARM IS
+    // PART OF THE FIGURE** (`D-298`). `1.9.0` read twelve at construction; `1.9.1` made it THIRTEEN, the thirteenth being
+    // `Symbol(provident-storeroom.registration-save)` — the marker the release that rolls a refusing registration back
+    // mints at construction (measured 2026-11-03 on both trees then installed, one fresh instance each; the two lists
+    // match member for member apart from it) — and `1.11.0` made it **FOURTEEN**, the fourteenth being
+    // `Symbol(provident-storeroom.registration-deliver)`, declared in the package's `src/entry/delivery.mjs` and installed
+    // as a NON-ENUMERABLE own property by `installRegistrationDelivery` in the one call `storeCreate` makes at the
+    // construction instant. **`1.12.0` MOVES NEITHER LIST**, and the installed tree was re-measured for this row
+    // (2026-11-16, one fresh instance per arm): the string list is unmoved, which is why the figure below is the only one
+    // that moved here.
+    // **THE ARM, STATED RATHER THAN ASSUMED** (the constant's own `symbolCount` docblock carries it and this row reads it
+    // there): a **BARE** `createProfileStore()` — no `constraints`, no `listeners`, the construction `boot()` above
+    // stands — reads **14** own symbols at construction and **15** after the first `write`, the extra being the store's
+    // own `Symbol(provident-storeroom.kernel)`; while an **ARMED** construction — a batched constraint, which the app's
+    // own boot store is (`main.ts` batches the tab record's and the view record's declarations into that one call) —
+    // reads **15** AT THAT SAME INSTANT, its registration path installing that kernel slot before `storeCreate` answers.
+    // So the declared figure is the BARE arm's, taken at the instant every construction path shares, and it is stated
+    // with its arm rather than as universal: `14` is not a claim about every store this app constructs.
+    // **AND A COUNT READ OFF THIS CONSTANT IS A DECLARATION AGREEING WITH ITSELF, WHICH IS WHY THIS ROW IS NO LONGER THE
+    // CENSUS'S ONLY WITNESS.** `S-9` REMAINS THE DECLARATION-SIDE READING — it pins the figure the seam declares, so a
+    // silent move of the declaration reds HERE and is named as a declaration that drifted — and the LIVE ENUMERATING
+    // WITNESS is `tests/integration/central-data/seam-census.test.ts`'s `SC-1`, authored in this pass at this module's
+    // own integration grain, which reads `Object.getOwnPropertySymbols` off a fresh instance and holds the live SET and
+    // the live count against this census, naming the drifting symbol. This row enumerates nothing and does not duplicate
+    // that work: the two fail for different reasons, and the figure below reds on a package that grew while the
+    // declaration stood still exactly as `SC-1` reds on a declaration that drifted from a package that moved.
+    expect(STOREROOM_DECLARED_SURFACE.symbolCount, 'and fourteen own symbols at construction — the BARE arm, no batched constraint (D-298)').toBe(14)
     const importers = walk(SRC).filter((file) => readFileSync(file, 'utf8').includes("from 'provident-storeroom'")).map(rel).sort()
     expect(importers, 'L1 §5 S-9 — the package is imported in exactly the seam, the operator-settings instance and (D-63) the tab record\'s own instance').toEqual(['main/operator-settings/index.ts', 'main/storeroom.ts', 'main/tabs-record/index.ts'])
     expect(importers.filter((file) => file.startsWith('main/data/')), 'and nowhere under src/main/data/: this module reaches the store through the seam').toEqual([])

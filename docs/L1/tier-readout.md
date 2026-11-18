@@ -1,7 +1,7 @@
 # L1 — `tier-readout`: `data.read` answers each node's own tier, composed over `readTiered`
 
-- **Layer:** L1 · **Unit:** `tier-readout` · **Branch:** `strata` (D-6) · **Rev:** 3 — rev 3 names WHICH `read` §1's lossy-name
-  means (the store's own verb, at no `data.*` route) and re-grains §8's `S-9` line; rev 2's `E-8` landing and rev 1's row `6` stand (§5, §6, D-147)
+- **Layer:** L1 · **Unit:** `tier-readout` · **Branch:** `strata` (D-6) · **Rev:** 4 — rev 4 re-grains the seam census figure (§1, §2, §8)
+  to `15` members / `14` own symbols at a bare construction (`15` armed or after a write), naming `SC-1` the LIVE witness and `D-298` the move; rev 3's lossy-name clause and its §8 re-grain stand; rev 2's `E-8` landing and rev 1's row `6` stand (§5, §6, D-147)
 - **Charter:** the user's finding, verbatim — *"The returned object should already include the tier data. If it doesn't that
   is a defect."* — answered by `1.10.0`'s `readTiered`: ONE `_tier` at EVERY node the read returns (D-133, D-134)
 - **Status:** LANDED — the answer shape is in `src/**` (`E-1`…`E-4`) and the three e2e sites' re-grain sits in
@@ -32,8 +32,8 @@
   composition moves the READ verb alone (D-134, D-101).
 - **The seam gains no byte, and that is a measurement rather than an omission**: the verb is typed at the declaration
   (`readTiered(address, tier?): TieredNode`) and `ProfileStore` is `ReturnType<typeof createProfileStore>`, so the package's
-  own type already reaches `src/main/data/` without any file there spelling the package — and `S-9`'s census, `15` members
-  over `13` symbols with the verb third, is the reading that proves it (D-134, D-103, §9 `ASM-2`).
+  own type already reaches `src/main/data/` without any file there spelling the package — and the seam's census, `15` members
+  and `14` own symbols at a bare construction (`15` armed or after a write; `SC-1`, D-298), is the reading that proves it (D-134, D-103, §9 `ASM-2`).
 
 ## 2. The map rows this unit's design lands on
 
@@ -48,7 +48,7 @@ is a summary that cannot be kept true (D-43, D-26). The paths below are the ones
 | `store-tabs-record` | no `src/main/tabs-record/` byte: the leg's `recordView` reader and `X-31`'s `row` arm read `data.read`'s answer | `tests/e2e/store-crossings/` |
 
 `app-shell` is named and NOT claimed: the five `ipcMain.handle` sites and the preload's five members carry the answer as a value and move no member, so this unit adds no route and no bridge surface
-(D-112, D-18). `central-data`'s `S-9` row stays GREEN: it pins the seam's census, which `D-134` already re-grained (D-134).
+(D-112, D-18). `central-data`'s `S-9` row pins the seam's census and enumerates nothing; the LIVE witness is `SC-1` (`D-298`, `D-43`), and this unit moves neither figure.
 
 ## 3. The module-interaction table
 
@@ -135,15 +135,15 @@ precondition, whose original subject is the row-`5` `temp` root).
   registry at `D-134` (D-5).
 - **The reached batteries were re-grained WITH the shape, never ahead of it** — a re-grain that runs first measures a state
   the tree has not reached: `E-5`/`E-6`/`E-7` landed beside it, and `E-8` at that leg's own sites (D-137, D-94, D-37).
-- **`docs/L1/central-data-management.md` §5's `S-9` row NOW READS THE CENSUS AT THIS HEAD** — `15` members / `13` symbols and
-  THREE importing files — re-grained by the pass that owned its number rather than left as the dated `(14 members / 11 symbols)`
-  it carried; the live figure is the seam's own census, re-measured at `tests/e2e/central-data/`'s `S-9` (D-43, D-26, D-134, D-147).
+- **`docs/L1/central-data-management.md` §5's `S-9` row READS THE CENSUS AT THIS HEAD** — `15` members, and `14` own symbols at a
+  bare construction (`15` armed or after a first `write`) with THREE importing files: the move is `D-298`'s and the LIVE witness is
+  `SC-1`, which enumerates the set, where `S-9` pins the constant (D-298, D-43, D-26, D-134, D-147; the dated `(14 members / 11 symbols)` stays the reading of its own date).
 
 ## 9. Assumptions, each with the alternative it rejected (D-1 §8)
 
 | id | Assumption | Rejected alternative |
 |---|---|---|
 | ASM-1 | the answer's `value` CARRIES the release's `TieredNode` form unchanged, so a leaf answers `{_tier, value}` under the answer's own `value` | flattening the node into the arm as `{status, kind, path, _tier, value}`, which collides with the answer's own members for an object node and gives this surface a SECOND spelling of a shape the package already declares (D-53, D-134) |
-| ASM-2 | the seam gains no byte: the typed verb reaches `src/main/data/` through `ProfileStore` and `S-9`'s census is the pin | a declared seam accessor mirroring `commitLog`, which existed because that member was UNTYPED — a typed member removes an assertion and not a function (D-103, D-134) |
+| ASM-2 | the seam gains no byte: the typed verb reaches `src/main/data/` through `ProfileStore`, `S-9`'s census is the pin and `SC-1` enumerates the live set behind it | a declared seam accessor mirroring `commitLog`, which existed because that member was UNTYPED — a typed member removes an assertion and not a function (D-103, D-134, D-298) |
 | ASM-3 | the `absent` and `DataLedger` arms gain NOTHING | carrying the caller's tier on them as `D-133` first proposed, which states the ARGUMENT rather than the answer and makes every refusal claim something about a store it never reached (D-107, D-134) |
 | ASM-4 | only `T-6`'s boot waits for the renderer realm, because the other seven read what main answers over stdio and that surface stands before the window does | a renderer wait on every boot, which binds a fact those rows do not claim and spends the bound's whole margin per row (D-27, D-94) |

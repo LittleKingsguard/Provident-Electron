@@ -33,9 +33,18 @@
 // whose refusing registration rolls its own landing back — and the two lists match member for member
 // apart from it. **`1.9.2` MOVED NEITHER LIST AND `1.9.3` MOVES NEITHER**, which is the reading this
 // header is re-measured at rather than an assumption: 15 string members in this order — `1.10.0`'s
-// `readTiered` being the fifteenth, the ONE addition since the pin (`D-134`) — and the same 13 own
+// `readTiered` being the fifteenth, the ONE addition since the pin (`D-134`) — and the same 14 own
 // symbols at construction, one fresh instance each (2026-11-03 at `D-103`, 2026-11-04 at `D-109`,
-// the member re-read at `1.10.0`).
+// the member re-read at `1.10.0`; **those three instances answered `13`, so the `14` above is
+// `1.11.0`'s and is dated by the sentence below rather than by them — the FOURTEENTH arrived after
+// all three, with `1.11.0`**).
+// **AND IT MOVED ONE MORE TIME WITH `1.11.0`, BY ONE, WHICH IS WHERE THIS HEADER IS RE-GRAINED**: the
+// fourteenth own symbol at construction is `Symbol(provident-storeroom.registration-deliver)` — declared
+// in the package's `src/entry/delivery.mjs` and installed as a NON-ENUMERABLE own property by
+// `installRegistrationDelivery`, in a call `storeCreate` makes ONCE, at the construction instant, so the
+// census instant below sees it. **`1.12.0` MOVES NEITHER LIST**: on the installed tree this header now
+// reads **14** own symbols at construction — beside its 15 string members — and **15** after one
+// `write`, the extra again being the store's own `Symbol(provident-storeroom.kernel)` growth.
 // **WHAT `1.9.2` ADDED IS IN NEITHER LIST, AND ITS ABSENCE FROM BOTH IS THE WHOLE OF THE
 // NARROWING BELOW**: a passing act's record now answers with the commit's log, carried
 // NON-ENUMERABLY, so it moves no name and no symbol — see `commitLog`, the one declared reader.
@@ -43,7 +52,16 @@
 // `tests/e2e/central-data/scenarios.test.ts` `S-9` pins the two counts: a version bump that adds,
 // removes or re-orders a member reddens a row HERE and a count that moves reddens there, in a
 // message that names the drift, rather than surfacing as an undefined-is-not-a-function somewhere
-// downstream.
+// downstream. **BUT A COUNT READ OFF THIS CONSTANT IS A DECLARATION AGREEING WITH ITSELF**: `S-9`
+// enumerates nothing, which is how a symbol the package added at `1.11.0` stood here as `13` for a
+// release and a half. **SO THE LIVE WITNESS IS `tests/integration/central-data/seam-census.test.ts`'s
+// `SC-1`** — authored in this pass at this module's own integration grain, carrying no marker, so it
+// GATES (`D-30`) — which reads `Object.getOwnPropertySymbols` off a fresh `createProfileStore()` and
+// holds the live symbol SET and the live count against this census, the set against the row's own
+// fourteen-name list and the count against `symbolCount`: a package that adds, drops, re-spells or
+// re-namespaces a symbol reds there **NAMING THE SYMBOL**, with the live list printed beside the
+// declared one — **and its MEMBER half is the GATING one**, `tests/storeroom-surface.test.ts`'s own
+// pin reporting ON NOTICE from its first line (`D-30`).
 
 import { storeCreate, type LogEntry, type StoreConfig, type StoreInstance } from 'provident-storeroom'
 
@@ -83,12 +101,26 @@ export const STOREROOM_DECLARED_SURFACE = {
    * AND AGAIN AT `1.9.2`**: the thirteenth, `Symbol(provident-storeroom.registration-save)`, is `1.9.1`'s own and
    * sits fifth in `getOwnPropertySymbols`' order (measured 2026-11-03 on the `1.9.0`, `1.9.1` and `1.9.2` trees, one
    * fresh instance each — the two later lists identical member for member, which is why `D-103`'s bump left it alone).
+   * **AND IT MOVED ONE LAST TIME WITH `1.11.0`, WHICH IS THE READING THIS FIGURE IS RE-GRAINED AT**: the fourteenth
+   * own symbol at construction is `Symbol(provident-storeroom.registration-deliver)` — declared at
+   * `src/entry/delivery.mjs:518` and installed as a NON-ENUMERABLE own property by `installRegistrationDelivery`
+   * (`:524`–`:532`), in a call `storeCreate` makes ONCE at the construction instant (`index.mjs:1910`) — so **a BARE
+   * construction of the installed tree reads 14 at construction**, the instant the census is read at, and `1.12.0`
+   * moves neither list. **AND THE BARE ARM IS THE ONE THIS FIGURE IS READ AT** — `createProfileStore()` with no
+   * `constraints` and no `listeners`, which is the arm `tests/integration/central-data/seam-census.test.ts`'s `SC-1`
+   * drives. **A CONSTRUCTION ARMED WITH A BATCHED CONSTRAINT READS ONE MORE, 15, AT THAT SAME INSTANT**, because its
+   * registration path installs the store's own `Symbol(provident-storeroom.kernel)` slot before `storeCreate` answers
+   * (the slot the one-write sentence below names): **the INSTANT is shared by every construction path and the FIGURE is
+   * not**, so `14` is stated here with its arm and never as universal.
+   * The declared figure stood at `13` from `1.11.0` until it was re-grained here — one behind the package, on a
+   * figure read from the constant and measured by no row from that release on (`SC-1` is the first row that does).
    * **AND ONE WRITE INSTALLS ANOTHER**, `Symbol(provident-storeroom.kernel)`, absent on a fresh store and present
-   * after the first `write` — so the read after that act is **14** here, 13 under `1.9.0` and 12 under `1.7.0`, the
+   * after the first `write` — so the read after that act is **15** here, 13 under `1.9.0` and 12 under `1.7.0`, the
    * one-member growth being the store's own and not either release's. The census is therefore read at
-   * **construction**, the one instant every construction path shares, and no string member moves either way.
+   * **construction**, the one instant every construction path shares — at the **bare** construction's figure, the arm
+   * `SC-1` drives — and no string member moves either way.
    */
-  symbolCount: 13,
+  symbolCount: 14,
 } as const
 
 /** The journal length a profile store opens with when the caller does not decide. */
