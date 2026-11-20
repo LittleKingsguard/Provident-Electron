@@ -34,12 +34,24 @@
 // and no new surface is added to prove a step — `D-18`'s rule applied to a battery.
 //
 // WHAT THE ROWS DO NOT MEASURE, STATED BECAUSE AN ABSENT ROW IS OTHERWISE INDISTINGUISHABLE FROM A FORGOTTEN ONE:
-//   · nothing here is batched or delivered — the passthrough's batch is `U3`'s (`M-11`/`M-13`) and filing its row
-//     now would be a row that cannot pass (D-74);
+//   · nothing here is batched or delivered — the passthrough's batch is `U3`'s (`M-11`/`M-13`), and a gating row
+//     filed before its step is implementable cannot pass (design §6: the ruling is that page's own, with D-40 and
+//     D-30 owning why a row that cannot green is evidence of nothing). **AND `D-307` RE-GRAINS WHAT THOSE TWO ROWS
+//     WILL MEASURE, AND WHEN THEY FILE**: a module's listener has TWO OPTIONAL HALVES — a main/server handler
+//     invoked when the store fires it, whose return is the channel's DATA FOR THAT LISTENER, and a client/renderer
+//     listener the channel fires on delivery — and a listen declaring no main half is wrapped as a STRAIGHT
+//     PASSTHROUGH; because the witness for both halves is REALM-side, the two rows are filed with the first
+//     realm-side driver (`S-20`'s) and not at `U3`'s own landing, and they file in their OWN battery
+//     (`tests/e2e/module-channel/`), not here. So `M-11` is the batch (one delivery carrying every entry one
+//     write turn fired, the entries sharing one `turn`: a main half's return, an empty return, the triggering
+//     address on the passthrough arm, a main half that THREW contained and named, and a return that is not
+//     transport-safe refused BY NAME) and `M-13` is the fan-out (each entry's client half fired on delivery,
+//     contained per module, and the crossing path's two halves under an address-keyed fan-out);
 //   · nothing here adds, moves or paints a node — the registries, the pane point, the template point and the
 //     overlay placeholders are `U2`/`U4`/`U5`'s;
 //   · a module's RENDERER half is not driven: `M-1`..`M-5` are the main-side contract, and the client half needs
-//     a driver envelope the pane rows will carry;
+//     a driver envelope the pane rows will carry — **nor is a listener's CLIENT half, which is `M-13`'s and is
+//     reserved with it** (`D-307`);
 //   · `S-1`'s SECOND DELIVERY is not driven: no bundled module exists at this head (there is no `src/modules/`, and
 //     whether the bundler emits a module's source string or its exports is `OWED-3`'s and L2's), so `M-1` measures the
 //     installed-source-STRING delivery, and "the same shape to the executor" only on its MAIN half;

@@ -170,9 +170,10 @@
         "src/main/module-channel/",
         "src/renderer/module-channel-client.ts",
         "tests/unit/module-channel/",
-        "tests/integration/module-channel/"
+        "tests/integration/module-channel/",
+        "tests/e2e/module-channel/"
       ],
-      "endpoints": 4
+      "endpoints": 5
     },
     {
       "name": "menus-module",
