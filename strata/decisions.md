@@ -6476,3 +6476,16 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 
 **ITS REGISTER IS `D-71` TO `D-307`** as prose, unchanged and extended by this row only. **This row records an L0 decision not to teardown, the measurement that keeps the threshold from firing, and the one cell a targeted pass must close.**
 
+---
+
+## D-309 — THE ASYNC ROADMAP IS RECORDED AS FORWARD-COMPATIBILITY AND CHANGES NOTHING THAT SHIPS: the contract stays synchronous, the binding is the single resolution seam, and the turn boundary is the handoff's question
+
+**Status:** ACTIVE · **Date:** 2026-11-20 · **Source (user, verbatim):** *"Async capability will be added in the future, does this change the design requirements for the local app?"* — answered by the user's chosen form: *"Record it as forward-compatibility"*.
+
+**WHAT IT DOES NOT CHANGE.** The local app's module contract stays SYNCHRONOUS: `provident-storeroom`'s listener is `(address: Address) => void` at the type and unawaited at the implementation (`node_modules/provident-storeroom/index.d.ts:573`; `src/entry/delivery.mjs:206`), and no requirement, step or row of `docs/L1/modularity.md` may assume a capability the package does not ship (`D-304` (iii)'s precedent, `D-5`). The two-half listener, the per-declaration handle, `C-2`'s five-arm envelope and its flush at the store verb's return therefore stand as filed.
+
+**WHAT IT ADDS, AS FORWARD-COMPATIBILITY AND NOT AS MACHINERY.** (i) **The module-authoring contract does not change**: a module declares `main?`/`client?` and names no transport or timing; if async lands, a main half's return widens from `data` to `data | Promise<data>` **at the binding**, never at the manifest. (ii) **The binding is the single resolution seam** (`C-3`): an awaited listener becomes a local change in one cell — the flush moves from the verb's return to the resolution — not a redesign; the entry's `outcome` set is where a `resolved`/`rejected` pair would land, and the cross-compat claim is unaffected because the channel is data-shaped (`C-13`). (iii) **The turn boundary is the handoff's question**: async listeners force the package to choose between a receipt that WAITS for every listener (a latency and semantics change to every write) and a delivery that ARRIVES LATER (a second delivery path) — that choice is the package's, and the local app's requirements must not pre-empt it; **`H-4` → `provident-storeroom` is drafted in the unit's record, status MEASURED NOT REQUIRED (today), four fields.**
+
+**ITS REGISTER IS `D-71` TO `D-308`** as prose, unchanged and extended by this row only. **This row records the user's roadmap as a constraint on the design's assumptions and on nothing that ships.**
+
+
