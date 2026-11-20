@@ -6463,3 +6463,16 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 **AND THE CHANNEL'S INTEGRATION IS EXPECTED TO NEED ANOTHER HANDOFF.** The user names it — *"Integrating the channel will probably require a handoff to the storeroom project"* — so **`H-3` joins `H-1`/`H-2` in the unit's record** (`strata/records/modularity-unit.md`), its four fields drafted by L1 and filed by L0 (D-5: the packages are never modified). The design's rev 2 re-derives the channel's envelope, its rows and the listener contract in one pass; no other sub-unit's boundary moves.
 
 **ITS REGISTER IS `D-71` TO `D-306`** as prose, unchanged and extended by this row only. **This row records a listener's two halves, the main half's return as the channel's data, the passthrough arm, and the storeroom handoff the integration is expected to need.**
+
+---
+
+## D-308 — THE L1 DESIGN'S CYCLE IS NOT REBUILT: the battery is clean on every pass and ONE blocking cell remains, so one TARGETED pass closes the client-half crossing rather than a teardown
+
+**Status:** ACTIVE · **Date:** 2026-11-20 · **Source (measurement):** the examiner's `FAIL` of rev 2 (`strata/.strata/returns/modularity-l1-examination.json`) and the architect's rev 3–7 sequence (`strata/.strata/returns/modularity-l1-design.json`); `rebuild.md` §1/§3's threshold weighed and NOT met in the corpus's sense.
+
+**WHY NOT A REBUILD.** `rebuild.md` §3's ground is *"three passes on one design indicts the design"*, counted by `strata-state`'s per-artifact `streaks` (`rebuild.md` §1) — and the figure the architect reported is its OWN adversarial-round count, not the examiner's: the separate examiner seat has passed the artifact ONCE (rev 2, seven findings, all closed by revs 3–7), while the six in-session `FAIL`s were the architect's rounds against itself. The artifact's substance survives where it has been independently examined: the battery is clean on every pass with no row moved, the map's 26 rows and the endpoint arithmetic re-derive, and the closed list spans the three misstated measurements and the four inconsistencies. **One blocking cell remains** — `S-2b`'s client-source crossing has no payload, owner or file — and **one non-blocking** (`M-2b`'s battery, boot and sub-unit). A rebuild would discard that with no cause, and the ledger's streak reads `1`.
+
+**THE ACT.** One **TARGETED** L1 pass (rev 8) whose whole scope is the client-half crossing: the payload — the source is a STRING and transport-safe data, since `C-2` refuses a FUNCTION and not text — the owner seat and the files, each a declared write under `D-301`/`D-302` (the `OWED-6` precedent), reconciled with `S-12`'s one-member wire; plus `M-2b`'s battery, boot and sub-unit. Nothing else on the page is re-derived. **If rev 8 fails the same class, `rebuild.md` §3 fires**: the recommendation goes to L1's designer with a ≤20-line retrospective, and the cycle restarts from the artifact spec.
+
+**ITS REGISTER IS `D-71` TO `D-307`** as prose, unchanged and extended by this row only. **This row records an L0 decision not to teardown, the measurement that keeps the threshold from firing, and the one cell a targeted pass must close.**
+

@@ -1,0 +1,37 @@
+{
+ "unit": "modularity",
+ "from": "L1",
+ "to": "L0",
+ "verdict": "FAIL",
+ "artifact": "docs/L1/modularity.md",
+ "testIds": [
+  "M-1",
+  "M-2",
+  "M-3",
+  "M-4",
+  "M-5"
+ ],
+ "citations": [
+  "docs/L1/modularity.md (rev 7)",
+  "strata/.strata/returns/modularity-l1-examination.json",
+  "tests/e2e/modularity/module-executor.test.ts",
+  "tests/e2e/security-store-storeroom/isolation.test.ts",
+  "tests/integration/security-store-storeroom/isolation.test.ts",
+  "tests/e2e/settings-carrier-retirement/scenarios.test.ts",
+  "tests/e2e/boundary-grain/declarations.test.ts",
+  "strata/modules.json",
+  "src/main/preload.ts",
+  "src/renderer/secure-panels.ts",
+  "src/renderer/module-client.ts",
+  "src/shared/types.ts",
+  "src/main/view-record/index.ts",
+  "src/main/tabs-record/index.ts",
+  "src/main/operator-settings/index.ts",
+  "node_modules/provident-storeroom/index.d.ts",
+  "node_modules/provident-storeroom/index.mjs",
+  "node_modules/provident-storeroom/src/entry/delivery.mjs",
+  "strata/decisions.md D-301 D-302 D-304 D-305 D-306 D-307"
+ ],
+ "notes": "Battery VALIDATED CLEAN on all six passes; no row added, moved, skipped or softened; boundary block declared == edit set (docs/L1/modularity.md, strata/modules.json). Artifact at rev 7; six examiner returns, all FAIL, all routed to this seat. CLOSED across revs 3-7: the delivered-set universal (pending is seeded as a clone of triggered, so WriteRecord/DeleteRecord.triggered carry every fired handle and its binding address on a repair-less act, and a DELETE's record.commit.pending hands the set over on every arm — H-3's symptom narrowed to a WRITE a repair fires inside); the handle's re-mint replaced by this design's stated choice (listen answers the CALLER'S own spelling, index.d.ts:1200-1211 read; the replacement rule cited to surface.md rule 2 at delivery.mjs:749-757); the label table placed at secure-panels.ts:165 against the operator-settings VALID_SET copy at :168; M-13's witness moved to ONE crossing's root and a leaf under it under the store's PREFIX relation with a disambiguating root write; the bridge census stated as moving 10 -> 11 with the eleventh member landed on BOTH lockstep sites (preload.ts and secure-panels.ts) and the four files of other seats named as their declared writes; S-17's seven-member grammar split into five API nouns and two placed S-1 declarations; app-shell's endpoints re-derived 8 -> 9 in strata/modules.json. OPEN on rev 7, both this seat's: (1, BLOCKING) S-2b has no crossing, payload or owning seat for a module's client source — src/shared/types.ts's ModuleListEntry/RpcMethod censuses, src/renderer/module-client.ts (operator-settings' path) and preload.ts's module member are each owned elsewhere while S-12 caps the wire at ONE member carrying C-2's {turn,entries} and C-2 refuses a function as data; (2, non-blocking) M-2b is realm-side and files with no battery, boot or sub-unit, while section 6 sends only M-11/M-13 to tests/e2e/module-channel/. AT THE REBUILD THRESHOLD: six FAILs on one artifact id is rebuild.md section 3's streak, so the choice between one further L1 pass on S-2b's realm crossing and a rebuild is L0's and is stated here rather than spent on an unexamined rev 8. Filing the five in-session returns and extending strata/records/modularity-unit.md beyond rev 2's return are L0's acted items (D-3).",
+ "rootCause": "The battery is valid and no row moves; the design does not yet hold on ONE blocking cell: S-2b says a module's client source is delivered into the realm, but no cell states the crossing, the payload or the owning seat — src/shared/types.ts's ModuleListEntry/RpcMethod censuses, src/renderer/module-client.ts and preload.ts's module member are each owned elsewhere, while S-12 caps the wire at ONE member carrying C-2's {turn,entries} and C-2 refuses a function as data. One non-blocking finding rides it: M-2b is realm-side and files with no battery, boot or sub-unit."
+}
