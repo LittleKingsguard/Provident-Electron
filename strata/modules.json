@@ -141,7 +141,10 @@
     {
       "name": "module-system",
       "paths": [
+        "src/main/modules/",
         "src/renderer/extensions.ts",
+        "src/shared/module-contract.ts",
+        "tests/e2e/modularity/",
         "tests/module-router.test.ts",
         "tests/module-dynamic.test.ts",
         "tests/module-e2e.test.ts",
@@ -149,7 +152,43 @@
         "tests/module-queue.test.ts",
         "tests/module-image.test.ts"
       ],
-      "endpoints": 7
+      "endpoints": 16
+    },
+    {
+      "name": "declaration-registry",
+      "paths": [
+        "src/shared/registry/",
+        "tests/unit/declaration-registry/",
+        "tests/integration/declaration-registry/"
+      ],
+      "endpoints": 10
+    },
+    {
+      "name": "module-channel",
+      "paths": [
+        "src/shared/module-channels.ts",
+        "src/main/module-channel/",
+        "src/renderer/module-channel-client.ts",
+        "tests/unit/module-channel/",
+        "tests/integration/module-channel/"
+      ],
+      "endpoints": 4
+    },
+    {
+      "name": "menus-module",
+      "paths": [
+        "src/modules/menus/",
+        "tests/integration/menus-module/"
+      ],
+      "endpoints": 13
+    },
+    {
+      "name": "demo-contents",
+      "paths": [
+        "src/modules/demo/",
+        "tests/integration/demo-contents/"
+      ],
+      "endpoints": 6
     },
     {
       "name": "secure-panels",
