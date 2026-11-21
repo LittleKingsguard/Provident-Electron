@@ -59,9 +59,10 @@
 //     grant this file can carry is the profile seed (`provident-security.json`'s `enabled`, `D-85`) — nothing on this
 //     surface narrows `code` — so `M-5` shows the gate ADMITS under `module`+`code`, which is one arm of two. The other
 //     arm would need a second boot on a seed without `code`, and that breaks §6's one-boot grain;
-//   · no row boots a second host: the browser/Node build is upstream-blocked (the `provident-storeroom` WASM build
-//     is pending, `D-298`/`D-299`), so cross-compatibility is read as the contract's absence of host APIs and not
-//     as a second boot (design §6 (ii)).
+//   · no row boots a second host: the browser/Node build is upstream-blocked — the pending `provident-storeroom` WASM
+//     build's carrier is `D-304` (iii); `D-298`/`D-299` carry the pin's `require`/`exports` move and the `>=22.12.0`
+//     floor and name no build — so cross-compatibility is read as the contract's absence of host APIs and not as a
+//     second boot (design §6 (ii)).
 //
 // EVERY WAIT IS BOUNDED AND EVERY FAILURE NAMES ITS REASON. A boot that publishes a load error is reported AT
 // ONCE with that error, never as a timeout; a handshake that never settles is reaped and PROVED gone before the
