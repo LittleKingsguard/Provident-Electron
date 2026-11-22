@@ -6488,4 +6488,17 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 
 **ITS REGISTER IS `D-71` TO `D-308`** as prose, unchanged and extended by this row only. **This row records the user's roadmap as a constraint on the design's assumptions and on nothing that ships.**
 
+---
+
+## D-310 — THE STOREROOM 2.0.0 IS ADOPTED, AND A BROWSER-SIDE WASM STORE JOINS FOR ELECTRON-vs-NODE PARITY: the pin moves with its carriers, and the modularity design re-grains to the shipped listener-return contract
+
+**Status:** ACTIVE · **Date:** 2026-11-20 · **Source (user, verbatim):** *"Major package version update for async, WASM implementation, and listener returns"* — pointing at `Provident-Storeroom/docs/L1/handoff-2.0.0.md` — then the two rulings: *"Adopt now: pin + rev 10"*, and on the WASM host: *"Add a WASM store in the browser side in addition to the existing main/node side. This will be part of the modular design parity for electron vs. node.js."*
+
+**WHAT IS ADOPTED.** `provident-storeroom ^2.0.0` replaces `^1.12.0`, its carriers re-grained at their own layers (`package.json`, `tests/storeroom-surface.test.ts`'s `S-1.3`, `brief.md` §2's two rows, the seam census's symbol half; the `>=22.12.0` floor is unmoved), and **the modularity design's rev 10 re-grains the cells `2.0.0` moves** (`strata/records/storeroom-2.0.0-research.md` rows D1–D7): `C-2`'s `return` data route now reads the receipt's `returnedValues`, the `Promise` in the `refused` arm is FALSIFIED (the store settles it), the turn edge becomes the **settled** answer, `H-3` stands as a fact and is superseded as a requirement, and `H-4` is ANSWERED — the package chose settle-before-answer.
+
+**AND THE WASM REALM IS NO LONGER DEFERRED: A BROWSER-SIDE STORE JOINS THE MAIN/NODE ONE, AND THE MODULE DESIGN OWES TOPOLOGY PARITY.** *"Add a WASM store in the browser side in addition to the existing main/node side"* — so the module contract, the managed channel and every listener two-half rule must run with the store **main-side (Node addon, today's Electron topology)** and **realm-side (`@auspicion/provident-storeroom-js-wasm`, the browser/Node-hosted topology)**, the same module code under both; the design's `C-13` stops saying *"the WASM build is assumed by no step and no row"* and names the parity its steps owe. **The two topologies' authority boundary — one store per app, whichever realm hosts it (`D-129`'s class) — is the design's to state, and a question it cannot settle climbs to the user** (`D-1` §8).
+
+**ITS REGISTER IS `D-71` TO `D-309`** as prose, unchanged and extended by this row only. **This row records the user's adoption of the published MAJOR, the carriers it moves, and the parity that brings a browser-side WASM store into the modularity design's scope.**
+
+
 
