@@ -6500,5 +6500,18 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 
 **ITS REGISTER IS `D-71` TO `D-309`** as prose, unchanged and extended by this row only. **This row records the user's adoption of the published MAJOR, the carriers it moves, and the parity that brings a browser-side WASM store into the modularity design's scope.**
 
+---
+
+## D-311 — THE CHANNEL IS THE WRITER FOR e2e REQUESTS, AND THAT IS HOW IT RECEIVES THE LISTENER DATA: the client half's store acts are executed by the channel object, whose receipt carries the settled returns and failures the batch is composed from
+
+**Status:** ACTIVE · **Date:** 2026-11-20 · **Source (user, verbatim):** *"For clarity, the channel management is performed by ensuring that the channel object is the writer for e2e requests, meaning it will receive the listener data from the store."*
+
+**THE CLARIFICATION, AND WHAT IT FIXES.** The managed channel object is the **writer** of the end-to-end requests: a module's client half does not call a store verb itself — its store request is executed by the channel — and **therefore the receipt is the channel's**, carrying the settled `returnedValues` and `bodyFailures` (`2.0.0`, `D-310`) that the batch is composed from. This is the same shape the package chose (`D-149` item 4: the receipt is the answer on every arm) applied at the foundation's own seam: whoever writes holds the answer, so the channel that writes is the one that reads the listener data — no second capture and no second authority.
+
+**WHAT IT SHARPENS IN `docs/L1/modularity.md`.** `C-2`'s `return`/`empty` arms already read the receipt's maps (rev 10); this ruling says **`C-2`/`C-3`/`S-11`/`S-13` must state the writer as the channel** — the client half's `store` route through the channel, the channel's own write turn, and the channel's receipt as the batch's source — and that **a main half's own store verb stays refused** (`reentrant-call`, `D-307`'s reentrancy ruling) because it is not an e2e request. The parity is unchanged: the channel writes to whichever store hosts the records (main-side Node or realm-side WASM, `D-310`), so the same module code is lawful under both.
+
+**ITS REGISTER IS `D-71` TO `D-310`** as prose, unchanged and extended by this row only. **This row records the user's clarification that the channel is the writer, and the receipt it therefore holds.**
+
+
 
 
