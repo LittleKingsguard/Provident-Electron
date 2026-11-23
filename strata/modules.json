@@ -7,6 +7,8 @@
         "src/main/security.ts",
         "src/main/battery-host.ts",
         "src/main/standalone.ts",
+        "tests/unit/mcp-surface/",
+        "tests/integration/mcp-surface/",
         "tests/security-gate.test.ts",
         "tests/mcp-server-wiring.test.ts",
         "tests/markdown-endpoint.test.ts",
@@ -147,6 +149,8 @@
         "src/shared/module-contract.ts",
         "tests/e2e/modularity/",
         "tests/e2e/module-parity/",
+        "tests/unit/module-system/",
+        "tests/integration/module-system/",
         "tests/module-router.test.ts",
         "tests/module-dynamic.test.ts",
         "tests/module-e2e.test.ts",
@@ -154,7 +158,7 @@
         "tests/module-queue.test.ts",
         "tests/module-image.test.ts"
       ],
-      "endpoints": 16
+      "endpoints": 23
     },
     {
       "name": "declaration-registry",
