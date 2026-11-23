@@ -79,11 +79,19 @@ const DECLARED_SCOPE_IS_A_SET = new Set(DECLARED_SCOPE).size === DECLARED_SCOPE.
 
 /**
  * **THE POSITIVE CONTROL** — a path outside the union. It is deliberately a REAL file in this
- * repository (an MCP-surface module the purge never touches), so the control cannot be
- * satisfied by a string that names nothing.
+ * repository, and still a `src/main/` module, so the control cannot be satisfied by a string that
+ * names nothing and `B-2(a)` keeps REFUSING a real main-side path (design §2, `E-7`).
  */
-const EDIT_SET_OFFENDER_FIXTURE = 'src/main/security.ts' // `D-101`: a real MCP-surface module no pass has touched and
-// no in-flight declaration names — the union is computed, so the control is a path outside every declaration.
+const EDIT_SET_OFFENDER_FIXTURE = 'src/main/store-channels.ts' // `D-101`: a real `src/main/` module file — `app-shell`'s
+// channel-name constants, a file that holds names and nothing else — that NO in-flight `boundary-declared` block names and
+// that `git status --porcelain --untracked-files=all` does not carry. The union is COMPUTED, so the control is a path
+// outside every declaration IN FLIGHT, and this one lies outside every entry of `strata/records/modularity-unit.md`'s.
+// **THE FIXTURE WAS RE-POINTED; NOT ONE ASSERTION MOVED.** It read `src/main/security.ts` while that was an MCP-surface
+// module no pass had touched — then the mcp-surface composition homed `registrationAllowed` beside the group predicates
+// and DECLARED it (`D-306`), which put the control's path INSIDE the union and reddened `B-2(a)` with `the control path is
+// outside the union and MUST fail it: expected true to be false`. A control a landing can swallow is exactly the failure
+// this arm exists to catch, so the PATH moved to a module no declaration in this worktree names, and `B-2`'s three
+// controls, `B-1`'s subset assertion and `B-3`'s reading are byte-identical.
 
 /** `edit-set ⊆ declared scope`, as a SET, with the offenders NAMED rather than counted. */
 function editSetIsSubset(changed: readonly string[], scope: readonly string[]): { readonly ok: boolean; readonly offenders: readonly string[] } {

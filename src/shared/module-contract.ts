@@ -98,6 +98,9 @@ export type RefusalName =
   | 'declaration-overstated'
   | 'foundation-tool'
   | 'declaration-undeclared'
+  /** THE DOOR's two (`L2` §11): a name no standing record publishes, and a body that threw. */
+  | 'tool-unknown'
+  | 'handler-threw'
   | 'entry-malformed'
   | 'entry-threw'
   | 'dependency-cycle'
@@ -105,6 +108,11 @@ export type RefusalName =
   | 'application-version-unsatisfied'
   | 'reentrant-call'
   | 'no-store-host'
+
+/** THE DOOR's TWO answers, each a VALUE naming its subject (`L2` §11, `ASM-MS-4`): `tool-unknown` for a
+ *  name that does not stand — its `subject` the requested `module:<name>.<tool>` — and `handler-threw`
+ *  for a body that threw, its `message` the throw's own sentence. Never a throw, never an `undefined`. */
+export type InvocationRefusal = Refusal & { readonly reason: 'tool-unknown' | 'handler-threw' }
 
 export interface ListenerDeclaration {
   readonly address: readonly string[]
@@ -186,6 +194,8 @@ export interface Activation {
   readonly listeners: readonly ListenerBinding[]
 }
 
+/** FOUR members and NO FIFTH (`L2` §11, `ASM-MS-4`): `invoke` is what the EXECUTOR answers, so the HOST —
+ *  the embedding — is never made to hold the executor's own state. */
 export interface ModuleHost {
   readonly store: StoreSurface
   /** The ONE number the resolver judges (`C-11`). */
@@ -194,11 +204,17 @@ export interface ModuleHost {
   readonly log: (line: string, detail?: unknown) => void
 }
 
-/** `L2` §11's four doors, and NO fifth (`ASM-MS-4`). */
+/** `L2` §11's FIVE doors: `install`, `deactivate`, `activations` and `invoke` — THE DOOR, the ONE route by
+ *  which the transport reaches a `module:<name>.<tool>` handler, answering that handler's own value
+ *  VERBATIM or an `InvocationRefusal` (`ASM-MS-4`, `D-105`). */
 export interface ModuleExecutor {
   install(delivery: ModuleDelivery): readonly ModuleVerdict[]
   deactivate(name: string): DeactivationVerdict
+  /** The published names and the declarations: NO TOOL HANDLER leaves this answer (`L2` §11). */
   activations(): readonly Activation[]
+  /** THE DOOR: reads the STANDING record's handler map at the turn, so a name `deactivate` deleted is
+   *  refused by value; `args` travels BY IDENTITY, with no schema and no wrapper beside it. */
+  invoke(toolName: string, args: unknown): unknown
 }
 
 /** The DECLARATION's handle, `module:<name>#<key>`, disjoint from constraint ids (`C-3`, `D-310`). */

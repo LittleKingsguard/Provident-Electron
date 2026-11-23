@@ -158,7 +158,7 @@
         "tests/module-queue.test.ts",
         "tests/module-image.test.ts"
       ],
-      "endpoints": 23
+      "endpoints": 24
     },
     {
       "name": "declaration-registry",

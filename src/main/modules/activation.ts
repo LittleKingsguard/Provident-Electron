@@ -1,6 +1,6 @@
 // src/main/modules/activation.ts — compile `entry`, run it with the MAIN half's four-member ctx,
 // collect the runtime declarations and tool registrations, register ONE store entry per DECLARED
-// listener, mint the `Activation`, and run the inverse (`L2` §6, §9, §10; `design.md` §4).
+// listener, mint the `ActiveRecord`, and run the inverse (`L2` §6, §9, §10; `design.md` §4).
 //
 // NOTHING REACHES THE STORE BEFORE THE COMPARISON: the four members are a literal, the store member
 // refuses EVERY verb `reentrant-call` as a VALUE (`D-311`), and `compare` runs in both directions
@@ -27,6 +27,10 @@ export interface ActiveRecord {
   readonly manifest: ModuleManifest
   readonly tools: readonly string[]
   readonly listeners: readonly ListenerBinding[]
+  /** THE DOOR's map, keyed by the FULL published name: what this activation's run filled, and what
+   *  `invoke` reads AT THE TURN. It rides the RECORD and never `Activation`, so no listing consumer is
+   *  handed a callable that outlives its activation (`L2` §11, `ASM-MS-4`). */
+  readonly handlers: ReadonlyMap<string, (args: unknown) => unknown>
 }
 
 export type ActivationOutcome =
@@ -73,6 +77,8 @@ export function activate(module: LoadedModule, host: ModuleHost): ActivationOutc
         state.refusal ??= refusal('foundation-tool', name, `${name} occupies the foundation's own namespace`)
       }
       state.tools.add(name)
+      // THE MAP THE DOOR READS (§3): keyed by the FULL published name, the closure the entry itself
+      // handed `tool`, so `invoke` runs it with the state this run created (`D-307`, guardrail 12).
       state.handlers.set(name, handler)
       return name
     },
@@ -130,6 +136,7 @@ export function activate(module: LoadedModule, host: ModuleHost): ActivationOutc
       manifest,
       tools: [...state.tools],
       listeners: bindings,
+      handlers: state.handlers,
     },
   }
 }

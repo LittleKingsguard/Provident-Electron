@@ -13,7 +13,7 @@ import {StreamableHTTPServerTransport} from '@modelcontextprotocol/sdk/server/st
 import {z} from 'zod'
 import {createServer, type IncomingMessage, type ServerResponse} from 'node:http'
 import type {RpcRequest, RpcReply, DispatchRequest} from '../shared/types.js'
-import {SecurityGate, exclusionAllowsWork, type ToolGroup, moduleToolAllowed} from './security.js'
+import {SecurityGate, exclusionAllowsWork, registrationAllowed, type ToolGroup, moduleToolAllowed} from './security.js'
 // **THE MODULE REGISTRY'S INTERFACE LIVES HERE NOW (D-81, 2026-11-02).** It stood in `module-store.ts`
 // — the raw-`fs` registry module, deleted with the Q-5 arm that was its only reader (`D-78`'s second
 // clause, the user's ruling). What survives of that module is the three INTERFACES below and nothing
@@ -24,11 +24,50 @@ import {SecurityGate, exclusionAllowsWork, type ToolGroup, moduleToolAllowed} fr
 // `handleModuleTool`, `syncModuleRouter` and `ProvidentMcpServerOptions.moduleStore` are the three
 // consumers — and the composition root imports them back from here rather than the reverse.
 import type {CapabilityRouter} from '../renderer/extensions.js'
+// **THE ONE APPLICATION-VERSION AUTHORITY, IMPORTED AND NEVER RE-SPELLED** (`docs/L2/mcp-surface/interface.md`
+// §11; `docs/L2/module-system/interface.md` §8; L1 §4 `C-11`): `appVersion()` is hosted in the contract's home
+// (`src/shared/module-contract.ts`) and this surface is its SECOND READER, never a second authority. The
+// `'0.1.0'` literal that stood in `createServer` retires HERE, into the default of the `versionReader` seam.
+import {appVersion} from '../shared/module-contract.js'
 // central-data — the module's OWN surface, supplied at the composition site. The server never
 // constructs it: the profile's directory is not a server's to derive (`interface.md` §5; D-13).
 import type {DataSurface} from './data/index.js'
 
 const TOOL_PREFIX = 'provident.'
+
+/** **THE EXECUTOR'S `module:<n>.<t>` NAMESPACE, SPELLED ONCE AND HERE AS THE COMPOSITION'S OWN TEST**
+ *  (`docs/L3/mcp-surface/design.md` §3; `docs/L2/module-system/interface.md` §1). It is NOT a second spelling of
+ *  `security.ts`'s GROUP rule and the difference is the question asked: `admits` answers a group for ANY name,
+ *  so a static name arriving in an activation would be published by the group test alone, while this literal
+ *  asks the other question — *is this a composed name at all*. The two group literals stay `security.ts`'s
+ *  (`groupForTool`) and are untouched (D-16's second-copy hazard named, not propagated). */
+const MODULE_NAMESPACE = 'module:'
+
+/** **ONE ELEMENT OF THE REGISTRY'S ANSWER** (`docs/L3/mcp-surface/signatures.md` §2; `design.md` §2). This
+ *  surface reads `tools` and NO other member — `Activation`'s `name`, `version` and `listeners` are
+ *  `module-system`'s, and a member that page adds later cannot break this composition. */
+export interface ActivationLike {
+  readonly tools: readonly string[]
+}
+
+/** **THE DYNAMIC HALF'S TWO ANSWERS, ON ONE OBJECT** (`design.md` §2, §3, §10 `ASM-1`; `docs/L2/mcp-surface/
+ *  interface.md` §10):
+ *   · `activations()` is the ACTIVATED TOOL NAMES in the resolver's order, already full `module:<n>.<t>`
+ *     names, with NO group term — the GROUP axis is this surface's `admits`, which is what lets a WITHDRAWAL
+ *     read the port unfiltered (`ASM-5`): a group-off name must never be mistaken for a withdrawn one.
+ *   · `invoke` is the door: a composed name's call reaches its handler through it, its answer is a handler's
+ *     own value OR the door's own refusal VALUE, and `args` travels BY IDENTITY (no schema, no coercion).
+ *   · `install` is the ACTIVATION the two install tools hand their source to, and its verdicts are their
+ *     answer — one fact per store, never this one's census (`design.md` §5).
+ *  NO fourth member, and NO default that reads anything else: with no port injected the dynamic half is EMPTY
+ *  (`design.md` §3's last two bullets), so no second source stands behind the composition and the object
+ *  that answers the NAMES is the object that answers the CALL. Structural by construction, so the executor
+ *  satisfies it without naming it. */
+export interface ModulePort {
+  install(delivery: {readonly kind: 'source'; readonly source: string}): readonly unknown[]
+  activations(): readonly ActivationLike[]
+  invoke(toolName: string, args: unknown): unknown
+}
 
 /** `docs/specs/secure-exclusion.md` `§2.5` item 1 — THE ONE CLOSED REFUSAL FORM. It is produced
  *  at three sites only (the MCP invocation turn, the HTTP POST at arrival, and the in-flight
@@ -106,12 +145,21 @@ function exclusionTurn(gate: () => SecurityGate) {
   return exclusionAllowsWork(gate().exclusionState()) ? null : exclusionRefusal()
 }
 
-/** U9 (F1) — invoke a dynamic `module:<name>.<tool>` tool. Enforces the
- *  invocation two-gate: a module tool backed by an executable entry requires
- *  `module` AND `code` at EACH call (not just install). A module-only agent
- *  cannot run a module tool that is arbitrary code. Standalone so the static
- *  `registerTools` can route SDK calls through it. */
-export function invokeModuleTool(router: CapabilityRouter, gate: SecurityGate, toolName: string, args: unknown): unknown {
+/** U9 (F1) — **THE INVOCATION'S ONE GATE-THEN-DOOR FUNCTION** (`docs/L3/mcp-surface/signatures.md` §5;
+ *  `design.md` §5, §7; `docs/L2/mcp-surface/interface.md` §10).
+ *
+ *  THIS SIDE'S ARMS FIRST, THEN THE DOOR'S: a name that is not `module:`-prefixed THROWS (this gate is the
+ *  module tool's and nothing else's, so it can never become a second admission rule for the foundation half);
+ *  the invocation two-gate is re-checked at EVERY call and a refusal THROWS an `Error` naming the pair, which
+ *  is the SDK's tool-error ARM — made BEFORE entry, so no handler is reached (`moduleToolAllowed`, F1); and a
+ *  null door THROWS the null arm's own words, RE-GRAINED to name the EXECUTOR rather than the router the route
+ *  retires. Otherwise the door's answer — a handler's VALUE or the door's own refusal VALUE — is returned
+ *  VERBATIM, with no wrapper beside it: the surface renders it as the tool's answer body, and `isError` is
+ *  absent, so an agent reads a door refusal's `reason` exactly as it reads a value (D-105).
+ *
+ *  Standalone so the static `registerTools` can route SDK calls through it, and THE ONE SPELLING beside the
+ *  class's own `invokeTool`, which delegates here rather than re-stating the arms (`design.md` §5). */
+export function invokeModuleTool(door: ModulePort | null, gate: SecurityGate, toolName: string, args: unknown): unknown {
   if (typeof toolName !== 'string' || !toolName.startsWith('module:')) {
     throw new Error(`invokeTool: not a module tool: ${String(toolName)}`)
   }
@@ -120,7 +168,10 @@ export function invokeModuleTool(router: CapabilityRouter, gate: SecurityGate, t
   if (!moduleToolAllowed(toolName, gate.enabled, { executable: true })) {
     throw new Error(`invokeTool: ${toolName} requires module AND code groups (invocation two-gate)`)
   }
-  return router.invokeTool(toolName, args)
+  if (door === null) {
+    throw new Error(`invokeTool: no module executor configured`)
+  }
+  return door.invoke(toolName, args)
 }
 
 /** **`U-FOCUS-TOOL` (`F3`) — THE TOOL'S OWN HANDLER, A THIN ADAPTER AND NOTHING ELSE**
@@ -382,26 +433,71 @@ export function toolForName(name: string): string {
  *  group is allowed but which is unknown to the map never registers
  *  (`gate.toolAllowed` returns false for unknown tools — group is null). F3:
  *  the output is DEDUPED so a caller's register loop never hits the SDK's
- *  duplicate-registration throw. */
+ *  duplicate-registration throw.
+ *
+ *  **AND SINCE `S-5` ITS RULE HAS ONE SPELLING AND IT IS `security.ts`'s**: every member is handed to
+ *  `registrationAllowed`, the REGISTRATION sites' predicate, so the construction arm and any other registration
+ *  arm cannot describe two rules (`docs/L3/mcp-surface/design.md` §4; L2 §10's construction clause). The landed
+ *  contract is carried UNCHANGED — `module.install`/`module.update` register only while `module` AND `code` both
+ *  stand (they carry an executable entry, trusted-equivalent to `code`), while `module.list` and a dynamic
+ *  `module:<n>.<t>` register by their GROUP alone, and an unknown name or a bare `module:` is denied because
+ *  `groupForTool` answers `null` for it. The INVOCATION's pair and the re-gate's toggle are NOT routed through
+ *  this predicate: the three instants are not one rule (`design.md` §4, §9 `G-8`). */
 export function registeredToolNames(gate: SecurityGate, allNames: string[]): string[] {
+  const enabled = gate.enabled
   const seen = new Set<string>()
   const out: string[] = []
   for (const name of allNames) {
-    // U3 — the module.* install/update tools carry an executable entry, so they
-    // are trusted-equivalent to `code`: they register ONLY when BOTH `module`
-    // AND `code` are enabled (the two-gate, U1). `module.list` needs `module`
-    // only. This is the registration-level gate; the invocation-level
-    // `moduleToolAllowed` predicate (U1) is the per-call enforcement.
-    if (name === 'module.install' || name === 'module.update') {
-      if (gate.toolAllowed(name) && gate.enabled.has('code')) {
-        seen.add(name)
-        out.push(name)
-      }
-      continue
-    }
-    if (gate.toolAllowed(name) && !seen.has(name)) {
+    if (seen.has(name)) continue
+    if (!registrationAllowed(name, enabled)) continue
+    seen.add(name)
+    out.push(name)
+  }
+  return out
+}
+
+/** **THE COMPOSITION RULE — PURE, TOTAL, AND THE ONLY PLACE THE PUBLISHED SET IS ORDERED**
+ *  (`docs/L3/mcp-surface/signatures.md` §3; `design.md` §3; `docs/L2/mcp-surface/interface.md` §10; D-305).
+ *
+ *  It takes the static half ALREADY group-filtered (`registeredToolNames`'s answer, in `ALL_TOOLS`' own order),
+ *  the registry's half as `ActivationLike[]`, and the GROUP predicate, and answers the published names:
+ *
+ *    · the STATIC half FIRST, in the caller's own order — a foundation seat is never re-seated;
+ *    · the DYNAMIC half AFTER it, in the registry's activation order, FIRST OCCURRENCE WINNING, so no name
+ *      stands twice and the SDK's already-registered throw is never reached;
+ *    · a dynamic name its GROUP does not admit is ABSENT, never composed-and-then-refused: `admits` is the ONE
+ *      reading of the group rule (`security.ts`'s `groupForTool` through `gate.toolAllowed`);
+ *    · a name OUTSIDE the `module:` namespace is never composed even where `admits` would admit it, because the
+ *      dynamic half IS the executor's namespace and a static seat can never arrive by the registry.
+ *
+ *  NOTHING IS SORTED — the order is two blocks and no sort: a sort would re-seat a foundation name every time a
+ *  module was activated (D-41). TOTAL: an empty static half, an empty activation list or a non-array answer
+ *  yields a set, never a throw. */
+export function composePublishedSet(
+  staticNames: readonly string[],
+  activations: readonly ActivationLike[],
+  admits: (name: string) => boolean,
+): string[] {
+  const out: string[] = []
+  const seen = new Set<string>()
+  if (Array.isArray(staticNames)) {
+    for (const name of staticNames) {
+      if (typeof name !== 'string' || seen.has(name)) continue
       seen.add(name)
       out.push(name)
+    }
+  }
+  if (!Array.isArray(activations)) return out
+  for (const activation of activations) {
+    const tools = activation.tools
+    if (!Array.isArray(tools)) continue
+    for (const tool of tools) {
+      if (typeof tool !== 'string') continue
+      if (!admits(tool)) continue
+      if (!tool.startsWith(MODULE_NAMESPACE)) continue
+      if (seen.has(tool)) continue
+      seen.add(tool)
+      out.push(tool)
     }
   }
   return out
@@ -445,9 +541,27 @@ export interface McpServerOptions {
    *  the settings-backed file tier (`file.modules.<id>`, one atomic write; writer class 2).
    *  When set, the server handles the `module.*` tools in MAIN, NOT routed to the renderer. */
   moduleStore?: ModuleStore
-  /** U9 — the CapabilityRouter whose dynamic `module:<name>.<tool>` tools are
-   *  registered + invoked (with the invocation two-gate, F1). */
+  /** U9 — **THE REALM ROUTER THE ROUTE FED, RETAINED HERE AND READ BY NOTHING IN THIS FILE FROM `S-5` ON**
+   *  (`docs/L3/mcp-surface/signatures.md` §5; `design.md` §2's RETIRE row). The composition reads the PORT and
+   *  the door reaches the PORT, so this member names no source and no route any more. It retires TOGETHER with
+   *  `main.ts`'s construction literal and that file's two `syncModuleRouter` calls, in app-shell's pass — which
+   *  is why the member and the free `syncModuleRouter` still stand here: this module's move reds no other
+   *  module's typecheck (D-3). */
   router?: CapabilityRouter
+  /** **THE DYNAMIC HALF'S ONLY SOURCE** (`docs/L2/mcp-surface/interface.md` §10; `design.md` §2, §3, §10
+   *  `ASM-1`): one port answering BOTH the names (`activations()`) and the call (`invoke`) — NOT a
+   *  `CapabilityRouter`, which declares no tool table and mints no `module:<n>.<t>` name. `install` is the
+   *  ACTIVATION the two install tools hand their source to, and its verdicts are their answer.
+   *  **NO DEFAULT THAT READS ANYTHING ELSE**: absent, the dynamic half is EMPTY — exactly the set a server
+   *  publishes today with no router — so the published set and the callable set are ONE object's two answers. */
+  readonly modulePort?: ModulePort
+  /** **THE ONE AUTHORITY'S READER — AN INJECTION SEAM AND NEVER A SECOND AUTHORITY** (`docs/L2/mcp-surface/
+   *  interface.md` §11; `docs/L2/module-system/interface.md` §8; `design.md` §6, §10 `ASM-3`; L1 §4 `C-11`).
+   *  DEFAULT: the imported `appVersion()` of `src/shared/module-contract.ts`, so no caller has to name it. It is
+   *  held as the private field `versionReader`, so this option's spelling and the accessor's never read alike at
+   *  a call site, and a row that injects a value proves the transport REPORTS what it is given rather than that
+   *  a literal happens to agree. This file spells no number. */
+  readonly appVersion?: () => string
   /** central-data (`docs/L1/central-data-census-exception.md` §2 E-1) — the module's OWN data
    *  surface, which the five `provident.data.*` registrations drive. Supplied by the composition
    *  site's one options pass (`interface.md` §5; E-3). A server constructed WITHOUT it registers
@@ -464,7 +578,16 @@ export class ProvidentMcpServer {
   private readonly transport: McpTransportKind
   private readonly port: number
   private readonly moduleStore: ModuleStore | null
-  private readonly router: CapabilityRouter | null
+  /** **THE DYNAMIC HALF'S ONE OBJECT** (`design.md` §2, §3, §10 `ASM-1`): the port the composition reads its
+   *  NAMES from and the door a composed name's CALL is handed to. `null` when none was injected — and then the
+   *  dynamic half is EMPTY, never filled from a second source. The reader the handlers close over is
+   *  `liveDoor: () => ModulePort | null`, the landed `liveGate` shape, so a handler registered once reaches the
+   *  port that stands AT THE TURN and no handler holds a frozen reference (`design.md` §5). */
+  private readonly _modulePort: ModulePort | null
+  /** **THE ONE APPLICATION-VERSION AUTHORITY'S READER, BOUND ONCE AT THE CONSTRUCTION** (`design.md` §6): the
+   *  option member when one was injected, the imported accessor otherwise. One field, so `createServer`'s
+   *  construction spells one call and no number (`docs/L2/mcp-surface/interface.md` §11). */
+  private readonly versionReader: () => string
   private readonly dataSurface: DataSurface | null
   private httpServer: ReturnType<typeof createServer> | null = null
   private readonly httpServers = new Set<McpServer>()
@@ -507,7 +630,8 @@ export class ProvidentMcpServer {
     this.port = opts.port ?? 3787
     this._gate = opts.gate ?? new SecurityGate()
     this.moduleStore = opts.moduleStore ?? null
-    this.router = opts.router ?? null
+    this._modulePort = opts.modulePort ?? null
+    this.versionReader = opts.appVersion ?? appVersion
     this.dataSurface = opts.dataSurface ?? null
     // `§2.2` item 3 — THE ACCEPTOR'S EPOCH SOURCE IS BOUND TO THE **LIVE** GATE HERE (`PAR-5`
     // forbids any caller-supplied epoch; the stamp therefore comes from the gate this server
@@ -611,13 +735,15 @@ export class ProvidentMcpServer {
     // previously-disabled group must make those tools callable on the live server, not only on the
     // next fresh HTTP request). The live server is the stdio server (HTTP builds a fresh server per
     // POST from the current gate, so widening is automatic there).
+    // **AND THE WIDEN ARM IS THE SAME ACT AS AN ACTIVATION'S** (`docs/L3/mcp-surface/design.md` §5's third
+    // caller; `signatures.md` §5's call site (3)): it calls `syncPublishedTools()`, the ONE re-registration
+    // member, so the group axis and the registry axis cannot describe two sets. Its RESOURCE half stays where
+    // it is — `ALL_RESOURCES` and the resource widen are not this composition's, and `syncPublishedTools` is
+    // tools only (`docs/L2/mcp-surface/interface.md` §10, §6).
     const liveServer = this.stdioServer
     if (!liveServer) return
     const liveGate = (): SecurityGate => this._gate
-    const toAdd = this.allowedToolNames().filter((n) => !this.registered.has(n))
-    if (toAdd.length > 0) {
-      ProvidentMcpServer.registerTools(liveServer, this.backend, toAdd, this.registered, this.moduleStore, this.router, this.dataSurface, liveGate)
-    }
+    this.syncPublishedTools()
     const resToAdd = ProvidentMcpServer.ALL_RESOURCES.filter(
       (r) => this._gate.toolAllowed(`resource:${r.uri ?? r.uriTemplate}`) && !this.resources.has(r.uri ?? r.uriTemplate!),
     )
@@ -674,37 +800,96 @@ export class ProvidentMcpServer {
     'provident.data.journal',
   ]
 
-  /** The subset of ALL_TOOLS whose group the current gate allows — the tools
-   *  the server registers (and can register on a re-gate). */
+  /** **THE PUBLISHED SET AT THIS INSTANT** (`docs/L2/mcp-surface/interface.md` §10; `docs/L3/mcp-surface/
+   *  design.md` §2, §3): `ALL_TOOLS` stops being the WHOLE set and becomes its FOUNDATION HALF — these entries
+   *  PLUS one `module:<name>.<tool>` name per activated module tool, composed by `composePublishedSet` over the
+   *  gate the server holds and the port's own `activations()`. The dynamic half is EMPTY where no port stands:
+   *  there is NO default that reads a second source (`ASM-1`).
+   *
+   *  The NAME is the landed one and does not move (`signatures.md` §4; D-41): `docs/L2/mcp-surface/interface.md`
+   *  §10 cites this site, so a rename would strand that citation. It is composed AT TWO INSTANTS — the
+   *  construction and every activation or withdrawal — and never recomputed per request, because a listing
+   *  recomputed per request would answer names no captured handle stands for (L2 §8 `ASM-11`; D-305). */
   allowedToolNames(): string[] {
-    const staticNames = registeredToolNames(this._gate, ProvidentMcpServer.ALL_TOOLS)
-    // U9 (M-r3) — the router's dynamic `module:<name>.<tool>` tools. They are
-    // gated by the `module` group (registration) + the invocation two-gate
-    // (F1, enforced in invokeTool). A dynamic tool is listed only when `module`
-    // is enabled.
-    if (this.router) {
-      for (const tool of this.router.listTools()) {
-        if (this._gate.toolAllowed(tool) && !staticNames.includes(tool)) staticNames.push(tool)
-      }
-    }
-    return staticNames
+    return composePublishedSet(
+      registeredToolNames(this._gate, ProvidentMcpServer.ALL_TOOLS),
+      // THE DOOR'S HALF: the port's activation order, read at THIS instant and never cached.
+      this._modulePort === null ? [] : this._modulePort.activations(),
+      // THE GROUP PREDICATE, asked ONCE: `groupForTool` is the ONE reader of the group rule, so a name its
+      // group does not admit is ABSENT from the set — never composed and then refused (L2 §10).
+      (name: string) => this._gate.toolAllowed(name),
+    )
   }
 
-  /** U9 (F1) — invoke a dynamic `module:<name>.<tool>` tool. Enforces the
-   *  invocation two-gate: a module tool backed by an executable entry requires
-   *  `module` AND `code` at EACH call (not just install). A module-only agent
-   *  cannot run a module tool that is arbitrary code. */
+  /** **THE RE-REGISTRATION ACT — THE LIVE SERVER'S SET MOVES WITHOUT A REBUILD** (`docs/L3/mcp-surface/
+   *  design.md` §5; `signatures.md` §4; `docs/L2/mcp-surface/interface.md` §12).
+   *
+   *  ONE pass over the DELTA, and the two readings are the design's, not a summary of it:
+   *   · `added` is WHAT THE MAP GAINED — read off the capture map before and after the registration pass,
+   *     NEVER off the candidate list, because a name the gate admits but no registration arm can answer is not
+   *     an `added` name (the five `provident.data.*` arms are conditional on an injected surface, `D-11`).
+   *   · `withdrawn` is every captured `module:`-prefixed name the port's `activations()` NO LONGER HOLDS, read
+   *     UNFILTERED BY GROUP (`ASM-5`): a name whose GROUP is off is NOT withdrawn — it stays captured and the
+   *     re-gate toggles it, which is the landed mechanism, and the two axes never swap (`G-4`).
+   *
+   *  WITHDRAW IS `remove()` AND NEVER `update({enabled:false})` (`ASM-2`; `G-4`): a disabled handle is
+   *  indistinguishable from a group-off one, so the group axis could never restore it, and a later
+   *  re-activation of the same name would meet the SDK's already-registered throw. `remove()` takes the name
+   *  out of the SDK's registry AND out of this map, so the next registration is clean.
+   *
+   *  THREE CALLERS AND NO FOURTH (L2 §12; L1 §3 `S-5`): the `module.install`/`module.update` arm right after its
+   *  persisted row and its one activation; the re-gate's widen arm; and — NAMED AND OWED RATHER THAN DECLARED —
+   *  the port's own out-of-band activation delivery, for which no route exists at this head (neither
+   *  `ModulePort` nor `ModuleHost` carries a sink), so such an activation reaches the live set only at the NEXT
+   *  composition instant. `http` needs no re-registration and gets none: that transport builds a fresh server
+   *  per POST from the current gate. */
+  syncPublishedTools(): {readonly added: readonly string[]; readonly withdrawn: readonly string[]} {
+    // (a) THE REGISTRY AXIS — the delta is computed and APPLIED here, in one place, so no caller can apply half
+    // of it:
+    const held = new Set<string>()
+    if (this._modulePort !== null) {
+      for (const activation of this._modulePort.activations()) {
+        for (const tool of activation.tools) held.add(tool)
+      }
+    }
+    const withdrawn: string[] = []
+    for (const name of [...this.registered.keys()]) {
+      if (!name.startsWith(MODULE_NAMESPACE)) continue
+      if (held.has(name)) continue
+      this.registered.get(name)?.remove()
+      this.registered.delete(name)
+      withdrawn.push(name)
+    }
+    // (b) THE GROUP / REGISTRY AXIS SHARED — the names the composition publishes and the map lacks. The map is
+    // read BEFORE the pass and again AFTER it, so `added` answers what was CAPTURED and not what was asked for.
+    const wanted = this.allowedToolNames().filter((name) => !this.registered.has(name))
+    const before = new Set(this.registered.keys())
+    const liveServer = this.stdioServer
+    if (liveServer !== null && wanted.length > 0) {
+      const liveGate = (): SecurityGate => this._gate
+      const rePublish = (): void => { this.syncPublishedTools() }
+      const liveDoor = (): ModulePort | null => this._modulePort
+      ProvidentMcpServer.registerTools(liveServer, this.backend, wanted, this.registered, this.moduleStore, this.dataSurface, liveGate, rePublish, liveDoor)
+    }
+    const added = [...this.registered.keys()].filter((name) => !before.has(name))
+    return {added, withdrawn}
+  }
+
+  /** **THE CAPTURED HANDLES' KEYS — the map's own reading**, symmetric to the landed `registeredResources()`
+   *  (`docs/L3/mcp-surface/signatures.md` §4; `design.md` §2). It is what tells a WITHDRAWN name from a
+   *  group-disabled one: the withdrawn is absent, the toggled is present with `registeredEnabled` false.
+   *  NOT named `registeredToolNames`, which is the landed FREE function's spelling — one name for two facts is
+   *  the drift D-41 refuses. */
+  capturedToolNames(): string[] {
+    return [...this.registered.keys()]
+  }
+
+  /** U9 (F1) — **THE CLASS'S OWN INVOCATION ACCESSOR, AND IT RE-STATES NO ARM** (`docs/L3/mcp-surface/design.md`
+   *  §5): the null-door arm and the delegate are `invokeModuleTool`'s, over `this._modulePort`, so the class and
+   *  the free function are ONE shape and there is no second spelling to drift. The two-gate is checked at THIS
+   *  side before the door, and a refusal THROWS the error naming the pair (`G-6`'s one-door rule). */
   invokeTool(toolName: string, args: unknown): unknown {
-    if (!this.router) throw new Error(`invokeTool: no module router configured`)
-    if (typeof toolName !== 'string' || !toolName.startsWith('module:')) {
-      throw new Error(`invokeTool: not a module tool: ${String(toolName)}`)
-    }
-    // F1 — the invocation two-gate. A dynamic module tool is trusted-equivalent
-    // to `code` (executable entry), so it needs module AND code.
-    if (!moduleToolAllowed(toolName, this._gate.enabled, { executable: true })) {
-      throw new Error(`invokeTool: ${toolName} requires module AND code groups (invocation two-gate)`)
-    }
-    return this.router.invokeTool(toolName, args)
+    return invokeModuleTool(this._modulePort, this._gate, toolName, args)
   }
 
   /** R1 (mcp-resources-review.md) — the resource list + their read-group
@@ -861,7 +1046,12 @@ export class ProvidentMcpServer {
    *  handles into `this.registered` (M1) so a later re-gate can toggle them. */
   private createServer(): McpServer {
     const server = new McpServer(
-      { name: 'provident-electron', version: '0.1.0' },
+      // **THE ONE SITE THE NUMBER IS PUBLISHED, AND IT SPELLS NO NUMBER** (`docs/L2/mcp-surface/interface.md`
+      // §11; `docs/L3/mcp-surface/design.md` §6; L1 §4 `C-11`): `serverInfo.version` reports the ONE
+      // application-version authority through the `versionReader` seam — the injected value or, unset, the
+      // imported `appVersion()`. The `'0.1.0'` literal retires here, and because `http` builds a fresh server
+      // per POST this one site serves BOTH transports with no second site (`G-10`: this file reads no manifest).
+      { name: 'provident-electron', version: this.versionReader() },
       {
         instructions:
           'The Provident-Electron shell: a provident-ssr renderer with full ' +
@@ -877,8 +1067,14 @@ export class ProvidentMcpServer {
     // what they close over must be the READER of the live gate, never the gate instance: the
     // transition REPLACES `this._gate`, and a captured instance would freeze the enforcement at
     // its registration-time value.
+    // **AND THE TWO OTHER READERS THE LOOP CLOSES OVER ARE BOUND HERE, ONCE** (`docs/L3/mcp-surface/
+    // signatures.md` §5): `rePublish` is the install/update arm's re-registration call (`design.md` §5's first
+    // caller) and `liveDoor` is the DOOR a composed name's call is handed to at the turn. No handler holds a
+    // frozen server, a frozen gate or a frozen port.
     const liveGate = (): SecurityGate => this._gate
-    ProvidentMcpServer.registerTools(server, this.backend, this.allowedToolNames(), this.registered, this.moduleStore, this.router, this.dataSurface, liveGate)
+    const rePublish = (): void => { this.syncPublishedTools() }
+    const liveDoor = (): ModulePort | null => this._modulePort
+    ProvidentMcpServer.registerTools(server, this.backend, this.allowedToolNames(), this.registered, this.moduleStore, this.dataSurface, liveGate, rePublish, liveDoor)
     // R3 — register the gated read-group resources in the SAME server build
     // (serves BOTH the stdio long-lived server and the per-POST HTTP server).
     const allowedResources = ProvidentMcpServer.ALL_RESOURCES.filter((r) => this._gate.toolAllowed(`resource:${r.uri ?? r.uriTemplate!}`))
@@ -892,9 +1088,15 @@ export class ProvidentMcpServer {
     allowed: string[],
     registered: Map<string, RegisteredTool>,
     moduleStore: ModuleStore | null,
-    router: CapabilityRouter | null,
     dataSurface: DataSurface | null,
     liveGate: () => SecurityGate,
+    /** **THE INSTALL/UPDATE ARM'S RE-REGISTRATION CALL** (`docs/L3/mcp-surface/design.md` §5's first caller):
+     *  the callback the delivery arm makes in the SAME act as the activation, so the live server's tool set
+     *  moves without a rebuild. Bound at the construction, so no handler holds a frozen server. */
+    rePublish: () => void,
+    /** **THE DOOR READER** the dynamic arm reaches the executor through at the TURN (`design.md` §5; `G-6`):
+     *  `() => ModulePort | null`, the landed `liveGate` shape. ONE spelling, and no second route. */
+    liveDoor: () => ModulePort | null,
   ): void {
     // `§2.2` item 2(a) — THE INVOCATION TURN, applied at the ONE REGISTRATION BOUNDARY so it is
     // UNFORGETTABLE for EVERY tool (including one added later): each declared handler below is
@@ -1036,18 +1238,30 @@ export class ProvidentMcpServer {
         description,
         inputSchema,
       }, guarded(async (args: Record<string, unknown>) => {
-        // U3 — the module.* tools are MAIN-process (node:fs persisted store),
-        // NOT routed to the renderer. They are handled here directly.
+        // U3 — the module.* tools are MAIN-process (the secure crossing's `file.modules.<id>` rows: the
+        // registry the composition hands this server — the legacy store and its `put`/`remove`/`setDisabled`
+        // FILE writers are deleted, `D-81`), NOT routed to the renderer. They are handled here directly.
         if (name.startsWith('module.')) {
-          const before = handleModuleTool(moduleStore, name, args)
-          // U9-FIX — after a successful install/update, re-sync the live router
-          // so the module's declared tools become callable.
-          if (name === 'module.install' || name === 'module.update') {
-            if ((before as { status?: string }).status === 'installed' || (before as { status?: string }).status === 'updated') {
-              if (moduleStore && router) syncModuleRouter(router, moduleStore)
-            }
-          }
-          return text(before)
+          // (1) THE PERSISTED REGISTRY ROW FIRST — the census `module.list` and `status().loaded` read, through
+          // the landed helper, and the SAME narrowing the landed arm takes on its `unknown` answer.
+          const landed = handleModuleTool(moduleStore, name, args) as { status?: string }
+          if (name !== 'module.install' && name !== 'module.update') return text(landed)
+          // (2) A REFUSED OR UNMOVED ROW ENDS THE ARM: nothing moved, so there is nothing to activate and no
+          // re-publish to make (`docs/L3/mcp-surface/design.md` §5).
+          if (landed.status === 'rejected' || landed.status === 'no-op') return text(landed)
+          // (3) THE SAME SOURCE GOES TO THE PORT'S `install` WHERE ONE STANDS, AND THAT CALL IS THE ACTIVATION:
+          // the verdicts it returns are this arm's ANSWER, and the re-publish follows in the same act. THE TWO
+          // STORES ANSWER TWO QUESTIONS AND ARE NOT ONE REGISTRY — the `ModuleStore` above is the census of
+          // INSTALLED rows, the executor's registry is its own activation table reached only through
+          // `activations()`/`invoke` — so a delivery is written once to each and neither is renamed the other.
+          // THE LINE THAT STOOD HERE WAS `syncModuleRouter(router, moduleStore)`, and what replaced it is not a
+          // call: that target is a tool table the realm half no longer declares (`syncModuleRouter` retires whole
+          // in app-shell's pass) — `design.md` §5; `docs/L2/mcp-surface/interface.md` §10.
+          const source = typeof args.source === 'string' ? args.source : ''
+          const door = liveDoor()
+          const answered = door === null ? landed : door.install({ kind: 'source', source })
+          rePublish()
+          return text(answered)
         }
         const method = dispatch(name)
         const value = await backend.invoke(method, args)
@@ -1055,22 +1269,37 @@ export class ProvidentMcpServer {
       })))
     }
 
-    // U9 (M-r3) — register the router's DYNAMIC `module:<name>.<tool>` tools.
-    // They are gated by the `module` group (registration) + the invocation
-    // two-gate (F1, enforced in invokeTool). Each SDK call routes back through
-    // `invokeTool` so the two-gate is checked at EVERY invocation.
-    if (router) {
-      for (const tool of router.listTools()) {
-        if (!allowed.includes(tool)) continue
-        if (registered.has(tool)) continue
-        registered.set(tool, server.registerTool(tool, {
-          title: tool,
-          description: `A dynamic module tool (${tool}) — requires module AND code groups (invocation two-gate).`,
-          inputSchema: {},
-        }, guarded(async (args: Record<string, unknown>) => {
-          const value = invokeModuleTool(router, liveGate(), tool, args)
-          return text(value)
-        })))
+    // U9 (M-r3) — **THE DYNAMIC ARM: the registry's `module:<name>.<tool>` names, and their call route**
+    // (`docs/L3/mcp-surface/design.md` §5, §9 `G-12`; `docs/L2/mcp-surface/interface.md` §10).
+    // THE NAMES COME FROM THE PORT'S OWN `activations()` — the same answer the composition reads — so a name is
+    // never listed without a handler behind it. A name the caller's `allowed` list does not carry is not
+    // registered (a group-off name is ABSENT, never present-and-refusing), and a name the map already holds is
+    // never registered twice (the SDK's registry is keyed by name).
+    // **AND THE DECLARATION MOVES WITH THE CALL SITE, IN ONE ACT**: the arm declared `inputSchema: {}` — an empty
+    // raw shape the SDK normalises into a MEMBERLESS object schema and parses EVERY call against, handing the
+    // handler `parseResult.data` — so a caller's members were stripped to `{}` before this function was reached,
+    // and a call omitting `arguments` was refused by the parse itself. The declaration below declares NO member
+    // (a module tool's argument shape is the MODULE's, never this surface's) and STRIPS nothing: the caller's own
+    // keys reach the door with their values by reference, and an omitted `arguments` member is the SAME CALL as
+    // `{}` — the shape `provident.focus` keeps, and for the same reason (`G-12`; D-141's passthrough precedent).
+    const door = liveDoor()
+    if (door !== null) {
+      for (const activation of door.activations()) {
+        for (const tool of activation.tools) {
+          if (!allowed.includes(tool)) continue
+          if (registered.has(tool)) continue
+          registered.set(tool, server.registerTool(tool, {
+            title: tool,
+            description: `A dynamic module tool (${tool}) — requires module AND code groups (invocation two-gate).`,
+            inputSchema: z.preprocess((carried) => carried ?? {}, z.object({}).passthrough()),
+          }, guarded(async (args: unknown) => {
+            // THE PAIR IS CHECKED AT THIS SIDE BEFORE ENTRY, THEN THE NAME AND THE ARGS GO TO THE DOOR BY
+            // IDENTITY; the door's answer — a handler's value OR its own refusal VALUE — is rendered by the
+            // same `text` a landed answer takes, with `isError` absent (`design.md` §7).
+            const value = invokeModuleTool(liveDoor(), liveGate(), tool, args)
+            return text(value)
+          })))
+        }
       }
     }
 

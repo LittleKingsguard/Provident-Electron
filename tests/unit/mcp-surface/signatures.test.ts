@@ -3,34 +3,41 @@
 // `signatures.md` §7).
 //
 // WHY IT EXISTS (`D-45`: a document may keep a declaration block only if something compares it to the tree). The page
-// this row measures is the one rev 2's `F-4` keeps — the composition function, the port's two types, the class's three
-// members, the two option members, the declared `liveRouter` reader and the registration predicate, each a signature
-// with no body. This row is the arm of `D-45` that lets the block stand: **EVERY NAME THE DOCUMENT DECLARES MUST EXIST
-// IN THE FILE ITS OWN SECTION NAMES.**
+// this row measures is the one rev 3 keeps — the composition function (`composePublishedSet`), the port's two types
+// (`ActivationLike`, `ModulePort`), the class's three transcribed members (`allowedToolNames`, `syncPublishedTools`,
+// `capturedToolNames`), the two option members the pass adds (`modulePort?`, `appVersion?`) with the retained
+// `router?` beside them, the registration predicate (`registrationAllowed`) and the free `invokeModuleTool(door, …)`,
+// each a signature with no body. This row is the arm of `D-45` that lets the block stand: **EVERY NAME THE DOCUMENT
+// DECLARES MUST EXIST IN THE FILE ITS OWN SECTION NAMES.**
 //
-// **ONE DIRECTION ONLY — DECLARED ⊆ EXPORTED.** The document declares the DELTA of L1 step `S-5`, not the module's
-// whole export set (the two files carry on the order of a hundred names between them), so a two-direction equality
-// would red on the module's OTHER exports for ever and would make a lawful delta block unkeepable. The whole-set block
-// stays owed to the landing pass, when a set-equality can be taken both ways without declaring those names
-// (`signatures.md` §7; `design.md` §11).
+// ONE DIRECTION ONLY — DECLARED ⊆ EXPORTED. The document declares the DELTA of L1 step `S-5`, not the module's whole
+// export set (the two files carry on the order of a hundred names between them), so a two-direction equality would
+// red on the module's OTHER exports for ever and would make a lawful delta block unkeepable. The whole-set block stays
+// owed to the landing pass, when a set-equality can be taken both ways without declaring those names (`signatures.md`
+// §7; `design.md` §11).
 //
-// **WHAT IT DOES NOT COMPARE, SAID HERE SO NO READER TAKES IT FOR MORE THAN IT IS.** (a) The module's whole export set —
-// the paragraph above. (b) **ANY BEHAVIOUR**: a signature document carries no body by construction, so it is no
+// **WHAT IT DOES NOT COMPARE, SAID HERE SO NO READER TAKES IT FOR MORE THAN IT IS.** (a) The module's whole export set
+// — the paragraph above. (b) **ANY BEHAVIOUR**: a signature document carries no body by construction, so it is no
 // evidence about a body, and a green here says nothing about what any declared name DOES — no signature document is
-// evidence about an implementation (`design.md` §9; `D-45`). It reads DOCUMENTS AND SOURCES ONLY and **RUNS NOTHING**:
-// no module is imported, no server constructed, no tool called. The source's own names are read off its BYTES, which is
-// the only reading that can see an `export interface` or an `export type` at all — neither has a runtime presence a
-// namespace import could enumerate.
+// evidence about an implementation (`design.md` §9; `D-45`). (c) **§4's THREE TRANSCRIBED MEMBERS AND §5's CALL
+// SITES**: a `declare class` block and a call site begin with no `export` line, so the reader below cannot see them at
+// all — `design.md` §11 names that residue rather than leaving it to be found, and the behaviour of every one of them
+// is `published-set.test.ts`'s subject (`MS-1`…`MS-6`), not this row's. It reads DOCUMENTS AND SOURCES ONLY and
+// **RUNS NOTHING**: no module is imported, no server constructed, no tool called. The source's own names are read off
+// its BYTES, which is the only reading that can see an `export interface` or an `export type` at all — neither has a
+// runtime presence a namespace import could enumerate.
 //
 // **AUTHORED AFTER the `D-30` sweep, so this file carries NO `strata:marked` / `strata:marked-file` marker and GATES**
 // (D-40; `strata/decisions.md` D-30/D-40).
 //
-// **RED ON ARRIVAL, AND AT THIS HEAD IT REDS NAMING FOUR NAMES**: `registrationAllowed`, `composePublishedSet`,
-// `ActivationLike` and `ActivationSource` are declared by the document and exported by neither source file — `S-5`'s
-// absence in `src/**`, which is `signatures.md` §1/§2/§3's whole subject and this row's evidence (`design.md` §9, §11).
-// That red is the LANDING's absence and never this row's defect, and **NOT ONE LINE HERE MAY BE SOFTENED TO MAKE IT
+// **AUTHORED RED-FIRST, AND WHAT IT RED ON IS READ OFF THE RUN AND NEVER SPELLED HERE.** While `S-5`'s pass was unbuilt
+// the failure below listed, one line per name, the names the page declared that the tree did not export yet — that
+// red was the LANDING's absence and never this row's defect, and **NOT ONE LINE HERE MAY BE SOFTENED TO MAKE IT
 // GREEN**: a comparison narrowed until it passes would leave the page uncompared, which is the drift `D-45` exists to
-// catch.
+// catch. **At the head this row now runs at, the landing carries every name the page declares and the row is GREEN**,
+// with the one-direction limit and the residue in the paragraph above stated rather than implied; the standing names
+// were `registrationAllowed`, `ActivationLike`, `ModulePort` and `composePublishedSet`, recorded here as the history of
+// the red and never as a constant this file asserts (`design.md` §9, §11).
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
@@ -78,7 +85,8 @@ const exportedNames = (text: string): string[] =>
 /** **A DECLARED NAME'S FILE IS THE FILE ITS OWN SECTION NAMES, AND THIS IS THE WHOLE MAP** (`signatures.md` §7): §1
  *  transcribes `src/main/security.ts`; §2…§5 transcribe `src/main/mcp-server.ts`. A section OUTSIDE the map that
  *  declares a name is REPORTED and never skipped — silently dropping a declaration would be the one failure this row
- *  exists to catch, and it is idle at rev 2 because §6 and §7 carry no `export` line. */
+ *  exists to catch, and it is idle at rev 3 because §6 and §7 carry no `export` line (§7's fence is comment lines
+ *  only, so it declares nothing). */
 const FILE_OF_SECTION: ReadonlyMap<string, string> = new Map([
   ['1', 'src/main/security.ts'],
   ['2', 'src/main/mcp-server.ts'],
@@ -127,7 +135,7 @@ const divergence = (declared: readonly Declaration[], sourced: ReadonlyMap<strin
 }
 
 /** The `**Rev:** N` a document carries, or `''` where it carries none — the header marker, not any later prose that
- *  happens to spell a rev (both pages mention "rev 2" in their bodies; only the header line is the marker). */
+ *  happens to spell a rev (both pages mention earlier revs in their bodies; only the header line is the marker). */
 const revOf = (document: string): string => /\*\*Rev:\*\* (\d+)/.exec(document)?.[1] ?? ''
 
 describe('D-45 — `signatures.md`\'s declaration block, compared to the files its own sections name', () => {
@@ -147,7 +155,10 @@ describe('D-45 — `signatures.md`\'s declaration block, compared to the files i
     // superseded design is not evidence about the current tree: it may compare clean against a module the design has
     // already moved, so the two revs are read and compared first. This is the drift class the store-tabs-record
     // precedent pins in the same shape (`tests/unit/store-tabs-record/signatures.test.ts`, `C-7`), and the two readings
-    // are the two headers' own `**Rev:** N` markers — `signatures.md` and `design.md` (`signatures.md` §7).
+    // are the two headers' own `**Rev:** N` markers — `signatures.md` and `design.md` (`signatures.md` §7). At rev 3
+    // that pin is load-bearing rather than ceremonial: the pair moved `ActivationSource`/`activations?` to
+    // `ModulePort`/`modulePort?` and re-grained the invocation's route, so a page left at rev 2 would compare a
+    // superseded set of names against a tree that no longer declares them.
     const designRev = revOf(DESIGN)
     const pageRev = revOf(PAGE)
     expect(

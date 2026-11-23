@@ -91,6 +91,41 @@ export function moduleToolAllowed(
   return true
 }
 
+/** **THE REGISTRATION SITES' PREDICATE — the landed rule FACTORED and never re-decided**
+ *  (`docs/L3/mcp-surface/design.md` §4; `docs/L2/mcp-surface/interface.md` §10's construction clause;
+ *  `docs/L3/mcp-surface/signatures.md` §1).
+ *
+ *  `module.install`/`module.update` carry an executable entry and are trusted-equivalent to `code`, so they
+ *  register only while `module` AND `code` BOTH stand; every other name — `module.list` and a dynamic
+ *  `module:<n>.<t>` included — registers by its GROUP alone; and an unknown name or a bare `module:` is denied
+ *  because `groupForTool` answers `null` for it. `registeredToolNames` delegates to this, so the construction
+ *  arm's rule has ONE spelling (D-41's site rule).
+ *
+ *  **ITS SCOPE IS THE REGISTRATION SITES ONLY**: the re-gate's toggle keeps the landed PAIR predicate over
+ *  every `module.`- and `module:`-prefixed handle, and the INVOCATION keeps `moduleToolAllowed(...)`. One
+ *  function returning one answer for `module.list` cannot say "group alone" at construction and "the pair" at
+ *  the re-gate, so the asymmetry is the contract's and not a simplification to make (`design.md` §4, §9 `G-8`).
+ *
+ *  **TOTALITY OVER A MALFORMED `enabled` IS THIS PASS'S OWN RULE AND NOT THE LANDED ONE** (`design.md` §10
+ *  `ASM-4`): `null`, `undefined` and a NON-ITERABLE answer `false` and never throw — the posture
+ *  `moduleToolAllowed` already carries in this file (`F3`), which `toolAllowed` does NOT (`new Set(enabled)`
+ *  throws on a non-iterable). A gate that throws is a crash wearing a refusal's clothes (D-105). */
+export function registrationAllowed(
+  name: string,
+  enabled: ReadonlySet<ToolGroup> | readonly ToolGroup[] | null | undefined,
+): boolean {
+  // F3 (the landed fail-closed posture, borrowed): a malformed `enabled` FAILS CLOSED, never throws.
+  if (!(enabled instanceof Set || Array.isArray(enabled))) return false
+  const set: ReadonlySet<ToolGroup> = enabled instanceof Set ? enabled : new Set(enabled)
+  const group = groupForTool(name)
+  // An unknown name, and a bare `module:` with an empty rest, answer `null` and are denied — never resolved to
+  // `module`, never admitted by a prefix.
+  if (group === null || !set.has(group)) return false
+  // `module.install`/`module.update` are the ONLY pair names: the `module` group alone does not open them.
+  if (name === 'module.install' || name === 'module.update') return set.has('code')
+  return true
+}
+
 export function defaultSecurityConfig(): { token: string | null; enabled: ToolGroup[] } {
   return { token: null, enabled: ['read', 'dispatch'] }
 }

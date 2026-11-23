@@ -1,13 +1,16 @@
-// src/main/modules/index.ts — `createModuleExecutor` and `L2` §11's four doors (`design.md` §3–§4).
+// src/main/modules/index.ts — `createModuleExecutor` and `L2` §11's FIVE doors (`design.md` §3–§4).
 //
 // `install` is §4–§5 in one act: load, admit, resolve against the host's ONE application number, then
 // activate in the RESOLVER's order and not the delivery's; `deactivate` is §4's inverse; `activations()`
-// answers the records in that same order, so no caller sorts (`D-304`). The tool handler table is the
-// executor's own, and the route by which the transport reaches a handler is `ASM-MS-4`'s one undeclared
-// cell: this file adds NO fifth host member and NO `invoke` (`L2` §11).
+// answers the records in that same order, so no caller sorts (`D-304`); and `invoke` is THE DOOR — the
+// ONE route by which the transport reaches a `module:<name>.<tool>` handler, reading the handler map the
+// standing record's own activation filled, AT THE TURN, so a name `deactivate` has deleted is refused by
+// value rather than run (`L2` §11, `ASM-MS-4`, `D-105`). The host gains NO fifth member: the door is what
+// the executor ANSWERS, and the host is only what it is GIVEN.
 import type {
   Activation,
   DeactivationVerdict,
+  InvocationRefusal,
   ModuleDelivery,
   ModuleExecutor,
   ModuleHost,
@@ -140,7 +143,29 @@ export function createModuleExecutor(host: ModuleHost): ModuleExecutor {
         return { name: record.name, version: record.version, tools: record.tools, listeners: record.listeners }
       })
 
-  return { install, deactivate, activations }
+  // THE DOOR (`L2` §11, `ASM-MS-4`): a standing record's handler map, READ AT THE TURN — never a table
+  // a listing handed out — answering that handler's own value VERBATIM with `args` travelling BY
+  // IDENTITY, and its two refusals as VALUES naming the name it could not run (`D-105`).
+  const invoke = (toolName: string, args: unknown): unknown => {
+    for (const name of order) {
+      const handler = records.get(name)?.handlers.get(toolName)
+      if (handler === undefined) continue
+      // The handler runs with the closure ITS OWN activation created: no re-compile, no second `entry`.
+      try {
+        return handler(args)
+      } catch (error) {
+        return refuse('handler-threw', toolName, message(error))
+      }
+    }
+    return refuse('tool-unknown', toolName, `no activated handler publishes ${toolName}`)
+  }
+
+  return { install, deactivate, activations, invoke }
+}
+
+/** The door's two answers, each a VALUE that names its subject and throws nothing (`L2` §11, `D-105`). */
+function refuse(reason: 'tool-unknown' | 'handler-threw', subject: string, sentence: string): InvocationRefusal {
+  return { status: 'refused', reason, subject, message: sentence }
 }
 
 function candidateOf(manifest: ModuleManifest): Candidate {
