@@ -1,22 +1,23 @@
 // strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
-// tests/module-image.test.ts — RED tests for Unit U5: the image/binary MCP
-// tool-result channel (M-r4). Contract: docs/specs/module-import-proposal.md
-// §9 (M-r4 payload guard) + docs/specs/module-feature-list.md §3
-// (`module.captureView()` tool-provider).
+// tests/module-image.test.ts — RE-GRAINED to the SHIPPED realm half (unit `modularity`, L2 §3, §10,
+// D-305/D-311/D-231).
 //
-// These tests are RED because:
-//   - `imageResult` does NOT exist in `src/main/mcp-server.ts` (the import
-//     fails at module load).
-//   - `ctx.captureView()` currently returns `''` (the U4 stub), NOT a data-URI.
-//   - the `maybeDigest`/`largePayloadBytes` guard does NOT extend to the image
-//     channel (a large image payload crosses the IPC boundary unbounded).
-// The Implementer makes this file green by adding `imageResult` to
-// `src/main/mcp-server.ts`, wiring a capture provider into `CapabilityRouter`
-// so `ctx.captureView()` returns a data-URI, and extending the payload guard to
-// the image channel — with NO changes to these tests.
+// ROWS 1–3 AND 6–8 are the image channel's own and are kept verbatim: `imageResult` formats an MCP image
+// content block, and `RendererBackend`'s payload guard bounds a large image payload. Neither is a module
+// ctx member, and neither moved.
+//
+// ROWS 4, 5 AND 7 measured `ctx.captureView()` and `CapabilityRouter.setCaptureProvider` — TWO MEMBERS
+// THIS LANDING RETIRES WHOLE. `captureView` is one of the six the replaced `ModuleCtx` carried (L2 §3,
+// `D-305`: four of the six were stubs or unwired, and it is retired rather than re-pointed), and the
+// capture PROVIDER seam went with it, so no member present-but-inert stands in its place (`ASM-MS-1`).
+// What replaces the READ is `ctx.store`: on the client half a store verb is an e2e REQUEST the channel
+// executes, so the rendered fragment is read through the store and never captured off the ctx (§10).
+// Row 4 is re-grained to that; row 5's subject has NO replacement and is pinned as an ABSENCE, which is
+// the strongest thing a test can say about a member that must never come back. Row 7's unicode subject
+// moves to the image channel that is still here.
 import { describe, it, expect } from 'vitest'
 import { imageResult, RendererBackend } from '../src/main/mcp-server.js'
-import { CapabilityRouter, type ModuleCtx } from '../src/renderer/extensions.js'
+import { CapabilityRouter, type ClientHalfCtx } from '../src/renderer/extensions.js'
 
 describe('imageResult — format an MCP image content block (M-r4, proposal §9)', () => {
   it('1. imageResult("data:image/svg+xml;base64,xxx") → { content: [{ type: "image", data: "xxx", mimeType: "image/svg+xml" }] }', () => {
@@ -38,28 +39,39 @@ describe('imageResult — format an MCP image content block (M-r4, proposal §9)
   })
 })
 
-describe('captureView — the toolset produces a data-URI (feature-list §3)', () => {
-  it('4. ctx.captureView() returns a string that starts with "data:" (a data-URI)', () => {
+describe('the rendered view is READ THROUGH THE STORE, never captured off the ctx (old rows 4/5: ctx.captureView + setCaptureProvider — L2 §3, §10)', () => {
+  it('4. `captureView` is ABSENT from the five-member ctx; the same read is a store verb, and with no writer handed it is the named refusal `no-store-host` AS A VALUE (old row 4: ctx.captureView() returned a data-URI)', () => {
     const router = new CapabilityRouter()
-    let view: string | undefined
-    router.registerModule('capture', (ctx: ModuleCtx) => {
-      view = ctx.captureView()
+    let handed: ClientHalfCtx | undefined
+    router.registerModule('capture', (ctx: ClientHalfCtx) => {
+      handed = ctx
     })
-    expect(typeof view).toBe('string')
-    expect(view!.startsWith('data:')).toBe(true)
+    expect(handed).toBeDefined()
+    expect('captureView' in handed!).toBe(false)
+    expect(Object.keys(handed!).sort()).toEqual(['action', 'graph', 'log', 'onDelivery', 'store'])
+    // NO writer was handed: every verb refuses by name and still answers — a view read is a REQUEST.
+    const surface = handed!.store as unknown as Record<string, () => { status: string; reason: string; subject: string }>
+    for (const verb of ['read', 'readLiteral', 'readTiered']) {
+      const out = surface[verb]!()
+      expect(out.status).toBe('refused')
+      expect(out.reason).toBe('no-store-host')
+      expect(out.subject).toBe(verb)
+    }
   })
 
-  it('5. the CapabilityRouter accepts a capture provider; ctx.captureView() returns the provider fragment wrapped as a data-URI', () => {
-    const router = new CapabilityRouter()
-    const fragment = '<div id="inc">0</div>'
-    router.setCaptureProvider(() => fragment)
-    let view: string | undefined
-    router.registerModule('capture', (ctx: ModuleCtx) => {
-      view = ctx.captureView()
-    })
-    expect(view!.startsWith('data:')).toBe(true)
-    // the provider's fragment is embedded in the data-URI (base64 or SVG)
-    expect(view!.length).toBeGreaterThan(0)
+  it('5. RETIRED, NO REPLACEMENT — the realm carries NO capture-provider seam: the router has no `setCaptureProvider`, and a delivered source that calls `ctx.captureView()` is contained by name instead of reaching a stub (L2 §3, D-305)', () => {
+    const lines: string[] = []
+    const router = new CapabilityRouter({ log: (line: string) => lines.push(line) })
+    // the old row's door does not exist on this class, at any name that would re-open it.
+    for (const gate of ['setCaptureProvider', 'captureView', 'captureProvider']) {
+      expect((router as unknown as Record<string, unknown>)[gate]).toBeUndefined()
+    }
+    // and a module that still asks for the retired member cannot become a silent no-op: the entry THROWS
+    // on the absent member and the realm reports it as the named refusal `entry-threw` (D-105).
+    router.registerModule('capture', `(ctx) => { ctx.captureView() }`)
+    expect(lines).toContain('entry-threw')
+    expect(router.listeners()).toEqual([])
+    expect(router.actions()).toEqual([])
   })
 })
 
@@ -75,14 +87,14 @@ describe('M-r4 payload guard — a large image payload is bounded (proposal §9)
     expect(resolved).toHaveProperty('digest')
   })
 
-  it('7. captureView handles a unicode fragment (emoji) without crashing (H1 adversarial fix)', () => {
-    const router = new CapabilityRouter()
-    router.setCaptureProvider(() => '<div>hello \u{1F600} world</div>')
-    let view: string | undefined
-    router.registerModule('capture', (ctx: ModuleCtx) => {
-      view = ctx.captureView()
-    })
-    expect(view!.startsWith('data:')).toBe(true)
+  it('7. a non-ASCII (emoji) fragment survives the image channel intact — the capture path it used to take is gone, the payload it produced is still carried whole (old row 7: a unicode fragment through ctx.captureView)', () => {
+    const fragment = '<div>hello \u{1F600} world</div>'
+    const dataUri = `data:image/svg+xml;base64,${Buffer.from(fragment, 'utf8').toString('base64')}`
+    const result = imageResult(dataUri)
+    expect(result.content[0].mimeType).toBe('image/svg+xml')
+    // the payload crosses base64 WHOLE: the emoji decodes back to the same code point, not a lone surrogate.
+    expect(Buffer.from(result.content[0].data, 'base64').toString('utf8')).toBe(fragment)
+    expect(Buffer.from(result.content[0].data, 'base64').toString('utf8')).toContain('\u{1F600}')
   })
 
   it('8. the live maybeDigest path bounds a large image content block (H2 adversarial fix)', () => {
