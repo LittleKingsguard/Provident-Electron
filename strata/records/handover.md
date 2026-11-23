@@ -1,40 +1,47 @@
-# handover — `main` carries `strata`'s work (fast-forwarded from `28e9ac1` on 2026-11-06 by the user's merge permission, D-6's pointer clause; D-119; nothing pushed)
+# handover — 2026-11-23: the `modularity` unit is at L4, its executor, door and composition landed; the four legs are whole and the eleven remaining suite reds are each named
 
-Read `strata/brief.md` first, then `strata/decisions.md` in full — its last row is the current one.
+Read `strata/brief.md` first, then `strata/decisions.md` from `D-304` onward.
 
-## What is landed
+## Where the branch stands
 
-**WHICH UNITS ARE CLOSED IS STATE AND IT IS NOT COUNTED HERE** (`.strata/units/*.json`, `D-26`, `D-43`): read the ledger's `stage` per unit, and take a unit's own record for the verdict that closed it. **`focus-retirement` CLOSED at a `PASS`** (`D-149`), its earlier `STALE` runs having been currency passes (`strata/records/focus-retirement-walkthrough.md`). **Two units are this session's**: `family-helper` — the additive family object with its two gating rows and its unit row, CLOSED (`D-291`…`D-293`) — and `boundary-grain` — the boundary instrument's grain, LANDED AND OPEN pending its exit walkthrough (`D-301`, `D-302`). What each landed is its own design documents' and its map row's, cited here and never restated: **a landed unit is not a queue** (D-26, D-43).
-`settings-carrier-retirement` (`docs/L1/settings-carrier-retirement.md` §3-§5; the `operator-settings` and `app-shell` rows) · `central-data-management` (`docs/L3/central-data/design.md`; the `central-data` row) · `security-store-storeroom` (`docs/L1/security-store-storeroom-exception.md` §9; the `operator-settings` and `settings-surface` rows).
-`strata-bootstrap` (`strata/` itself, and `strata/archive.md` for the archived corpus) · `bundle-boot-seam` (`docs/L2/bundle-boot-seam/`; its row's `package.json` and three battery directories) · `secure-panels` (`docs/L1/secure-panels.md` §7 `E-1`; the `secure-panels` row).
-`store-tabs-record` (`docs/L2/store-tabs-record/interface.md`, `docs/L3/store-tabs-record/signatures.md` rev 2, and `strata/records/store-tabs-record-unit.md`; its own row, which also claims the `npm run crossings` leg, and `store-view-record`'s).
+`main` carries the work; **nothing is pushed** (D-6's pointer clause, D-119). The unit `modularity` (`D-306`) went L1 rev 15 → L2 → L3 → L4 in this session; the ledger's `layer` reads `L3` (the last entered) and its `stage` is not a verdict — read `.strata/units/modularity.json` (D-26, D-43). The unit's record is `strata/records/modularity-unit.md`; its design `docs/L1/modularity.md` rev 15; L2 the two interface pages; L3 both modules' designs and signatures.
 
-## What stands between the tree and the product now
+## What landed
 
-- **The boot seam is fixed** (D-27): the built main bundle boots, every leg's reading is `brief.md` §6's table — `panes` among them, the fourth leg and outside the floor (D-37) — and no count is restated here (D-26).
-- **The test triage is decided, instrumented and applied** (D-30, D-40): `tests/e2e/**` and the Electron legs gate, the scenarios that stood when the rework was decided report on notice, and one authored after that sweep gates. The readings are `strata-marks.mjs report`'s and `strata/marks.json`'s, never this file's, and until a runner separates the two `npm test` still measures the whole tree (§6).
-- **The Settings pane's roster is a projection of a table the gate's `ToolGroup` types** (D-35, D-38), so the pane cannot drift from the gate again; which groups exist is `brief.md` §2's.
-- **The rendered surface HAS been audited against its own pattern and now obeys it**: `D-126`'s eleven findings are CLOSED, the last at `D-174`, and **`pending.md`'s table is EMPTY** — the audit's remainder left on 2026-11-09 with all seven closed (`D-164`…`D-174`, `D-61`), so nothing of that audit stands in a queue.
-- **The artifact is not self-contained**: it resolves `provident-storeroom` from `node_modules` at run time, so a packaged build ships the package and a loadable addon (`docs/L3/bundle-boot-seam/design.md` §4 `G-8`).
+- **The pins** (D-310, D-314): `provident-storeroom ^2.0.0` (lock 2.0.1), `provident-ssr ^0.6.0`; the demo bundle regenerated; `SC-1` reads `15`/`14`; the map's `module-system` `endpoints` **24** (cap **290**, D-14).
+- **The executor** (`src/shared/module-contract.ts`, `src/main/modules/{loader,admission,activation,resolver,handles,index}.ts`, `src/renderer/extensions.ts`): the manifest, the two deliveries through one `ModuleSource`, the disjoint ctx halves, admission's three refusals by name, the resolver's four and its total order, the listener two-half with the passthrough arm, the `reentrant-call` refusal, and the **`invoke` door** (unknown name / throwing handler answer values).
+- **The transport** (`src/main/mcp-server.ts`): the published set as the registry's composition over **`ModulePort`**, re-registration on activation with withdrawal by `remove()`, one version authority (`appVersion()`), `invokeModuleTool(door, gate, …)`, the dynamic arm's schema moved so a caller's args reach the door.
+- **`src/main/main.ts`**: the executor's host and its `modulePort` at the one-line options pass; `syncModuleRouter` and `router?` retired whole; the set-disabled toggle stated as a census write (the port's `activations()` is the live set).
+- **The six marked rows** re-grained to the shipped realm surface (55/55); `src/renderer/runtime.ts`'s transform hook retired (C-10, D-231).
+
+## The readings (clean tree)
+
+`typecheck` **0**, `typecheck:tests` **0**, `build` **0**; the unit batteries **15/15** (`module-system` 8 + `mcp-surface` 7); the boundary **10/10**; `strata-lint` **211**. The suite: **11 failed / 3,020 passed / 2 skipped of 3,033** over **158** files.
+
+## The eleven reds, each with its owner
+
+- **`M-1`…`M-5`** (`tests/e2e/modularity/`): U1's e2e — waiting on the **boot census activation route** (the delivery arm is the MCP tool's; a boot's census-loaded module has no activation path).
+- **`I-3`/`I-8`** (`tests/integration/module-system/`): the activation's main-ctx/log/refusing shape — module-system's seat.
+- **`S-11`** (e2e) **and `ISO-4`** (integration) `security-store-storeroom`: the isolation scanner flags `src/main/modules/admission.ts`'s **token census** as a channel invocation — a row re-grain (the census site is a refusal vocabulary).
+- **`S-9`** (`tests/e2e/central-data/`): the seam census — `src/shared/module-contract.ts` is a **fourth** package importer.
+- **`REGISTER-EXEC-1`** (`tests/focus-tool.test.ts`): the register's execution against the composition.
+
+## The handoff set (by pointer)
+
+`H-1`/`H-2` → `provident-ssr`: delivered (`Preempt-Providence/docs/handoff-modularity-2026-11-20.md`), answered (`handoffs-answer-modularity-2026-11-23.md`), the arm handed over (`docs/probes/…`, `handoffs-arm-…`); **`H-1` discharged at 0.6.0** (rev 15's `C-7` is the host-side adoption), **`H-2` withdrawn**. `H-3`/`H-4` → `provident-storeroom`: superseded/answered at 2.0.0. `H-5` → the WebAssembly arm: delivered and **discharged at 2.0.1**. The release summary: `Preempt-Providence/docs/handoffs-update-0.6.0-2026-11-23.md`.
 
 ## What a fresh session does next, in order
 
-**The queue is `strata/next-steps.md`, `strata/pending.md` and `strata/proposals.md`** (D-61): next-steps is what is actionable now and in what order — **and the rows that stand are that file's own table, never a number here** (`D-26`, `D-43`).
-**State decides what is open, and it is read before any prose about it is believed.** `stage` is the last structural transition and never a verdict (`strata/README.md`, § "State, not prose"), so a `done` stage makes no unit ready and skips no survey (how many read it is the ledger's own figure, `D-26`, `D-43`):
-- **the units carrying a standing `lastFailure` are the ledger's own — each unit file's `lastFailure` field is the list, never a count or a name here** (`D-26`, `D-43`) — and only `rebuild` clears one (`rebuild.md` §1), so a **closed** unit can still carry one (`D-149` records exactly that).
-- **`pending.md` holds the blocked work, and its rows ARE the list — never a number** (that file's table is the list; the audit's remainder left at `D-174` and the composers at `D-155`): `D-128`'s audit reachability reading: nothing waits on a decision, an admission, the package or the user, the last row (`strata-lint`'s record gap) having left with its work on 2026-11-05 as `pending.md` records (`D-114`), and the deviations those rows named stand open in the records they belong to. **THE `data.*` ANSWER SITES ARE NO LONGER AMONG THEM**: `D-112` answered all five on 2026-11-04 (five renderer arms, five `ipcMain.handle` sites, one `data` member in lockstep, eleven gating rows, no push), and the departure is recorded in `pending.md` WITH its second role, `D-82`'s clause-2 revival condition, which now lives in `D-112` and is unchanged in substance — a route is not a consumer and the cell stays `N/A`. **The eleven unimported `src/shared/` modules are no longer among them**: the ruling was taken on 2026-11-04 and it is **carried as designs**, the user's, with `D-111` recording the disposition and what carrying leaves unsaid. **And `src/shared/overlay.ts`'s absent consumer is no longer among them either**: the user's ruling gave it the consumer it was owed — *"The overlay is used to contain UI elements that should block general app access while open, ex. security tools and other configuration settings"* — `D-113` authored the surface and wired the application on 2026-11-05, and `pending.md` records the departure with its reason.
-
-So the first act is still a **SURVEY** — every unit's state, every row in `pending.md` (that file's table is the list — no row stands at this head, and a row that lands leaves) and the deviations the records name — and `next-steps.md` is where actionable work is taken from once a row is filed there.
+1. **The five named reds' owners**: the isolation scanner's row re-grain, the seam census's re-grain, the focus register, `I-3`/`I-8` (module-system's activation), and the **boot census activation route** — then `M-1`…`M-5` close.
+2. **The two outstanding halves**, named not hidden: the **registration frame's wire** (`S-12`'s eleventh bridge member + its `secure-panels` lockstep + `module-channel`'s receiver + three census rows — other seats' files) and the **out-of-band activation sink** (`design.md` §5's third caller — no port/host member carries it).
+3. Then **U2–U7**, with **U7's acceptance conversion (the menus pane and the demo contents as modules) last**.
 
 ## Operating notes that cost real time
 
-- **A run is only trustworthy on a clean tree.** The boundary row asserts the worktree against a declared edit set, so a dirty tree reddens it **by construction** — commit, then measure (`tests/integration/store-view-record/boundary.test.ts`; brief §6).
-- **The layer wall is prompt-level in this seat**: without the preset's `role_*` tools the L1/L2/L3 seats are plain delegations carrying the role's persona and procedure, so only the instruction and the diff hold scope.
-- **A disposition is not a landing**: a `routed` finding is not fixed, and a fix over prose must be re-read rather than substituted — a commit hash once ate a row count in two L1 documents (D-3).
-- **Instruments before prose** (D-29, D-30, D-44): `strata-walkthrough.mjs` stages, checks and pins; `strata-marks.mjs` keeps markers and index agreeing — a finding a script should have caught indicts it. **Commit per gate and never push** — the one merge D-6 reserved was taken on the user's instruction of 2026-11-06, and `main` and `strata` stood at ONE commit when it landed (D-6's pointer clause, D-119), so a later pass either commits on `main` or re-cuts `strata` from it; four legs and `strata-lint`, run from `strata/`.
-- **`npm test` — not only the Electron legs — can leave process trees**: the boot battery spawns Electron and a teardown lives only as long as
-  its vitest hooks, so check `ps -eo pid,etime,args | grep -E 'node_modules/electron/dist|dist/main/main.mjs'` after a run and expect it empty.
-  The teardown now SIGKILLs a boot's whole tree by process-tree walk, never by SIGTERM — the main process ignores it — and **proves zero**, failing loudly with every survivor listed; `reapProfile`'s cmdline-only match saw neither `--type=zygote` child (D-74).
-- **A snapshot of an artifact another worker may rebuild is not a reading.** `dist/` is co-owned: `boot-contract.test.ts`'s `beforeAll` runs
-  `npm run build` (first arm `npm run clean`) while `arrangement.test.ts` reads the same files, so "it exists" is true one millisecond and false
-  the next. Every read of a co-owned artifact is a BOUNDED wait — present, non-empty, unchanged across two polls — and a failure is awaited to its reason line rather than sampled: a published error arrives in more than one stderr chunk (D-74).
+- **Each window's declaration block declares exactly that window's paths** (D-146): a fresh pass writing `src/`/`docs/`/`tests/` must declare every path it writes, in a page it owns; the duplicates `P-7` names are the usual slip, and a committed path must not stay in a live block (P-5 refuses a pre-filed declaration).
+- **The demo bundle regenerates** when its `@source` digests move (`node demo/pane-drag-demo/build.mjs`, D-118); the demo-bundle rows red until it does.
+- **Commit per gate and never push** (D-6); a reading is taken on a clean tree; the four legs plus the boundary instrument are the floor (brief §6, D-301).
+
+```boundary-declared
+{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/handover.md", "d": "D-306", "why": "the session handover replaced whole: where the branch stands, what landed, the eleven named reds, the handoff set and the next acts"}]}
+```
