@@ -6,9 +6,10 @@
 //
 // Contract (§2.1, §3.7): the ONLY declarative change of this unit is
 // `package.json`'s `dependencies['provident-ssr']`, moving `^0.2.1` → `^0.5.2`
-// (RE-GRAINED FROM `^0.5.1`, and `R-14`'s own comment now says WHY the bump
-// came — see below; the row is re-pinned only with the sentence that bought it);
-// the installed dist must resolve to `0.5.2` (the skew protection — a stale
+// (RE-GRAINED FROM `^0.5.1`) and, at REV 15, `^0.5.2` → `^0.6.0` (a CARET cannot
+// admit it — on `^0.x.y` the MINOR is pinned exactly); `R-14`'s own comment says
+// WHY each bump came — see below; the row is re-pinned only with the sentence
+// that bought it; the installed dist must resolve to `0.6.0` (the skew protection — a stale
 // `node_modules` beneath a moved pin is the signature of a half-installed tree
 // and must NOT be able to produce a green suite). No new MCP surface, no new
 // renderer RPC method, no shim member beyond the one (§2.2.4).
@@ -22,7 +23,7 @@
 // exception (`docs/L1/central-data-census-exception.md` §4), which adds the five
 // `provident.data.*` names in the SAME COMMIT as their registration and gate rows.
 //
-// TDD: the retarget has landed (`package.json:27` = `^0.5.2`, installed `0.5.2`),
+// TDD: the retarget has landed (`package.json:27` = `^0.6.0`, installed `0.6.0`),
 // so R-14 PASSES on this tree; R-15/R-14b and the static rows PASS and must stay
 // passing (§4.1: "PASSES until `U-FOCUS-TOOL` lands"). This file is the
 // version/AF-9 half of the second red cycle's re-write.
@@ -31,6 +32,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { ShimElement } from '../src/shared/dom-shim.js'
+import { Supervisor } from 'provident-ssr'
 import { ProvidentMcpServer } from '../src/main/mcp-server.js'
 import { groupForTool, type ToolGroup } from '../src/main/security.js'
 import type { RpcMethod } from '../src/shared/types.js'
@@ -49,13 +51,36 @@ function readJson(rel: string): Record<string, unknown> {
 // ---------------------------------------------------------------------------
 
 describe('U-ENGINE-PIN — the version pin (spec §2.1, §3.7, §4.1)', () => {
-  it('R-14 the declared pin is ^0.5.2 and the installed dist is 0.5.2', () => {
+  it('R-14 the declared pin is ^0.6.0 and the installed dist is 0.6.0', () => {
     // States:
-    //   S1 the DECLARED pin: package.json dependencies['provident-ssr'] === '^0.5.2'
-    //   S2 the INSTALLED dist: node_modules/provident-ssr/package.json .version === '0.5.2'
+    //   S1 the DECLARED pin: package.json dependencies['provident-ssr'] === '^0.6.0'
+    //   S2 the INSTALLED dist: node_modules/provident-ssr/package.json .version === '0.6.0'
     //   S3 the two agree — version skew cannot be silently green
+    //   S4 the CAPABILITY the reason below rests on is installed, not merely declared
     //
-    // WHY THIS LITERAL MOVED `^0.5.1` → `^0.5.2`, IN THIS ROW'S OWN WORDS — A PIN ROW THAT DOES
+    // REV 15 / `D-314` RE-GRAINS THIS ROW WHOLE — TITLE AND LITERAL — `^0.5.2` → `^0.6.0`, because a
+    // title that lags a moved pin is the first thing a later pass misreads. WHY THE LITERAL MOVED,
+    // IN THIS ROW'S OWN WORDS (the rule the paragraph below states for the previous bump): A CARET CANNOT ADMIT IT — on `^0.x.y`
+    // the MINOR is pinned exactly, so `^0.5.2` can never resolve `0.6.0`, and this is a DECLARATIVE
+    // MOVE rather than a widening. WHAT IT BOUGHT, by reference and never restated as a rule
+    // (`docs/handoffs-update-0.6.0-2026-11-23.md` §1–§2): `PATH-DOMAIN-RE-MINT` — the SUPERVISOR'S
+    // TREE COMPILE MODE, `CompileMode = 'family' | 'path'` (`dist/core/supervisor.d.ts:93-125`),
+    // DECLARED via `{ compileMode }` / `setCompileMode()` (`.js:221-224,625-631`) and INFERRED at
+    // the bootstrap seam `recordResolved` from the recorded path states (`.js:644-647`), with the
+    // pass-2 switch at `.js:734-743` — WHICH DISCHARGES `POST-BOOTSTRAP-EMIT-DROP` UPSTREAM: on the
+    // installed dist this unit's `4 → 0` arm renders the FULL tree (226 chars, five ids) once the
+    // post-bootstrap compile honours the mode, where this host's own plain `node.compile` still
+    // zeroes the document, so the surviving case is the HOST'S RECIPE and the host-side half is
+    // `producing-runtime`'s (`docs/L1/modularity.md` `C-7`/`S-16`); plus `attach` now REGISTERING an
+    // unregistered node (register-if-new, `.js:1648-1662`), a refused restore answering
+    // `replay().status === 'no-op'` and KEEPING the graph, the condensed base declared a LIVE VIEW,
+    // the `handler-body-missing` warn, and the census dedupe. THIS ROW CARRIES THE PIN AND NOT THE
+    // ADOPTION: it asserts that the two version strings agree and that the mode surface the
+    // adoption depends on is really in the installed bytes.
+    //
+    // AND THIS PARAGRAPH IS KEPT AS THE READING IT WAS — the `^0.5.1` → `^0.5.2` bump's own reason,
+    // because a pin row that forgets what a bump bought is a row that is re-pinned without review.
+    // WHY THE PREVIOUS LITERAL MOVED `^0.5.1` → `^0.5.2`, IN THIS ROW'S OWN WORDS — A PIN ROW THAT DOES
     // NOT SAY WHAT THE BUMP BOUGHT IS A ROW THAT WILL BE RE-PINNED WITHOUT REVIEW.
     // `0.5.2` (`VALUE-PROVIDER-RENDER-DISPOSITION`) NARROWS THE COMPILE EMIT GATE so that a
     // name-consumed provider is dropped ONLY WHEN IT IS A RUNTIME-MINTED VALUE RECORD —
@@ -73,20 +98,32 @@ describe('U-ENGINE-PIN — the version pin (spec §2.1, §3.7, §4.1)', () => {
     const installed = readJson('node_modules/provident-ssr/package.json')
 
     // S1
-    expect(deps['provident-ssr']).toBe('^0.5.2')
+    expect(deps['provident-ssr']).toBe('^0.6.0')
     // S2
-    expect(installed.version).toBe('0.5.2')
+    expect(installed.version).toBe('0.6.0')
     // S3 — the declared range must be satisfied by the installed version: a
-    // `^0.5.2` pin with a `0.5.1` dist is the half-installed signature, so the
-    // caret is read as a caret and not as `minor >= 5`: on `^0.x.y` the MINOR is
-    // pinned exactly and the PATCH moves, which is why a `0.5.1` beneath this pin
+    // `^0.6.0` pin with a `0.5.2` dist is the half-installed signature, so the
+    // caret is read as a caret and not as `minor >= 6`: on `^0.x.y` the MINOR is
+    // pinned exactly and the PATCH moves, which is why a `0.5.2` beneath this pin
     // reds here even though it would have passed the loose form.
     const installedParts = String(installed.version).split('.').map(Number)
     const [installedMajor, installedMinor, installedPatch] = installedParts
     expect(installedParts.length, 'the installed version is a three-part semver').toBe(3)
     expect(installedMajor).toBe(0)
-    expect(installedMinor).toBe(5)
-    expect(installedPatch).toBeGreaterThanOrEqual(2)
+    expect(installedMinor).toBe(6)
+    expect(installedPatch).toBeGreaterThanOrEqual(0)
+    // S4 — THE REASON'S OWN WITNESS, so the paragraph above is a MEASURED reading
+    // and not a comment (`D-43`: a declaration agreeing with itself is not
+    // evidence). The installed supervisor carries the compile-mode surface
+    // `D-314`'s reading rests on, and it DEFAULTS to `family` — which is what
+    // makes the `path` INFERENCE at `recordResolved` an event at all, and what
+    // makes a host's adoption a decision. A dist lacking the surface reds HERE,
+    // in the pin carrier, rather than in the design's step.
+    const sup = new Supervisor({})
+    expect(typeof sup.getCompileMode, 'the installed supervisor answers getCompileMode').toBe('function')
+    expect(typeof sup.setCompileMode, 'the installed supervisor answers setCompileMode').toBe('function')
+    expect(sup.getCompileMode(), 'an undeclared tree compile mode defaults to family').toBe('family')
+    sup.dispose()
   })
 
   it('R-14b the retarget changed only the one dependency line (§2.1, §5.1)', () => {
