@@ -491,7 +491,24 @@ describe('view-record · clause 2 — the push, measured per family and against 
     expect(surface.commitPane(DEFAULT_PANE_ID, { height: 111 }).status).toBe('committed')
     expect(sunk.length - bridged, 'the main-side half: one committed pane change reaches the sink exactly once').toBe(1)
     bridged = sunk.length
-    expect(surface.commitZones(ZONE, { size: 140, display: 'normal' }).status, 'a committed change of a second family').toBe('committed')
+    // **THE ZONE'S `size` MUST LAND A CHANGED FIGURE, OR ONLY ONE OF THE TWO LEAVES DELIVERS**: at
+    // `provident-storeroom@2.0.0` a `write` fires its listener only where the LITERAL changes (`D-310` in `strata/decisions.md`;
+    // research finding `A11`; `node_modules/provident-storeroom/index.d.ts:718-758`; `RELEASE-NOTES.md` §2.0.0 items 12–14).
+    // The previous stimulus supplied `size: 140` — the figure `top` already stands at, its own creation default
+    // (`DEFAULT_ZONE_SIZES`, `src/shared/view-shape.ts:310`) — so that leaf was no change, delivered nothing, and this row
+    // counted one push where its two supplied members are two leaf writes (`D-151`). The figure below is derived from the same
+    // table and moved off the standing one; the zone pair is `zonesMustStand` at `src/main/view-record/index.ts:1153`,
+    // admitting through `zonesAdmitAt` `:996`, `zoneNodeAdmits` `:964` and `zoneMemberAdmits` `:978`; and `zoneIn`
+    // (`:~644-690`) admits a finite non-negative `size` and a string `display`, so both leaves land and both deliver.
+    // **AND THE `display` MEMBER IS A CHANGE FROM ABSENCE, WHICH IS THE OTHER HALF OF WHY IT DELIVERS**: the creation
+    // placeholder states a zone's `size` and NO `display` (`viewZonesPlaceholder`/`defaultZoneRecord`,
+    // `src/shared/view-shape.ts:333-347`), so `'normal'` is a member the standing record does not carry and the leaf moves
+    // its bytes (`zoneOf`, `src/main/view-record/index.ts:658`, carries a member only where the record states one). A
+    // placeholder that ever states a `display` would re-red this row with exactly the class this pass fixed — a stimulus
+    // written at a value the record already holds, which at `provident-storeroom@2.0.0` fires nothing (`A11`, `D-310`).
+    const declaredSize = DEFAULT_ZONE_SIZES.find((entry) => entry.id === ZONE)
+    if (declaredSize === undefined) throw new Error(`the table declares no default size for ${ZONE}`)
+    expect(surface.commitZones(ZONE, { size: declaredSize.size + 20, display: 'normal' }).status, 'a committed change of a second family').toBe('committed')
     expect(
       sunk.length - bridged,
       'and this zone act reaches it too, over the one registration — twice, because its two supplied members are two leaf writes (D-151)',

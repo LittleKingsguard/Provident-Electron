@@ -179,15 +179,24 @@ describe('a passing act answers the commit’s log, and the two arms are disting
   it('L-2 · a CLEAN write answers a log with entries and NO `repair-run`, and `repaired:false` — so the two arms are distinguishable, which is the whole point', () => {
     const one = stand()
     // The pair must be STANDING for this to be the clean arm over a store that carries one: write the repaired record
-    // first, then write back exactly what stands. The second write's value is the first write's result, so the pass
-    // runs, all six pairs are asked, and every one of them PASSES.
+    // first, then write a CHANGED-BUT-LEGAL record over it, so the pass runs, all six pairs are asked, and every one of
+    // them PASSES.
     const repairedArm = landedWrite(one.surface.write({ path: ['tabs'], value: twoActive }))
     const stood = one.surface.read({ path: ['tabs'] })
     if (stood.status !== 'read') throw new Error(`the record was not readable: ${JSON.stringify(stood)}`)
-    // **THE CLEAN ARM WRITES BACK WHAT STANDS, AND THAT IS THE UNWRAPPED RECORD** (§2a's last rule): handing the delivery's
-    // node straight to `write` would store `_tier` members as ORDINARY DATA — the declared consequence of the readout — so
-    // the reader unwraps first and the six pairs judge the record the store actually holds.
-    const clean = landedWrite(one.surface.write({ path: ['tabs'], value: unwrap(stood.value) }))
+    // **THE CLEAN ARM'S VALUE IS THE UNWRAPPED STANDING RECORD WITH ONE TAB'S TITLE MOVED** — and the unwrap is §2a's last
+    // rule: handing the delivery's node straight to `write` would store `_tier` members as ORDINARY DATA — the declared
+    // consequence of the readout — so the reader unwraps first and the six pairs judge the record the store actually holds.
+    // **AND IT MOVES BECAUSE AT `provident-storeroom@2.0.0` A `write` FIRES ONLY WHERE THE LITERAL CHANGES** (`D-310` in
+    // `strata/decisions.md`; research finding `A11`; `node_modules/provident-storeroom/index.d.ts:718-758`;
+    // `RELEASE-NOTES.md` §2.0.0 items 12–14): the previous stimulus wrote back the value the address already answered, so
+    // nothing fired, no pair was asked and the log carried no entries at all. The member this arm moves is ONE tab's `label`
+    // (its title), which the pair `tab-has-title` admits as any non-blank string (`src/main/tabs-record/index.ts:1147-1153`);
+    // `order` and each row's `id`/`target`/`active`/`lastActiveAt`, and the other row's title, are exactly as they stood.
+    const stoodRecord = unwrap(stood.value) as Record<string, unknown>
+    const stoodRow = stoodRecord['pane-a'] as Record<string, unknown>
+    const moved = { ...stoodRecord, 'pane-a': { ...stoodRow, label: `${String(stoodRow['label'])} (moved)` } }
+    const clean = landedWrite(one.surface.write({ path: ['tabs'], value: moved }))
 
     expect(clean.repaired, 'nothing was repaired on this arm').toBe(false)
     // **`[]` IS NOT THIS ARM'S ANSWER** — the correction `D-102` gets wrong (`D-46`): the clean write over a store whose

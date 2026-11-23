@@ -479,18 +479,35 @@ describe('the instance’s declarations · measured at the store’s creation (D
 
     // (2) THE MEASUREMENT THAT MAKES TWO SEATS NECESSARY — THE TRIGGERED SETS, BOTH DIRECTIONS. The module's own batch,
     // wrapped in a counter and adopted by a real store, over the profile this instance already stands on (whose halves are
-    // the legal boot state, so every pair passes and no repair perturbs the set).
+    // the legal boot state — the one BEFORE the first landing write, since the second write runs over the first one's
+    // result — so every pair passes and no repair perturbs the set).
+    // **AND EACH WRITE MUST LAND A CHANGED-BUT-LEGAL VALUE**, because at `provident-storeroom@2.0.0` a `write` fires only
+    // where the LITERAL changes (`D-310` in `strata/decisions.md`; research finding `A11`; `node_modules/provident-storeroom/index.d.ts:718-758`;
+    // `RELEASE-NOTES.md` §2.0.0 items 12–14): the previous stimulus wrote `{open:false}` at the pane and
+    // `{exclusion:'mcp-enabled'}` at the ports — the boot's own two values — so nothing fired, `asked` stayed `[]` and
+    // `triggered` stayed `[]`. **AND THE PORTS HALF IS DRIVEN FIRST, BECAUSE THE ORDER IS THE LEGALITY ITSELF**: the pane
+    // record is `{open}` ALONE (`paneAdmitsAt`, `src/main/operator-settings/index.ts:882-889`), so its only changed value is
+    // `{open:true}`, lawful ONLY while the ports stand CLOSED (`paneAndPortsAreExclusive`, `:1167-1194`, with `settledPorts`
+    // at `:247-249`) — an open pane over open ports faults, and that repair writes at the OTHER half, which would put that
+    // seat in `asked` and destroy the one thing this row exists to measure. `{exclusion:'mcp-disabled'}` at the ports is
+    // changed at the boot state and legal with the pane closed: `wantedOf` derives the intent from the same word
+    // (`:223-231`), so `settledPorts('mcp-disabled', false)` is `'mcp-disabled'` and the seat passes with NO repair. The two
+    // arms are symmetric; the legality of the pane's changed value is what fixes which half is driven first.
+    // **AND THE ASSERTIONS' OWN MESSAGES STILL NARRATE THE ARMS IN THEIR ORIGINAL ORDER, WHICH IS DELIBERATE**: each was
+    // carried over BYTE-IDENTICAL with its block when the halves were re-ordered, because the sentence is a claim about the
+    // MEASURE it names and not about where that measure stands. So the physical order here is the legality's alone, and the
+    // ports assertion's *"AND THE REVERSE: …"* points at the PANE arm BELOW it (`D-310`, finding `A11`).
     const asked: string[] = []
     const store = armedCounting(batch, asked)
     asked.length = 0
-    const atPane = store.write(PANE, 'mem', { open: false }) as unknown as { triggered: Array<{ address: readonly string[] }> }
-    expect(asked, 'A WRITE AT THE PANE`S ADDRESS asks the pairs standing AT that address and no pair at the other half — the ports` seat is not in this list').toEqual([PANE_ID, PANE_EXCLUSIVITY_ID])
-    expect(atPane.triggered.map((entry) => entry.address), 'and the act`s own `triggered` set carries that one address and nothing beside it').toEqual([PANE, PANE])
-
-    asked.length = 0
-    const atPorts = store.write(EXCLUSION, 'mem', { exclusion: 'mcp-enabled' }) as unknown as { triggered: Array<{ address: readonly string[] }> }
+    const atPorts = store.write(EXCLUSION, 'mem', { exclusion: 'mcp-disabled' }) as unknown as { triggered: Array<{ address: readonly string[] }> }
     expect(asked, 'AND THE REVERSE: a write at the ports` address asks the pairs standing there and never the pane`s seat — a sibling write reaches NEITHER seat, whichever half moved').toEqual([EXCLUSION_ID, PORTS_EXCLUSIVITY_ID])
     expect(atPorts.triggered.map((entry) => entry.address), 'and its `triggered` set is that one address too').toEqual([EXCLUSION, EXCLUSION])
+
+    asked.length = 0
+    const atPane = store.write(PANE, 'mem', { open: true }) as unknown as { triggered: Array<{ address: readonly string[] }> }
+    expect(asked, 'A WRITE AT THE PANE`S ADDRESS asks the pairs standing AT that address and no pair at the other half — the ports` seat is not in this list').toEqual([PANE_ID, PANE_EXCLUSIVITY_ID])
+    expect(atPane.triggered.map((entry) => entry.address), 'and the act`s own `triggered` set carries that one address and nothing beside it').toEqual([PANE, PANE])
 
     // (3) ONE BATCH, ONE CONSTRUCTION, NO SECOND STORE: the six declarations ride ONE `createProfileStore` call.
     const before = captured.length

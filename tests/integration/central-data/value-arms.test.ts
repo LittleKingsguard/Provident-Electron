@@ -233,11 +233,38 @@ describe('the value arms — a declaration that cannot be subverted by any calle
 
   it('VA-2 · CLAIM TWO: the CONSTRAINT PASS runs on the `data.*` write path — the answer\'s own log names each family\'s pair, and a refused corrupt write names the pair that refused it (D-103, D-105)', () => {
     const one = stand()
+    // **EVERY FAMILY'S STIMULUS IS DERIVED FROM WHAT STANDS AND THEN MOVED BY ONE MEMBER**, because at
+    // `provident-storeroom@2.0.0` a `write` fires only where the LITERAL changes (`D-310` in `strata/decisions.md`; research finding `A11`;
+    // `node_modules/provident-storeroom/index.d.ts:718-758`; `RELEASE-NOTES.md` §2.0.0 items 12–14): the previous stimulus
+    // read each family's STANDING value out of the store and wrote it straight back, so no literal moved, no pair was asked
+    // and no pair was named. Each value below is still the store's own read, still at the family's own root, differs in
+    // exactly one member, and that member is one the family's own pair ADMITS:
+    //   · `tabs` (`file`): one row's `label` (its title) — `tab-has-title` asks only for a non-blank string
+    //     (`src/main/tabs-record/index.ts:1147-1153`);
+    //   · `panes` (`file`): `pane-a`'s `height`, the stage pane whose clamp is `bounds {min:0,max:200}` — `panesAdmitAt`/
+    //     `paneNodeAdmits` admit any finite non-negative figure (`src/main/view-record/index.ts:926`, `:950-955`);
+    //   · `zones` (`mem`): `top`'s `size` (creation default 140, `DEFAULT_ZONE_SIZES`, `src/shared/view-shape.ts:309-314`) —
+    //     `zonesAdmitAt`/`zoneMemberAdmits` admit any finite non-negative `size` (`src/main/view-record/index.ts:978-1001`);
+    //   · `theme` (`file`): the standing placeholder carries no token, so the changed value is a DIFFERENT TOKEN WITH ITS OWN
+    //     DERIVATION — `{token:'dark', declaration:{value:'dark', removal:false}}` is exactly what `derivedTheme`/`composeTheme`
+    //     produce for `dark` with no attribute name (`src/main/view-record/index.ts:751-776`), so `theme-must-stand` re-derives
+    //     and finds it EQUAL (`:1279-1286`) — no repair, hence `repaired:false`.
+    const stoodTabs = one.store.read(['tabs'], 'file') as Record<string, unknown>
+    const stoodTabOrder = stoodTabs['order'] as readonly string[]
+    const stoodTab = stoodTabs[stoodTabOrder[0]] as Record<string, unknown>
+    const movedTabs = { ...stoodTabs, [stoodTabOrder[0]]: { ...stoodTab, label: `${String(stoodTab['label'])} (moved)` } }
+    const stoodPanes = one.store.read(['panes'], 'file') as Record<string, Record<string, unknown>>
+    const stagePane = stoodPanes[DEFAULT_PANE_ID]
+    const movedPanes = { ...stoodPanes, [DEFAULT_PANE_ID]: { ...stagePane, height: Number(stagePane['height']) + 20 } }
+    const stoodZones = one.store.read(['zones'], 'mem') as Record<string, Record<string, unknown>>
+    const topZone = stoodZones[ZONE]
+    const movedZones = { ...stoodZones, [ZONE]: { ...topZone, size: Number(topZone['size']) + 10 } }
+    const movedTheme = { token: 'dark', declaration: { value: 'dark', removal: false } }
     const pairs: ReadonlyArray<readonly [string, readonly string[], unknown]> = [
-      ['tabs', ['tabs'], one.store.read(['tabs'], 'file')],
-      ['panes', ['panes'], one.store.read(['panes'], 'file')],
-      ['zones', ['zones'], one.store.read(['zones'], 'mem')],
-      ['theme', ['theme'], one.store.read(['theme'], 'file')],
+      ['tabs', ['tabs'], movedTabs],
+      ['panes', ['panes'], movedPanes],
+      ['zones', ['zones'], movedZones],
+      ['theme', ['theme'], movedTheme],
     ]
     const expected: Record<string, string> = {
       tabs: 'tabs-must-stand', panes: 'panes-must-stand', zones: 'zones-must-stand', theme: 'theme-must-stand',
