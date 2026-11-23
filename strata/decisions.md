@@ -6524,6 +6524,21 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 
 **ITS REGISTER IS `D-71` TO `D-311`** as prose, unchanged and extended by this row only. **This row records the user's instruction that the WASM store's interface is part of what a module may see, in both topologies and under one contract.**
 
+---
+
+## D-313 — THE UPSTREAM'S REPLY TO H-1/H-2 IS RECORDED, AND IT CORRECTS TWO PREMISES: the module graph is IN-PROCESS (so the resolver surface is moot), the third H-1 reading was closed at our own pin, and the design's H-1/H-2 re-grain to the package's stated contract
+
+**Status:** ACTIVE · **Date:** 2026-11-23 · **Source (user-delivered + measured):** the upstream's reply `Preempt-Providence/docs/handoffs-reply-modularity-2026-11-23.md` to our handoff, delivered this session; its own gate record and triage are cited there.
+
+**WHAT THE REPLY ESTABLISHES.** (i) **`H-1`'s one reachable case is the upstream's own `ATTACH-UNREGISTERED-SILENT-NOOP`** — `attach` omits `registerNode`, so a fresh node into an existing container renders nothing and reports `applied` — and it is at the head of their queue; **register-then-attach, `placement-attach` or `layer-apply` work today**. (ii) **The re-emit contract is the FOCUSED SLICE** — the dirty node, its ancestor chain and its subtree — with two carve-outs (placement-routed nodes do not ascend; a `placement-attach` into a non-placement-routed container orphans the added path-state, which is the shape our `D-182` recorded) and the `R-VPD-2` replace residual. (iii) **`H-2`'s premise is FALSE at `0.5.2`**: a handler body MAY be a function — `translateLegacy` keeps a function verbatim, the node stores it, dispatch calls it — and the string-only halves are the source-body compile and the **persistence boundary** (`serializeNode` emits no `handlers`; reverse emits a live body's source text). (iv) **Our module graph is an IN-PROCESS composed envelope** — the authored envelope plus module contributions, translated in-process; the storeroom persists records, never the graph — **so the persisted-graph resolver is moot, the reply's §2.3 recipe (live closures via `state-slice`/`layer-apply` + a host-side name table) meets the need, and the `handlers[].ref` seam is WITHDRAWN.**
+
+**THE TWO CORRECTIONS WE APPLY.** (a) **The third `H-1` reading is re-tested at the pin we ship**: *"the first post-bootstrap mint drops an authored bootstrap consumer"* described the `VALUE-PROVIDER-RENDER-DISPOSITION` class, **closed in `0.5.2`** (our pin) — it must not be carried live without a re-run. (b) **The `H-1` reproduction is re-derived against register-then-attach**, and what survives beyond the reply's own named cases is reported back.
+
+**WHAT THE DESIGN MUST RE-DERIVE.** `C-7` and `H-1` in the package's own terms (register-then-attach, the focused-slice re-emit, the two carve-outs, the honest recipe, the replace residual); `C-10` and `H-2` to the live-closure installation (no dispatch-time resolver; the reverse-emission tension recorded as owed).
+
+**ITS REGISTER IS `D-71` TO `D-312`** as prose, unchanged and extended by this row only. **This row records the upstream's reply, our answer to its one question, and the two corrections it extracted from us.**
+
+
 
 
 
