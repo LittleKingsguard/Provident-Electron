@@ -10,5 +10,6 @@
 
 ```boundary-declared
 {"unit":"modularity","layer":"L0","module":null,"writes":[
- {"path":"strata/records/modularity-unit.md","why":"this record: U1's L2 and L3 landings (the pages, the batteries, the three routed findings) beside the 0.6.0 adoption and the handoffs","d":"D-306"}]}
+ {"path":"strata/records/modularity-unit.md","why":"this record: U1's L2 and L3 landings (the pages, the batteries, the three routed findings) beside the 0.6.0 adoption and the handoffs, and the L3 entry","d":"D-306"},
+ {"path":"strata/.strata/units/modularity.json","why":"the unit's ledger row, written by strata-state when L3 was entered (the seat's own transition)","d":"D-306"}]}
 ```
