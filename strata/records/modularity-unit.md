@@ -10,6 +10,5 @@
 
 ```boundary-declared
 {"unit":"modularity","layer":"L0","module":null,"writes":[
- {"path":"strata/records/modularity-unit.md","why":"this record: the five handoffs with H-5's upstream delivery and 2.0.1 discharge, the patch landing through the caret, and the wasm surface rev 13 states","d":"D-312"},
- {"path":"package-lock.json","why":"the lock moves 2.0.0 -> 2.0.1 under the reviewed range ^2.0.0 (the caret's own rule, S-1.3); package.json's range is unchanged","d":"D-310"}]}
+ {"path":"strata/brief.md","why":"§6's suite cell re-taken on 2.0.1: the same 5 red-first / 2,993 passed / 2 skipped of 3,000 over 153 files (D-26, D-40, D-310)","d":"D-310"}]}
 ```
