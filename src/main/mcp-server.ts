@@ -21,9 +21,12 @@ import {SecurityGate, exclusionAllowsWork, registrationAllowed, type ToolGroup, 
 // spelled in this file**, which the MCP closure reaches and whose byte census allows exactly one
 // foreign name; the composition root's own comment names the dropped file once, and `D-81` records the
 // disposition. They are declared here because this file is the module tools' surface —
-// `handleModuleTool`, `syncModuleRouter` and `ProvidentMcpServerOptions.moduleStore` are the three
-// consumers — and the composition root imports them back from here rather than the reverse.
-import type {CapabilityRouter} from '../renderer/extensions.js'
+// `handleModuleTool` and `McpServerOptions.moduleStore` are the two consumers — and the composition
+// root imports them back from here rather than the reverse. **AND THE THIRD CONSUMER THE RETIRED
+// ROUTE'S FUNCTION WAS IS GONE WITH IT** (`docs/L3/mcp-surface/design.md` §2's RETIRE row): the
+// `router?: CapabilityRouter` option and `syncModuleRouter` retired WHOLE in app-shell's coupled pass,
+// so this file imports NO realm half at all — the dynamic half's names and its call reach the PORT
+// declared below and nothing else (`design.md` §3's last two bullets, §5; `G-6`).
 // **THE ONE APPLICATION-VERSION AUTHORITY, IMPORTED AND NEVER RE-SPELLED** (`docs/L2/mcp-surface/interface.md`
 // §11; `docs/L2/module-system/interface.md` §8; L1 §4 `C-11`): `appVersion()` is hosted in the contract's home
 // (`src/shared/module-contract.ts`) and this surface is its SECOND READER, never a second authority. The
@@ -319,7 +322,9 @@ export function handleModuleTool(store: ModuleStore | null, name: string, args: 
   // `version`, `capabilities.tools/hooks/transforms`). A best-effort parse: if
   // the source is a plain `{...}` manifest, extract capabilities.tools; else
   // fall back to any `capabilities` arg. The store records the parsed
-  // capabilities so `syncModuleRouter` can register the module's tools.
+  // capabilities as the CENSUS row's own members, which `module.list` answers.
+  // **THEY ARE NOT A NAME SOURCE ANY MORE**: the published dynamic half is the PORT's `activations()` and
+  // nothing in this file composes from these rows (`docs/L3/mcp-surface/design.md` §3, §5; L2 §10).
   const parseCapabilities = (src: string, argCaps?: unknown): { tools?: string[]; hooks?: string[]; transforms?: string[] } => {
     let parsed: { capabilities?: { tools?: unknown; hooks?: unknown; transforms?: unknown } } | null = null
     const trimmed = src.trim()
@@ -363,38 +368,6 @@ export function handleModuleTool(store: ModuleStore | null, name: string, args: 
     return store.list().map((r) => ({ name: r.name, version: r.version, capabilities: r.capabilities ?? {}, disabled: r.disabled, quarantined: r.quarantined }))
   }
   throw new Error(`unknown module tool: ${name}`)
-}
-
-/** U9-FIX — re-sync the CapabilityRouter from the module registry. The
- *  registry is the source of truth (the crossing's rows, fail-disabled/hash-verified); the
- *  router is the LIVE capability surface. Each installed, non-disabled,
- *  non-quarantined module's declared capabilities are registered into the router
- *  so its dynamic `module:<name>.<tool>` tools become callable. Disabled and
- *  quarantined modules are NOT registered (their tools are not callable). This
- *  closes the store→router→MCP dynamic-tool chain in production.
- *
- *  NOTE: the module's `entry` source (trusted-equivalent to `code`) is NOT
- *  evaluated here — the declared capability NAMES are registered with a
- *  pass-through handler that echoes the declared tool. Full entry execution is a
- *  documented follow-on (the eval of the source body); the registration +
- *  invocation two-gate + namespacing are all wired. */
-export function syncModuleRouter(router: CapabilityRouter | null, store: ModuleStore): void {
-  if (!router) return
-  router.clear()
-  const status = store.status()
-  const active = new Set(status.loaded)
-  for (const r of store.list()) {
-    if (!active.has(r.name)) continue // disabled or quarantined → not live
-    const caps = r.capabilities ?? {}
-    const tools = caps.tools ?? []
-    if (tools.length === 0) continue
-    router.registerModule(r.name, (ctx) => {
-      for (const fullTool of tools) {
-        const bare = fullTool.startsWith(`module:${r.name}.`) ? fullTool.slice(`module:${r.name}.`.length) : fullTool
-        ctx.tool(bare, (args) => ({ tool: fullTool, args }))
-      }
-    })
-  }
 }
 
 /** R1 (mcp-resources-review.md) — a gated read-group resource definition. */
@@ -541,13 +514,14 @@ export interface McpServerOptions {
    *  the settings-backed file tier (`file.modules.<id>`, one atomic write; writer class 2).
    *  When set, the server handles the `module.*` tools in MAIN, NOT routed to the renderer. */
   moduleStore?: ModuleStore
-  /** U9 — **THE REALM ROUTER THE ROUTE FED, RETAINED HERE AND READ BY NOTHING IN THIS FILE FROM `S-5` ON**
-   *  (`docs/L3/mcp-surface/signatures.md` §5; `design.md` §2's RETIRE row). The composition reads the PORT and
-   *  the door reaches the PORT, so this member names no source and no route any more. It retires TOGETHER with
-   *  `main.ts`'s construction literal and that file's two `syncModuleRouter` calls, in app-shell's pass — which
-   *  is why the member and the free `syncModuleRouter` still stand here: this module's move reds no other
-   *  module's typecheck (D-3). */
-  router?: CapabilityRouter
+  // **THE `router?: CapabilityRouter` OPTION MEMBER IS RETIRED WHOLE, AND ITS ABSENCE IS THE COUPLED ACT**
+  // (`docs/L3/mcp-surface/design.md` §2's RETIRE row, §3's last bullet; `signatures.md` §5): the realm router
+  // stood here as "the LIVE capability surface" the retired route fed, and NOTHING in this file reads it once
+  // the composition and the door reach the PORT — so it retires TOGETHER, in ONE act, with `syncModuleRouter`'s
+  // declaration above and with `src/main/main.ts`'s construction literal and its two call sites. That file is
+  // app-shell's and the three `typecheck` diagnostics the retirement closes were inside the function's own
+  // body (`router.clear`, `ctx.tool`, the implicit-`any` that followed), which is why the two halves could not
+  // be landed apart: a member left declared would name a source no reader ever asks (D-3, D-5).
   /** **THE DYNAMIC HALF'S ONLY SOURCE** (`docs/L2/mcp-surface/interface.md` §10; `design.md` §2, §3, §10
    *  `ASM-1`): one port answering BOTH the names (`activations()`) and the call (`invoke`) — NOT a
    *  `CapabilityRouter`, which declares no tool table and mints no `module:<n>.<t>` name. `install` is the
@@ -1255,8 +1229,9 @@ export class ProvidentMcpServer {
           // INSTALLED rows, the executor's registry is its own activation table reached only through
           // `activations()`/`invoke` — so a delivery is written once to each and neither is renamed the other.
           // THE LINE THAT STOOD HERE WAS `syncModuleRouter(router, moduleStore)`, and what replaced it is not a
-          // call: that target is a tool table the realm half no longer declares (`syncModuleRouter` retires whole
-          // in app-shell's pass) — `design.md` §5; `docs/L2/mcp-surface/interface.md` §10.
+          // call: that target is a tool table the realm half never declared, so the function retired WHOLE in the
+          // coupled app-shell pass and what stands in its place is this arm's one `install` and one `rePublish()` —
+          // `design.md` §5; `docs/L2/mcp-surface/interface.md` §10.
           const source = typeof args.source === 'string' ? args.source : ''
           const door = liveDoor()
           const answered = door === null ? landed : door.install({ kind: 'source', source })

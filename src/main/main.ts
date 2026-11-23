@@ -21,8 +21,17 @@ import type {ModuleStore, ModuleRecord, ModuleStoreStatus} from './mcp-server.js
 // ROLE ROUTE ADDS THE THIRD SPECIFIER** (`IPC_MENU_ROLE`, this file's own spelling beside `preload.ts`'s): the channel the
 // one handler below is registered on, taken from the one file that spells it.
 import {IPC_SECURITY_EXCLUSION, IPC_SECURITY_PANE, IPC_MENU_ROLE} from './store-channels.js'
-import {CapabilityRouter} from '../renderer/extensions.js'
-import {syncModuleRouter} from './mcp-server.js'
+// **THE REALM HALF IS NOT IMPORTED HERE ANY MORE, AND ITS ABSENCE IS THE COUPLED ACT** (`docs/L3/mcp-surface/design.md`
+// §2's RETIRE row, §3's last bullet): `CapabilityRouter` fed the retired store→router→tool chain, and the two names this
+// file imported for it — the router and `syncModuleRouter` — retire together with their three uses below once the
+// transport's dynamic half is the executor's PORT (`modulePort`). Nothing in this composition holds, constructs or
+// re-syncs a router: no import of `src/renderer/**` stands in this file at all (D-3, D-5; L1 §3 `S-5`).
+import {createModuleExecutor} from './modules/index.js'
+// **THE CONTRACT'S OWN NAMES, IMPORTED AND NEVER RE-SPELLED** (`src/shared/module-contract.ts`; L1 §2's `module-system`
+// row): `ModuleHost` is the FOUR members the executor is GIVEN (store, the one application number, the registration
+// sender, the log sink), `RegistrationFrame` is `C-15`'s ONE payload, and `appVersion` is the ONE version authority this
+// composition hands the resolver instead of spelling a number (`docs/L2/module-system/interface.md` §8, §11; L1 §4 `C-11`).
+import {appVersion, type ModuleHost, type RegistrationFrame} from '../shared/module-contract.js'
 import {SecurityGate, type ToolGroup} from './security.js'
 // central-data (`docs/L1/central-data-census-exception.md` §2 E-3) — the module's surface enters the
 // composition here, and nothing else of this file moves: it constructs no store and touches no file
@@ -546,8 +555,9 @@ async function main(): Promise<void> {
   // server's `moduleStore` option) and the operator `IPC_MODULE_SET_DISABLED` toggle (writer class
   // 1) both mutate THIS surface, whose every mutation issues ONE commit of the whole composed rows
   // list — a single authority, so after a `module.update` + a `setDisabled` on the same module the
-  // record and the served rows AGREE. The readers (`syncModuleRouter`, `status().loaded`) read the
-  // same rows. ══
+  // record and the served rows AGREE. The readers (`module.list`, `status().loaded`, the realm's `IPC_MODULE_GET`
+  // answer) read the same rows — **and the router that once stood beside them is gone WHOLE**: the transport's dynamic
+  // half is the executor's port and the census is not a name source any more (`docs/L3/mcp-surface/design.md` §3, §5). ══
   const moduleRecordsOf = (): ModuleRecord[] => {
     const out: ModuleRecord[] = []
     for (const row of settingsSurface.state().rows) {
@@ -624,11 +634,51 @@ async function main(): Promise<void> {
       settingsSurface.commit(modulePayloadWith(`file.modules.${name}`, next))
     },
   }
-  // U9-FIX — the live capability router (main-process). Synced from the store's record so
-  // installed modules' declared tools become callable. Passed to the MCP server so dynamic
-  // module tools are registered + two-gated.
-  const moduleRouter = new CapabilityRouter()
-  syncModuleRouter(moduleRouter, moduleSurface)
+  // ═══ THE EXECUTOR'S HOST, ITS ONE PORT, AND NOTHING BESIDE THEM ═══
+  // **THE LINE THAT STOOD HERE WAS `const moduleRouter = new CapabilityRouter()` + `syncModuleRouter(moduleRouter,
+  // moduleSurface)`, AND WHAT REPLACES IT IS NOT A ROUTER BUT THE EXECUTOR**: `module-system`'s
+  // `createModuleExecutor` is the object that ANSWERS the dynamic half — its `activations()` is the published names and
+  // its `invoke` is the one route to a handler — so the transport is handed a PORT and this composition hands the
+  // executor its HOST (`docs/L3/mcp-surface/design.md` §3's last two bullets, §5; `docs/L2/module-system/interface.md`
+  // §11; L1 §2's `module-system` row). **THE HOST IS FOUR MEMBERS AND THIS FILE IS THEIR ONLY SOURCE**:
+  //   · `store` is the boot's OWN `createProfileStore` instance, never a second one and never the census below: the
+  //     executor's registry is its own activation table and `ModuleHost.store` is the PROFILE store (`C-16`, `D-312`);
+  //   · `appVersion` is the ONE authority the resolver judges, IMPORTED rather than spelled — this file states no number
+  //     (L1 §4 `C-11`; `docs/L2/module-system/interface.md` §8);
+  //   · `log` is the module's own contained evidence, written to the main-process console and never fatal (`D-105`);
+  //   · `sendRegistration` is `C-15`'s registration frame, and ITS WIRE is the half that does not stand at this head —
+  //     see the docblock below rather than a second channel.
+  // **AND THE CENSUS ABOVE IS NOT RENAMED INTO IT**: `moduleSurface` is the INSTALLED rows (`module.list`, `status()`),
+  // the executor's registry is its activation table — two facts, two stores, and a delivery is written once to each
+  // (`design.md` §5; D-43).
+  /** **`C-15`'S REGISTRATION FRAME, SENT BY THE ONE SENDER THIS COMPOSITION OWNS — AND THE WIRE IT RIDES IS `S-12`'s, WHICH
+   *  HAS NOT LANDED.** The payload is `module-system`'s and it crosses as DATA: `{module, client}`, the module's name and
+   *  its `client` source STRING, minted at activation and on the realm's boot read
+   *  (`docs/L1/modularity.md` §4 `C-15`; `docs/L2/module-system/interface.md` §9). **THE SENDER IS THIS FILE'S AND THE
+   *  MEMBER IT PUSHES OVER IS NOT**: `S-12` declares the bridge's ELEVENTH member — a realm-side handler registration,
+   *  one main-side sender beside the four crossing signals, `D-307`'s second kind on the channel's ONE message — and
+   *  that step is `app-shell`'s, with its LOCKSTEP half in `src/renderer/secure-panels.ts`'s `declare global`
+   *  re-declaration (`secure-panels`' seat: a half-widening FAILS) and three census rows in other seats' batteries
+   *  (`ISO-4` twice, `S-11`). None of those is this pass's write, so the frame is RECORDED and the debt NAMED rather than
+   *  routed over a second, invented channel: `src/shared/module-channels.ts` (the message and its kinds) and
+   *  `src/renderer/module-channel-client.ts` (the realm's receipt and fan-out) are `module-channel`'s paths and do not
+   *  stand either. **NOTHING IS SILENTLY DROPPED**: the frame's arrival is stated here, with the module's name and the
+   *  source's LENGTH and never the source, so a boot log says what the executor delivered and to what. */
+  const sendRegistration = (frame: RegistrationFrame): void => {
+    console.error(`[provident-main] module registration frame — module '${frame.module}', client source ${frame.client.length} chars; the wire (the eleventh bridge member, S-12) is OWED, so the realm receives nothing yet`)
+  }
+  const moduleHost: ModuleHost = {
+    store: centralStore,
+    appVersion,
+    sendRegistration,
+    log: (line: string, detail?: unknown): void => {
+      console.error(`[provident-main] module: ${line}`, detail)
+    },
+  }
+  /** **THE ONE PORT THE TRANSPORT IS HANDED** — `install` is the delivery's activation, `activations()` the published names
+   *  and `invoke` the door a composed name's call returns through. One object, two answers, so the published set and the
+   *  callable set can never describe two registries (`docs/L3/mcp-surface/design.md` §3, §5; `ASM-1`). */
+  const modulePort = createModuleExecutor(moduleHost)
   // THE ONE-LINE OPTIONS PASS (§2.8 item 3): the server's construction options receive the
   // re-pointed module surface — the module tools' REPLY SHAPES are UNCHANGED.
   // **AND THE `data` SURFACE IS HANDED THE BOOT'S OWN STORE** (D-79, D-80): `centralStore` was constructed above
@@ -642,7 +692,9 @@ async function main(): Promise<void> {
   // handlers below and the server's option are the SAME object, so a bridge request and a `provident.data.*` tool call
   // reach one adapter and cannot carry two answers. Nothing else about the options pass moves — it is still ONE line, the
   // exception's `E-3` claim, with `dataSurface` passed by name instead of constructed in it.
-  const mcp = new ProvidentMcpServer({ backend, transport, port, gate, moduleStore: moduleSurface, router: moduleRouter, dataSurface })
+  // **AND `modulePort` REPLACES `router` ON THE SAME LINE** (`design.md` §2's two option rows): the transport's dynamic
+  // half is the PORT and no router is passed, so no second source stands behind the composition (`ASM-1`).
+  const mcp = new ProvidentMcpServer({ backend, transport, port, gate, moduleStore: moduleSurface, modulePort, dataSurface })
   // `§0A` item 1 (the `A-1` ruling) — NO RE-POINT IS OWED HERE ANY MORE. The landed `R-2` re-point
   // existed because the store consulted a reader `main` had to keep aimed at the LIVE server
   // (`mcp-server.ts`'s `get gate()`). Neither half of that exists now: the retired store is gone
@@ -790,9 +842,19 @@ async function main(): Promise<void> {
       // WRITER CLASS 1 (§2.8 item 2) — the operator's `disabled` TOGGLE re-pointed to the
       // store's file tier (the single writer site for the disabled flag).
       moduleSurface.setDisabled(payload.name, payload.disabled === true)
-      // U9-FIX (#2) — disabling/enabling a module must re-sync the live router
-      // so its tools are registered/deregistered accordingly.
-      syncModuleRouter(moduleRouter, moduleSurface)
+      // ═══ WHAT REPLACED `syncModuleRouter(moduleRouter, moduleSurface)` IS NOT A CALL, AND SAYING SO IS THE WHOLE OF
+      // THIS SITE'S CLAIM (`docs/L3/mcp-surface/design.md` §5's third caller; §2's RETIRE row) ═══
+      // The retired line re-synced a ROUTER from the census, so a disabled module's declared tools dropped out of a
+      // second table and out of the live server's set. **THERE IS NO SECOND TABLE NOW**: the published dynamic half IS
+      // the executor's `activations()`, read at every composition instant (`allowedToolNames`), and the census row this
+      // handler just wrote is a DIFFERENT store from the executor's registry — `ModuleHost.store` is the profile store,
+      // and neither `ModulePort` nor `ModuleHost` carries a deactivation sink (`design.md` §5; `docs/L2/module-system/
+      // interface.md` §11). So the toggle's whole act is the CENSUS write above, and a `disabled` row moves the live set
+      // at the NEXT composition instant and at no instant of this handler's: **the out-of-band activation/withdrawal sink
+      // is NAMED AND OWED by `module-system`'s page and this file mints none** (D-3, D-5). The answer below is therefore
+      // the census reading the realm paints, and it is unchanged — `module.list` and `status().loaded` are what a toggle
+      // is FOR, and both read the row this line just wrote.
+      console.error(`[provident-main] module '${payload.name}' ${payload.disabled === true ? 'disabled' : 'enabled'} in the census — no router re-sync stands: the executor's live set is activations(), and its out-of-band sink is OWED (S-5's third caller)`)
     }
     return moduleBridgeResult()
   })
