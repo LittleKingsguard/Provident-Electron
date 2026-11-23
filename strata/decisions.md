@@ -6538,6 +6538,21 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 
 **ITS REGISTER IS `D-71` TO `D-312`** as prose, unchanged and extended by this row only. **This row records the upstream's reply, our answer to its one question, and the two corrections it extracted from us.**
 
+---
+
+## D-314 — PROVIDENT-SSR 0.6.0 IS ADOPTED: the release's must-handle set is checked against this host, the tree compile mode is the runtime's to adopt, and `POST-BOOTSTRAP-EMIT-DROP` is DISCHARGED upstream with the host-side half owed
+
+**Status:** ACTIVE · **Date:** 2026-11-23 · **Source (user-delivered + measured):** the upstream's `docs/handoffs-update-0.6.0-2026-11-23.md` — a published, registry-verified release (`v0.6.0`, commit `b8b710c`, shasum `6dfa85fd…`) — relayed this session, plus this seat's re-run of the arm against the installed `0.6.0`.
+
+**WHAT IS ADOPTED.** `provident-ssr ^0.5.2` → `^0.6.0` — a caret cannot admit `0.6.0`, so the pin MOVES — with its carriers: the demo bundle regenerated against the new dist (its `@source` digests include the package's `dist/core/*` files), `tests/engine-pin-version.test.ts`'s `R-14` re-grained, `brief.md` §2's packages row, and the unit record.
+
+**THE MUST-HANDLE SET, CHECKED AGAINST THIS HOST.** Of the six items, **none bites the app's code today**: there is no `replay(` call site (so `'no-op'` has no branch to add), no reference held across a `condense()` (`maxJournalLength` is the operator's configuration, not a captured object), no in-place write into `props`/`content`/an anchor value outside `apply(...)` (every write rides the managed channel), no dotted `props.a.b` write (`targetProp` is single-segment everywhere), and no `allNodes()` count compared across a restore. **The two that move the DESIGN are not in the app's code**: the tree compile mode (`PATH-DOMAIN-RE-MINT`) and `attach` now registering unregistered nodes.
+
+**AND THE ARM'S RE-TEST, MEASURED — THE FIX IS REAL AND THE HOST'S OWN RECIPE BYPASSES IT.** On the installed `0.6.0` the re-test 1 arm **still zeroes the document through this host's own post-bootstrap compile** (`src/renderer/runtime.ts`'s `applyCommand` compiles the focused slice itself with plain `node.compile`), while the same arm **honouring the supervisor's pass-2** (`takePass2States`, `compileMode` inferred `'path'`) renders the full tree with the appended child (`226` chars, five ids). **So `POST-BOOTSTRAP-EMIT-DROP` is DISCHARGED upstream and the host-side adoption is a step**: the runtime's post-bootstrap compile must honour `getCompileMode()` (or delegate to the supervisor's pass-2), and `H-1` is answered — no surviving case against the package; the surviving case is this host's recipe, and it is `producing-runtime`'s to change.
+
+**ITS REGISTER IS `D-71` TO `D-313`** as prose, unchanged and extended by this row only. **This row records a release adopted, its must-handle set cleared against this host, the arm's re-test, and the one host change the fix makes necessary.**
+
+
 
 
 
