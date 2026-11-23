@@ -59,10 +59,15 @@
 //     grant this file can carry is the profile seed (`provident-security.json`'s `enabled`, `D-85`) — nothing on this
 //     surface narrows `code` — so `M-5` shows the gate ADMITS under `module`+`code`, which is one arm of two. The other
 //     arm would need a second boot on a seed without `code`, and that breaks §6's one-boot grain;
-//   · no row boots a second host: the browser/Node build is upstream-blocked — the pending `provident-storeroom` WASM
-//     build's carrier is `D-304` (iii); `D-298`/`D-299` carry the pin's `require`/`exports` move and the `>=22.12.0`
-//     floor and name no build — so cross-compatibility is read as the contract's absence of host APIs and not as a
-//     second boot (design §6 (ii)).
+//   · no row boots a second host, AND THAT IS NOW A FACT ABOUT THIS BATTERY RATHER THAN ABOUT THE PACKAGE:
+//     `2.0.0` SHIPS the WebAssembly sibling (`@auspicion/provident-storeroom-js-wasm`, a sixth artefact and a
+//     second package, a separate manifest), and the modularity design owes electron-vs-node parity on it
+//     (`D-310`; design §4 `C-13`, §3 `S-13b`) — but the parity's witness is `M-29` in ITS OWN battery
+//     (`tests/e2e/module-parity/`) and its own boot, because this file's grain is the Electron bundle's main-side
+//     surface. So cross-compatibility HERE is still read as the contract's absence of host APIs and not as a
+//     second boot (design §6 (ii)). The WASM-pending clause this bullet carried (`D-304` (iii), with
+//     `D-298`/`D-299` named for the pin's `require`/`exports` move and the `>=22.12.0` floor) is OBSOLETE as a
+//     fact at this pin (`strata/records/storeroom-2.0.0-research.md` row D8) and is kept here only as that reading.
 //
 // EVERY WAIT IS BOUNDED AND EVERY FAILURE NAMES ITS REASON. A boot that publishes a load error is reported AT
 // ONCE with that error, never as a timeout; a handshake that never settles is reaped and PROVED gone before the

@@ -86,6 +86,7 @@
       "name": "central-data",
       "paths": [
         "src/main/storeroom.ts",
+        "src/shared/store-realm.ts",
         "src/main/data/",
         "tests/storeroom-surface.test.ts",
         "tests/integration/central-data/",
@@ -145,6 +146,7 @@
         "src/renderer/extensions.ts",
         "src/shared/module-contract.ts",
         "tests/e2e/modularity/",
+        "tests/e2e/module-parity/",
         "tests/module-router.test.ts",
         "tests/module-dynamic.test.ts",
         "tests/module-e2e.test.ts",

@@ -54,18 +54,44 @@ describe('S-1 — the seam module is what the app imports', () => {
     + ' without a repo change', () => {
     const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as
       { dependencies: Record<string, string> }
-    // **`1.12.0` IS THE PIN, AND THE PIN IS STILL A CARET RANGE** (`D-219`) — **THE REVIEWED PACKAGE MOVED `1.11.0` →
-    // `1.12.0` AND THE CARET IS WHAT LET IT LAND**: `1.12.0` is a MINOR, the caret admitted it, `package-lock.json` moved
-    // with it, and **no byte of the claim below had to be re-decided to let the install in** — which is exactly the property
-    // the row exists to assert, and the reason the claim is written on the RANGE and never on a version number. **THE
-    // FIGURE IS RE-GRAINED HERE ON PURPOSE, BECAUSE A PIN THAT MOVES SILENTLY IS THE DEFECT THIS ROW EXISTS TO CATCH**
-    // (`D-298` — the row this re-grain belongs to, filed at L0 for this pin move; it is not yet in `strata/decisions.md`'s
-    // register, so it is cited as the row and not by offset, `D-41`).
+    // **`2.0.0` IS THE PIN, AND THE PIN IS STILL A CARET RANGE** (`D-219`) — **THE REVIEWED PACKAGE MOVED `1.12.0` →
+    // `2.0.0`, AND THIS TIME THE CARET DID NOT ADMIT IT**: `2.0.0` is a MAJOR, so the adoption moved the RANGE as well as
+    // `package-lock.json`, and the figure below moved because a REVIEW adopted it (`D-310`, verbatim: *"Adopt now: pin +
+    // rev 10"*) and never because a resolver's discretion reached past the pin. **THE FIGURE IS RE-GRAINED HERE ON
+    // PURPOSE, BECAUSE A PIN THAT MOVES SILENTLY IS THE DEFECT THIS ROW EXISTS TO CATCH** (`D-310` is the row this
+    // re-grain belongs to, and it is cited as the row and not by offset, `D-41`). **THE CLAIM IS STILL WRITTEN ON THE
+    // RANGE AND NEVER ON A LOCKED VERSION**, for the reason the paragraph at the foot of this row states: a caret landing
+    // a later release must not red the row that exists to bless it (`D-298`'s rule, unmoved by this move).
+    // **THE REVIEW'S FIVE MOVES ARE THE REASON THE FIGURE MOVES** — `node_modules/provident-storeroom/RELEASE-NOTES.md`
+    // §2.0.0 and `strata/records/storeroom-2.0.0-research.md`'s fact base, read at the INSTALLED `2.0.0`:
+    //   (1) **`record.op.compacted` REMOVED** — a journal record's member set narrows; the app's reader of the store's own
+    //       journal is `src/main/storeroom.ts` (`D-103`), and a member it read would be the site that reds.
+    //   (2) **THE LISTENER-RETURN RECEIPTS.** `returnedValues` (one entry per handle whose body RETURNED A VALUE, the
+    //       entry being the SETTLED value) and `bodyFailures` (one entry per REJECTING body, `{status, message,
+    //       address}`) are NON-ENUMERABLE, `configurable` own getters over symbol-keyed data, installed on all three
+    //       records — write, delete and rollback — so **`Object.keys` is unmoved and `Object.getOwnPropertyNames` reads
+    //       SEVEN** (`index.d.ts:840`, `:879`, `D-150` item 1). Both are present on every arm and answer one shared
+    //       frozen `{}` where nothing stands.
+    //   (3) **RANK 23 `ListenerBodyRejected`** — the 23rd literal of `StoreStatus` (`index.d.ts:529`), and **no rank of
+    //       `1`…`22` moves**. The type's own last algebra still reads "twenty-two, ranked `1`…`22`", one amendment behind
+    //       its own union: a PACKAGE drift, recorded upstream-owned and never patched here (`D-5`, `D-52`).
+    //   (4) **THE SETTLE-BEFORE-ANSWER ARM.** An act's answer is withheld until its delivered set settles — conditional
+    //       on a STARTED body's answer carrying a callable `then`, and only at `write`/`delete`
+    //       (`src/entry/delivery.mjs:323-407`) — so a promise-returning listener body is SETTLED rather than refused,
+    //       and its rejection becomes a datum the act resolves with.
+    //   (5) **THE JOURNAL BOUNDED, AND THE WEBASSEMBLY SIBLING.** `@auspicion/provident-storeroom-js-wasm` is a SIXTH
+    //       artefact and a SECOND package, version-coupled to the five siblings, shipping NOTHING inside
+    //       `provident-storeroom`, whose namespace keeps its ONE name (`storeCreate`); the browser-side store joins the
+    //       modularity design as an electron-vs-node parity concern (`D-310`).
+    // **AND NO MEMBER COUNT MOVED WITH `2.0.0`** — the module namespace keeps its one name, the instance's own member set
+    // stays fifteen and `readTiered` stays THIRD in its order — **re-verified below at the installed `2.0.0` rather than
+    // assumed**, so `S-1.1` and `S-1.2` still read fifteen.
     // **THE PIN IS A REVIEWED PIN AND NOT A RESOLUTION FLOOR** (`D-41`'s site; `D-68` states it verbatim for the `^1.6.2`
     // move — *"so the pin is a REVIEWED pin (D-41's site) and not a resolution floor"*). The caret landing a release is what
-    // the caret DOES; what this row asserts is what a reviewer ADOPTED. **So the reviewed package is `1.12.0` and the figure
+    // the caret DOES; what this row asserts is what a reviewer ADOPTED. **So the reviewed package is `2.0.0` and the figure
     // follows the review, never the resolver's discretion.**
-    // **THE REVIEW'S THREE MOVES ARE THE REASON THE FIGURE MOVES** — `node_modules/provident-storeroom/RELEASE-NOTES.md`
+    // **AND `1.12.0`'S OWN REASON, KEPT AS THE READING IT WAS** (`D-46`; `D-298` is the row that move belonged to) —
+    // `node_modules/provident-storeroom/RELEASE-NOTES.md`
     // §1.12.0, in its own words (its section head states the class: *"a MINOR — the `require` route into the one claimed
     // realm: a third condition on the one `exports` arm, naming the SAME `./index.mjs`, and a floor that moves `>=18.0.0`
     // → `>=22.12.0` on all six manifests — one line, two moves"*):
@@ -86,11 +112,11 @@ describe('S-1 — the seam module is what the app imports', () => {
     //       `require` route is the package's to serve, not this repo's to shim.
     // **AND NO MEMBER COUNT MOVED WITH `1.12.0`** — §1.12.0's "what does not move" list keeps *"the module namespace's one
     // name (`storeCreate`)"*, *"the instance's own member set"*, *"every record, status and message"* and *"the `files`
-    // allowlist's seven rows"*; **re-verified here rather than assumed on the installed `1.12.0`**, so `S-1.1` and `S-1.2`
-    // still read fifteen and `readTiered` sits THIRD in the instance's own order (measured: `read`, `readLiteral`,
-    // `readTiered`, `write`, …).
+    // allowlist's seven rows"*; **re-verified rather than assumed then on the installed `1.12.0`, and re-verified AGAIN at
+    // `2.0.0` for this row's own move**, so `S-1.1` and `S-1.2` read fifteen and `readTiered` sits THIRD in the instance's
+    // own order (measured: `read`, `readLiteral`, `readTiered`, `write`, …).
     // **AND THIS ROW CARRIES A RANGE ASSERTION AND NO LOCKED-VERSION ASSERTION, DELIBERATELY — THEY ARE TWO DIFFERENT
-    // CLAIMS AND ONLY ONE OF THEM IS A PIN.** `package.json`'s `^1.12.0` is the REPO'S DECISION; the locked `1.12.0` in
+    // CLAIMS AND ONLY ONE OF THEM IS A PIN.** `package.json`'s `^2.0.0` is the REPO'S DECISION; the locked `2.0.0` in
     // `package-lock.json` (and in `node_modules/provident-storeroom/package.json`) is WHAT IS ON THIS DISK. A row that
     // pinned the latter would red on precisely the event this row exists to bless — a caret landing a later release
     // without a repo change — so the installed version is measured where it is the subject and where it can be measured
@@ -122,7 +148,7 @@ describe('S-1 — the seam module is what the app imports', () => {
     // IT** — `1.9.3` adds no name and no symbol, which is why `S-1.1` and `S-1.2` read the same fourteen (`D-109`).
     // In every one of those moves the figure moved for the reason this row states: the pin follows the reviewed install,
     // never the other way.
-    expect(pkg.dependencies['provident-storeroom']).toBe('^1.12.0')
+    expect(pkg.dependencies['provident-storeroom']).toBe('^2.0.0')
   })
 
   it('S-1.2 — the store `createProfileStore` returns IS a storeroom store, member for member', () => {
