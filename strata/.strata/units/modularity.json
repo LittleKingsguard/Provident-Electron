@@ -1,10 +1,10 @@
 {
   "unit": "modularity",
-  "layer": "L1",
+  "layer": "L2",
   "stage": "design",
   "artifacts": [],
   "assumptions": [],
   "streaks": {},
   "rebuildEligible": false,
-  "updated": "2026-11-20T20:58:52.303Z"
+  "updated": "2026-11-23T15:29:27.090Z"
 }
