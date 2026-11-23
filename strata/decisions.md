@@ -6512,6 +6512,19 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 
 **ITS REGISTER IS `D-71` TO `D-310`** as prose, unchanged and extended by this row only. **This row records the user's clarification that the channel is the writer, and the receipt it therefore holds.**
 
+---
+
+## D-312 — THE WASM STORE INTERFACES JOIN THE MODULE SURFACE: the contract's store surface is ONE host-agnostic interface the Node instance and the WASM arm both satisfy, and the arm's own shapes enter the contract's declared inputs
+
+**Status:** ACTIVE · **Date:** 2026-11-20 · **Source (user, verbatim):** *"Add the WASM store interfaces to the possible module surface."*
+
+**WHAT IT ADDS.** The module surface — the contract's declared store interface, the member the ctx hands a module and the channel writes through (`D-311`) — must be **satisfiable by both hosts**: the Node addon instance (`provident-storeroom@2.0.0`, its 15 own members) and the WebAssembly arm (`@auspicion/provident-storeroom-js-wasm`, `storeCreate(bindings, cfg)`, its 19 exports, `filePath` absent-by-domain, `saveCall`/`initialImage`, the `structuredClone` boundary) — so a module written against the surface is lawful under the Electron topology and the browser/Node one without a per-host contract. The arm's own shapes (its construction signature, its `cfg` keys, its export set, its boundary rule) are **declared inputs of the contract**, named where the surface is defined, and `C-13`'s parity cites them rather than a prose claim.
+
+**WHAT IT DOES NOT ADD, SAID SO IT IS NOT IMPLIED.** No module opens, owns or constructs a store of its own: the store is the app's ONE store per host (`D-310`'s one-store-per-app boundary), the channel is its writer (`D-311`), and a module sees the interface, never a second instance. The wasm package's pin lands with the step that builds against it (`OWED-11`), and no row may green on it before that step.
+
+**ITS REGISTER IS `D-71` TO `D-311`** as prose, unchanged and extended by this row only. **This row records the user's instruction that the WASM store's interface is part of what a module may see, in both topologies and under one contract.**
+
+
 
 
 
