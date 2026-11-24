@@ -2413,7 +2413,10 @@ class Client {
       expect(text, '§3.7 RT-2 class 5: a malformed configuration must not reach the boot/retry path').not.toMatch(/attempt \d\/\d|RT-7 EXHAUSTED|PRECONDITION/)
       expect(text, '§3.6: no failure may be converted into a skip or a green').not.toMatch(/UI RESULT:/)
     }
-  })
+    // THE ROW'S OWN BUDGET (`AN-18`): six `node` spawns inside the harness's 5 s DEFAULT timeout is a budget mismatch and
+    // never a claim — under a full parallel suite the sixth spawn can cross it while every assertion above still holds.
+    // The bound that matters is each `spawnSync`'s own 15 s, stated above; nothing here is softened, skipped or retried.
+  }, 60_000)
 
   // -------------------------------------------------------------------------
   // §3.7 RT-3 — the bound, the per-attempt profile, the teardown and the
