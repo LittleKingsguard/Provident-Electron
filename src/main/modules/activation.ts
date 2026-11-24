@@ -107,7 +107,7 @@ export function activate(module: LoadedModule, host: ModuleHost): ActivationOutc
   const bindings: ListenerBinding[] = []
   for (const declaration of declaredListeners(manifest.capabilities)) {
     const key = addressKey(declaration.address)
-    const handle = listenerHandle(manifest.name, declaration.address)
+    const handle = listenerHandle(manifest.name, declaration)
     const main = state.mains.get(key) ?? null
     if (typeof declaration.main === 'string' && declaration.main !== '' && main === null) {
       return { ok: false, reason: 'declaration-overstated', subject: key }

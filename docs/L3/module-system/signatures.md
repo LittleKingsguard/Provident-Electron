@@ -64,7 +64,7 @@ export interface ModuleSource { readonly manifest: ModuleManifest; readonly orig
 export interface ModuleVerdict { readonly status: 'installed' | 'updated' | 'no-op' | 'rejected'; readonly name: string; readonly version: string; readonly reason?: string }
 export interface DeactivationVerdict { readonly status: 'deactivated' | 'no-op' | 'rejected'; readonly name: string; readonly reason?: string }
 export interface RegistrationFrame { readonly module: string; readonly client: string }
-export interface ListenerBinding { readonly address: readonly string[]; readonly handle: string; readonly client?: string; readonly main?: (address: readonly string[]) => unknown }   // `client` is the manifest's client KEY; `handle` is the store's address-keyed handle (§4)
+export interface ListenerBinding { readonly address: readonly string[]; readonly handle: string; readonly main?: (address: readonly string[]) => unknown }   // `handle` is the declaration's ONE identity: client-keyed when it names a client half, else address-keyed (§4)
 export interface Activation { readonly name: string; readonly version: string; readonly tools: readonly string[]; readonly listeners: readonly ListenerBinding[] }
 export interface ModuleHost {                        // FOUR members and NO FIFTH (`L2` §11, `ASM-MS-4`): the door is the executor's
   readonly store: StoreSurface
@@ -91,7 +91,7 @@ export interface LoadedModule extends ModuleSource { readonly text: string }
 export declare function loadDelivery(delivery: ModuleDelivery): readonly LoadedModule[]
 // handles.ts — `addressKey`/`listenerHandle` compose `moduleHandle`; `toolName` composes the PUBLISHED name, never the mint (L2 §4 vs §11)
 export declare function addressKey(address: readonly string[]): string
-export declare function listenerHandle(module: string, address: readonly string[]): string
+export declare function listenerHandle(module: string, declaration: { readonly address: readonly string[]; readonly client?: string }): string   // client-keyed when named, else address-keyed — ONE handle per declaration (`C-3`)
 // admission.ts — the three refusals as VALUES with their SUBJECTS, and the two-direction comparison
 export type Admission = { readonly ok: true } | { readonly ok: false; readonly reason: RefusalName; readonly subject: string }
 export interface Registrations {                     // what the entry did at activation, for `compare`

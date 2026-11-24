@@ -10,7 +10,9 @@ export function addressKey(address: readonly string[]): string {
   return address.join('/')
 }
 
-/** The declaration's ONE handle — the store's own identity for the entry it holds (`C-3`). */
-export function listenerHandle(module: string, address: readonly string[]): string {
-  return moduleHandle(module, addressKey(address))
+/** The declaration's ONE handle — the store's own identity for the entry it holds (`C-3`), and the SAME
+ *  identity the realm's `onDelivery` mints: **client-keyed when the declaration names a client half, address-keyed
+ *  otherwise**, so a declaration's two halves never carry two handles (`C-3`, `D-307`). */
+export function listenerHandle(module: string, declaration: { readonly address: readonly string[]; readonly client?: string }): string {
+  return moduleHandle(module, declaration.client ?? addressKey(declaration.address))
 }
