@@ -150,7 +150,11 @@ export class Runtime {
     if (base === null) return { added: [], skipped: contributions.map((entry) => entry.parent), changed: false }
     const merged = this.composeContributions(base, () => contributions)
     if (merged.warnings.length > 0) {
-      this.prebuildWarnings = [...this.prebuildWarnings, ...merged.warnings]
+      // EVERY SKIP IS NAMED ONCE (`AN-9`): the channel is the boot's warnings plus the DISTINCT skips every later load
+      // re-emits, so N module frames naming the same absence add one entry and not N.
+      const named = new Set(this.prebuildWarnings.map((entry) => `${String(entry.code)}\u0000${String(entry.path)}`))
+      const fresh = merged.warnings.filter((entry) => !named.has(`${String(entry.code)}\u0000${String(entry.path)}`))
+      this.prebuildWarnings = [...this.prebuildWarnings, ...fresh]
       this.warnings = [...this.warnings, ...merged.warnings]
     }
     if (!merged.changed) return { added: [], skipped: merged.skipped, changed: false }

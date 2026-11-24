@@ -88,8 +88,10 @@ export function createModuleChannelClient(options: ModuleChannelClientOptions): 
           options.evaluate({ module: message.module, client: message.client })
           return
         }
-        // ONE call per MODULE carrying that module's entries; each entry's client half fired ON DELIVERY with the ENTRY
-        // (`S-13`, `ASM-MC-4`/`ASM-MC-6`). A module with no registered client half contributes nothing, never a fault.
+        // THE BATCH IS THE MESSAGE; THE FIRING IS PER ENTRY, IN THE MESSAGE'S ORDER (`D-320`, `S-13`). The grouping below
+        // is an ORDERING DEVICE and no call boundary: an entry names exactly ONE handle (`ChannelEntry.listener`), so a
+        // per-module call could only be an envelope around per-entry firings. Each entry's client half is fired with the
+        // ENTRY (`ASM-MC-4`/`ASM-MC-6`); a module with no registered client half contributes nothing, never a fault.
         const byModule = new Map<string, ChannelEntry[]>()
         for (const entry of message.entries) {
           const held = byModule.get(entry.module)

@@ -1,61 +1,46 @@
-# handover — 2026-11-24: all eleven `modularity` suite reds are closed and the four legs are green; the next acts are the door's row, the boot census route and the two named halves
+# handover — 2026-11-24 (rev 2): `U1`/`U3`/`U4`/`U5` are landed and green; what is left is the e2e battery's second row set, `U2`/`U6`/`U7`, and four named non-code debts
 
-Read `strata/brief.md` first, then `strata/decisions.md` from `D-304` onward.
+Read `strata/brief.md` first, then `strata/decisions.md` from `D-304` onward. **The unit's worklist is `strata/records/modularity-cleanup.md`** (`D-319`) — re-grains performed, anomalies standing, process rules, environment limits and the sweep order. It is not a design page and nothing cites it as authority.
 
 ## Where the branch stands
 
-`main` carries the work: `a58a7ab` is the last commit the remote has (`git ls-remote origin main` answers it), and the three commits after it — `4f2385e`, `b243020`, `4e075b7` — are LOCAL and unpushed (D-6's pointer clause, D-119). The older "nothing is pushed" line is therefore wrong as a status claim and right as the RULE: this pass pushes nothing, and the remote is now three commits behind the work rather than level with it. The unit `modularity` (D-306) went L1 rev 15 → L2 → L3 → L4; `.strata/units/modularity.json` still reads `layer: L3`, `stage: design`, `artifacts: []` because `strata-state` is not in this checkout — **the ledger is behind the work** (D-26, `platform.md` §4). The unit's record is `strata/records/modularity-unit.md`; its design `docs/L1/modularity.md` rev 15.
+`main` is at **`e49d372`**; the remote is at `a58a7ab` (30 commits behind, **nothing pushed** — `D-6`'s pointer clause, the freeze lifted). The worktree is clean, the pins stand (`provident-storeroom ^2.0.0`, lock 2.0.1; `provident-ssr ^0.6.0`), and the demo bundle was regenerated against the renderer and runtime it bundles (`D-118`).
 
-## What landed this pass
+## The readings (clean tree at `e49d372`)
 
-- **Eleven reds closed.** Eight by instrument re-grains that keep their claims: `I-3`/`I-8` (the activation's `module:<name>:` log prefix), `M-1`/`M-2` (the verdicts array, and the SDK's `isError` arm as a refusal), `S-9` (value imports only: three, with two `import type` sites named), `S-11`/`ISO-4` (an `electron` binding, not the word `ipcRenderer`, which `admission.ts` names in its forbidden-token census), and `REGISTER-EXEC-1` (declaring `registrationAllowed` in the focus register's cross-unit fence).
-- **`M-3`/`M-4`/`M-5` closed on the user's ruling (`D-315`, "Activate first, persist on success")**: the census check is READ-ONLY, a rejected/no-op verdict ends the arm, the source goes to the port's `install`, and the row is persisted only on a non-refused verdict before `rePublish()`. A refused install is never stored, so a retry reaches the resolver. L3 §5 and `signatures.md` §5 are re-grained to that order.
-- **The `invoke` door's rows are written**: `MS-9` (unit, declared store double) and `I-9` (integration, real store) drive the handler's own value, `tool-unknown` after `deactivate`, `handler-threw`, and a still-standing handler as the positive control — the gap the L2 and L3 pages had named.
-- **The boot census route landed (`D-316`)**: `src/main/main.ts` hands `status().loaded` to the executor as one table delivery **before** the transport composition, so a persisted module is active at boot instead of listed-and-silent. No member was added; `M-30` re-boots the same profile and calls the tools with no install. `M-30` is filed at `docs/L1/modularity.md` rev 16; an `app-shell` L2 rev is still owed.
-- **`docs/L2/module-channel/interface.md` rev 1 is NEW**: the managed passthrough's transport half at the I/O grain — the five members (binding, envelope, registration, fan-out, containment), the five arms, the one message's two kinds, the prefix relation, the parity, and four assumptions with alternatives. Its integration battery is owed with the steps that green it; the L3 page is the next rung.
-- **`docs/L3/module-channel/` rev 1 is NEW**: `design.md` states the store facade (the binding and the writer's entrance), the turn at the settled receipt, the two-kind message, the registration frame, the realm fan-out, the client proxy's data verbs and the one transport seam `S-12` supplies; `signatures.md` fixes the stubs. **Seven** assumptions carry the contested cells — the client verb set, the flag's one source, the store-act envelope, the registry key, the entry's address, the client half's payload, and the handle's key (client-keyed when the declaration names a client half).
-- **The CH integration battery is written**: `CH-1`…`CH-6` over a real `createProfileStore` and the connected transport pair; the writer's settled edge now composes from the SETTLED receipt (a suspending store answer is a Promise).
-- **The channel's main half landed**: `src/shared/module-channels.ts` (data), `src/main/module-channel/{writer,facade,index}.ts` (the facade's binding, the settled turn and the five arms) and `tests/unit/module-channel/channel.test.ts` (`MC-1`…`MC-8`). The realm client and the boot facade pass also landed, and **`S-12`'s wire landed**: the eleventh `channel` member on both lockstep sites, the real transport, and the three census rows at ELEVEN. **The realm's channel end also starts**: the app `CapabilityRouter` evaluates frames and fires deliveries, and main re-sends the census frames on `ready`. The U5 action/graph wiring and the batteries remain; the `app-shell` L2/L3 pages owe the member's re-grain.
-- **The client store is now `ClientStoreSurface`**: the async data half — each act a request the channel executes, each answer a Promise — while the main half's store stays the sync `StoreSurface`. `MS-3` awaits the default `no-store-host` refusal, as a module's client code must.
-- **The pins stand**: `provident-storeroom ^2.0.0` (lock 2.0.1), `provident-ssr ^0.6.0`; the demo bundle regenerated; `SC-1` reads `15`/`14`; the map's `module-system` `endpoints` **24** (cap **290**, D-14).
+`typecheck` **0** · `typecheck:tests` **0** · `build` **0** · **`npm test` GREEN — 0 failed / 3,068 passed / 2 skipped of 3,070 over 164 files**. All 11 `tests/e2e/` batteries ran inside it (they boot the built bundle), and the module batteries are green: the boundary battery **10/10**, `RW-M1`…`RW-M5` **5/5**, `D-317(a)`…`(c)` with `M-14`/`M-15` **7/7**, `MF-1`…`MF-3` **3/3**, `CH-1`…`CH-6` **6/6**, `MC-1`…`MC-13` green.
 
-## The readings (clean tree)
+## What has landed, in the unit's own order
 
-`typecheck` **0**, `typecheck:tests` **0**, `build` **0**; **`npm test` GREEN — `0 failed / 3,057 passed / 2 skipped` of `3,059` over `162` files**; the unit batteries **29/29** (9 + 7 + 8 + 5); the boundary **10/10**. **ALL FOUR LEGS ARE GREEN** (`npm test`, `typecheck`, `typecheck:tests`, `build`; `AGENTS.md`, `brief.md` §6). `strata-lint` **211** stands as the last reading and was NOT re-taken — `../Agent Harness/` is absent from this checkout.
+- **`U1` — the executor and both halves**: one manifest, `entry` evaluated at activation, admission by value (`host-api-token`, `declaration-overstated`, `foundation-tool`), the dependency resolver, the ONE `invoke` door, the published tool set, and the client source delivered as `C-15`'s registration frame. Rows `M-1`…`M-5`, `MS-9`, `I-9`.
+- **`U3` — the channel**: the store facade and the binding (`src/main/module-channel/`), the two-kind message and the settled turn (`src/shared/module-channels.ts`), the realm end with the per-entry fan-out and the async client store proxy (`src/renderer/module-channel-client.ts`), and the ELEVENTH bridge member (`S-12`). Rows `MC-1`…`MC-13`, `CH-1`…`CH-6`.
+- **`U4` — the pre-build and the post-bootstrap compile**: `RuntimeOptions.contributions` merges the ordered contributions into the authored template **before `translateLegacy`**, and `applyCommand`'s dirty loop honours `getCompileMode()` (`'path'` per member, `'family'` byte-for-byte, never the pass-2). Rows `M-14`/`M-14b`/`M-14c`/`M-15`; `M-16` is the e2e adoption row, **not written**.
+- **`U5` — the runtime composition and the module shape** (`D-317`, `D-318`): the runtime **stores its composed authored document** at construction (which also closes the boot-time `code.*` class) and gains **`contribute`** — the same merge routine, re-loaded through `loadEnvelope`, so the app's **30 authored handlers** survive; the serializer round-trip is refused by measurement and so is a raw `LayerApplyOp`. `startModuleShape` composes the router's pending contributions (live-graph id check **plus** a per-router key set), installs each `ActionRecord.fn` by NAME through one `state-slice` on `targetProp:'handlers'`, and re-drives the paints. Rows `D-317(a)`…`(c)`, `RW-M1`…`RW-M5`.
+- **The boot census route** (`D-316`): `main` hands `status().loaded` to the executor as ONE table delivery before the transport composes; `M-30` re-boots the same profile and calls the tools with no install, and `D-315`'s refusal rule is its other arm.
+- **The corpus caught up**: `docs/L1/modularity.md` **rev 16** (`M-30` filed; `module-system` `16 → 24`, `producing-runtime` `17 → 18`, `renderer-wiring` + its integration path), `strata/modules.json` moved for the last two, **`app-shell`'s L2/L3 pages now state the ELEVENTH bridge member** (`RG-8`), and `D-319` gave the unit its ledger — whose first sweep closed `AN-5`, `AN-6` (which found an id-less forest was never loaded at all), `AN-8`, `AN-12` and `AN-18`.
 
 ## What is open, named not hidden
 
-- **An upstream finding (`D-5`, recorded in the unit record)**: the real store's `returnedValues` carries a SETTLED thenable's value, not a synchronous listener's return — so the channel's `return` arm is async-only and a synchronous returner reads `empty`. The fix shape is the store's.
-- **The e2e `M-2b`/`M-11`/`M-13`** — the runtime composition and the module shape are LANDED (`D-317`: `contribute` + the stored authored document; `startModuleShape` + `installModuleActions` + the re-driven paints) with `D-317(a)`…`(c)` and `RW-M1`…`RW-M4` written; the e2e rows are L1's at `S-20`, and **`S-18`'s composed pane set waits on `U2`'s registry** (the five tables are total over `DECLARED_PANE_IDS`, read by `PM-1`/`PM-2`); the **out-of-band activation sink** (`design.md` §5's third caller) is undeclared.
-- **The boot route's `app-shell` L2 rev** — `M-30` IS FILED now (`docs/L1/modularity.md` rev 16), but `docs/L2/app-shell/interface.md` still has no rev naming the table delivery before the transport composition.
-- **L1 currency**: `docs/L1/modularity.md` still reads `module-system` `endpoints` **16**; the map reads **24** and L2 rev 3 derives 24 member-by-member. The move is L1's to file (the page is at 150/150, so a re-grain must compress).
-- **The harness-cap rule is stated two ways**: `bundle-boot-seam`'s pages say a product battery is EVIDENCE and does not count; `module-system`'s L2/L3 count the 246-line battery against the cap. One ruling is owed.
-- **The state ledger is behind** (`L3`/`design`/no artifacts) and cannot be moved without `strata-state`.
-
-## The handoff set (by pointer)
-
-`H-1`/`H-2` → `provident-ssr`: delivered, answered, the arm handed over; **`H-1` discharged at 0.6.0** (rev 15's `C-7` is the host-side adoption), **`H-2` withdrawn**. `H-3`/`H-4` → `provident-storeroom`: superseded/answered at 2.0.0. `H-5` → the WebAssembly arm: delivered and **discharged at 2.0.1**. Release summary: `Preempt-Providence/docs/handoffs-update-0.6.0-2026-11-23.md`.
+- **The e2e battery, split by `D-318`**: **`M-11`/`M-13`** are owed at `S-20` in `tests/e2e/module-channel/` (one shared boot; the harness is `module-executor`'s ~650 lines — `AN-20` says extract it first); **`M-2b`** moves to `S-23`/`U6`, because `module.update`'s second registration frame is dropped by the router's one-frame guard, so the updated `client` source is never evaluated.
+- **`AN-4`, before `M-11` is written**: `ASM-MC-3`/L2 §4 say the fan-out makes *one call per module*; the code fires *per entry*. One of the two has to move, and the row must not assert a grain the code lacks.
+- **The out-of-band activation sink**: undeclared, and the code says so itself (`src/main/main.ts`'s disable handler, `src/main/mcp-server.ts:818`).
+- **`app-shell`'s L2 rev for the boot census route** (`D-316`'s table delivery): the `channel` row landed, this one has not.
+- **The harness-cap ruling**: `module-system`'s L2 counts its 246-line unit battery against `50 + 10×N` (44 under); `bundle-boot-seam`'s pages say a product battery is EVIDENCE and does not count.
+- **The state ledger is behind** (`L3`/`design`/no artifacts): `../Agent Harness/` is absent, so `strata-state`/`strata-lint` cannot run and no ceiling or citation is machine-checked. Every ceiling count in the corpus is a `wc -l`.
+- **Upstream (`AN-1`, `D-5`)**: the real store's `returnedValues` carries a settled thenable's value, not a synchronous listener's return, so the channel's `return` arm is async-only; the fix shape is the store's. `AN-2`: `serializeNode` emits no `handlers` against the 30 the envelope authors.
+- **Unbuilt rungs**: `U2` (`S-6`…`S-10`, the five-domain declaration registry — no code; blocks `S-18`/`M-18`), `U6` (`S-22`…`S-25` — coeffects carried and judged by nobody, inverses, activate/deactivate), `U7` (`S-26`…`S-28`, the acceptance conversion; no `src/modules/`). `M-29` needs the WASM host build, which is not a dependency here.
 
 ## The worklist
 
-The unit keeps one ledger of what its passes owe — re-grains performed, anomalies standing, process rules and environment limits — at
-`strata/records/modularity-cleanup.md` (`D-319`). A cleanup pass sweeps it; a working pass appends to it. It carries no claim
-about behaviour, so nothing cites it as authority.
+`strata/records/modularity-cleanup.md` (`D-319`) carries the rest at the item grain: `AN-7`, `AN-9`, `AN-10`, `AN-11`, `AN-13`…`AN-17`, `AN-19`, `AN-20`, and the two splits `AN-15`/`AN-16`. A working pass appends; a cleanup pass sweeps. Its items are not claims and no design cites them.
 
 ## What a fresh session does next, in order
 
-1. **The e2e battery, SPLIT BY `D-318`** — `M-11`/`M-13` file at `S-20` on one shared boot in `tests/e2e/module-channel/` (the harness is the executor battery's, ~650 lines of lock/reap/boot that must be carried or shared), and **`M-2b` moves to `S-23`/`U6`** because an update's second registration frame is dropped by the router's one-frame guard, so the updated `client` source is never evaluated and the arm's "old marker GONE" claim needs the inverse. Then `U2`'s declaration registry (which unblocks `S-18`/`M-18`), the `app-shell` L2/L3 eleventh-member re-grain, the **out-of-band activation sink**, and the earlier debts (the cap ruling, the ledger when `strata-state` returns).
-2. **The harness-cap ruling** (one rule, two readings in the corpus), then the ledger when `strata-state` returns.
-3. **`U2`–`U7`**, with **`U7`'s acceptance conversion last**.
-4. **Move the ledger** to L4 and its artifacts when the workflow checkout is restored.
-
-## Operating notes that cost real time
-
-- **A first `npm test` after `npm install` can red on a still-materialising Electron binary**; the real reading is the second run (this pass saw 14 reds become 11 for exactly that reason).
-- **An e2e battery boots `dist/`, not `src/`**: rebuild after a source change or the old bundle answers (`npm run build`; the battery only builds when an artifact is absent).
-- **Each window's declaration block declares exactly that window's paths** (D-146); a committed path must not stay in a live block (P-5).
-- **Commit per gate and never push** (D-6); a reading is taken on a clean tree; the four legs plus the boundary instrument are the floor (brief §6, D-301).
+1. **`AN-4`'s decision**, then **`M-11`/`M-13`** — settle the fan-out's grain, extract the boot harness (`AN-20`), write the two rows in `tests/e2e/module-channel/`, and run them (a `DISPLAY` is a prerequisite and never a skip).
+2. **`U6`** (`S-22`…`S-25`), which is what `M-2b`'s third arm and the update path need; then `M-2b`.
+3. **`U2`** (`S-6`…`S-10`), which unblocks `S-18`/`M-18`'s composed pane set; then **`U7`**'s acceptance conversion, last.
+4. **`AN-15`/`AN-16`**'s splits, **`AN-11`**'s two claimed-but-absent battery paths, **`AN-7`/`AN-9`/`AN-10`**, and the **cap ruling** — then the ledger move when the workflow checkout returns.
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/handover.md", "d": "D-317", "why": "the handover's open items and next acts updated to the landed L4 and the remaining e2e/app-shell debts"}]}
+{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/handover.md", "d": "D-319", "why": "the handover replaced whole: the tree as it stands at e49d372 — four legs green at 3,068/164, the U1/U3/U4/U5 and corpus landings, the open set (the battery split, AN-4, the sink, app-shell's boot-route rev, the cap ruling, the absent tools, the upstream pair, U2/U6/U7), and the next acts in order"}]}
 ```

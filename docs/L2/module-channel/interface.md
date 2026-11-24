@@ -21,7 +21,7 @@
 | 1 | **BINDING** | a `ListenerBinding[]` from one activation, the store, and the message sink | the registrations made, and a withdrawal for the inverse | one store entry per DECLARATION under its ONE handle; the handler IS the function the store holds (`S-11`, `C-3`) |
 | 2 | **ENVELOPE** | one write turn's settled receipt | ONE message per turn per realm, carrying per-listener entries | the batch and the five arms (`S-11`, `S-13`, `C-2`) |
 | 3 | **REGISTRATION** | `{module, client}` from the executor | the second kind of the SAME message | the client source crosses as a STRING and in no other form (`S-2b`, `C-15`) |
-| 4 | **FAN-OUT** | a write-turn message, in the realm | one call per module, each entry's client half fired | delivery-time dispatch, address-keyed under the store's prefix relation (`S-13`, `C-3`) |
+| 4 | **FAN-OUT** | a write-turn message, in the realm | one message per turn; each entry fired to its own declaration's half, in the message's order (`D-320`) | delivery-time dispatch, address-keyed under the store's prefix relation (`S-13`, `C-3`) |
 | 5 | **CONTAINMENT** | a module's throw, at the fan-out or in a body | a named datum, and the batch continuing | a module's fault stops neither the batch nor the app's paint (`S-13`, findings 14) |
 
 **The five are the surface and the count is derived, not declared** (`platform.md` §4, D-14): a member of a member adds nothing, and the receipt's maps are data the envelope READS rather than a sixth member. **No sixth exists** — no `invoke`, no source request, no per-entry delivery (§4 below).
@@ -42,9 +42,9 @@
 - **A rejecting body is the SECOND SHAPE OF `empty` and not a sixth arm**: the store has already contained it, its rank-23 `bodyFailures` datum stands under that handle, and the act still answers — only `write`/`delete` settle, so the registration, boot and reversal instants neither convert a rejection nor await a suspension (`D-310`, `H-4`). **A refused store call is not an arm either**: a main half forwarding one returns a plain value under `return` (L1 §4 `C-2`).
 - **The registration frame is the message's SECOND KIND and is not a write turn**: it carries `{module, client}`, answers nothing, and exists because a boot's registry writes happen before the realm subscribes — a channel with only write turns would leave a pre-installed module's client half undelivered on every boot (`D-308`, `C-15`). **Two kinds and no third**; no `RpcMethod`, no second bridge member, no source request.
 
-## 4. The realm's fan-out — one call per module, and the address relation
+## 4. The realm's fan-out — the message is the batch, the firing is per entry, and the address relation
 
-- **One call per MODULE carrying that module's entries**, never one call per listener and never one entry per delivery: the module's client half receives its own batch and fires each entry's `client` half ON DELIVERY **with the ENTRY**, in the message's order (`S-13`, findings 14).
+- **THE BATCH IS THE MESSAGE; THE FIRING IS PER ENTRY** (`D-320`, re-graining the earlier "one call per module" wording): one `{kind:'write-turn', entries}` arrives per turn and no entry is pushed piecemeal, and **each entry is fired to its OWN declaration's `client` half — `fire(listener, entry)` — in the message's order**, so a module's several listeners observe one turn in the writer's order and never out of it. **Containment is per firing.** The grouping by module is an ORDERING DEVICE and no call boundary: the earlier wording demanded a per-module call the module system could not use, an entry naming exactly one handle. In the message's order (`S-13`, findings 14).
 - **The relation is the STORE'S OWN PREFIX**, and it is what makes a crossing a subscription: the address the fan-out receives is the WRITE's, and a subscriber is notified when ITS declared address prefixes that one — **a subscriber at a crossing's own root IS notified by a write at a leaf under it, and a subscriber AT that leaf is NOT notified by a write at the root** (`C-3`, `M-13`). A subscriber adds no registration and no inverse; the crossing's ONE registration is the construction's (`C-5`, `D-129`).
 - **Containment is PER MODULE**: a client half that throws is answered as that module's datum, its batch stops there, and neither another module's entries nor the app's paint are touched (`S-13`). **A module's fault is never the boot's** (`D-80`, `D-124`).
 
@@ -73,7 +73,7 @@
 
 - **`ASM-CH-1` — the handle is `module-system`'s and this module never re-mints it.** Alternative rejected: mint a channel-local handle, which would give one declaration two identities and break the receipt's attribution (`D-310`, `C-3`).
 - **`ASM-CH-2` — one message per write TURN per realm, never one per entry.** Alternative rejected: per-entry messages, which would make one turn observable as many and let the realm interleave two turns (`C-2`).
-- **`ASM-CH-3` — the fan-out is one call per MODULE carrying its entries.** Alternative rejected: one call per listener, which would let a module's halves observe one turn out of order and would put containment below the module (`S-13`, findings 14).
+- **`ASM-CH-3` — the batch is the MESSAGE and the firing is per ENTRY, in the message's order** (`D-320`). Alternative rejected: **the writer composing one message per listener**, which would let one turn be observed in fragments and would put the turn's composition below the module (`S-13`, findings 14). The earlier "one call per module" wording is WITHDRAWN — an entry names exactly one handle, so the grouping can only be an ordering device.
 - **`ASM-CH-4` — the registration frame is a KIND of the one message, not a second member and not a write turn.** Alternative rejected: a second bridge member or an `invoke`-style source request, both refused by `C-15`'s one-member rule (L1 §4 `C-15`, `D-308`).
 
 ```boundary-declared
