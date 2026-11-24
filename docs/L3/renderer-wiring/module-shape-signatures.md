@@ -10,11 +10,12 @@
 import type { CapabilityRouter } from './extensions.js'
 import type { ContributionResult, Runtime } from './runtime.js'
 
-/** The install's answer, for the log and the rows: the modules it composed, the node ids it added, the contributions
- *  the runtime skipped BY NAME, and the handler entries it filled (`S-18`/`S-20`). Idempotent: a contribution whose
- *  authored ids already stand in the live graph is not composed twice, so a repeated frame adds nothing. */
+/** The install's answer, for the log and the rows: the modules the ROUTER HOLDS at the answer (`standing` — cumulative
+ *  by construction, `AN-5`), the node ids this call added, the contributions the runtime skipped BY NAME, and the handler
+ *  entries it filled (`S-18`/`S-20`). Idempotent: a contribution already composed is not composed twice — the live-graph
+ *  id check catches an id-bearing forest and the seat's per-router key set catches an id-less one (`AN-6`). */
 export interface ModuleShapeInstall {
-  readonly modules: readonly string[]
+  readonly standing: readonly string[]
   readonly added: readonly string[]
   readonly skipped: readonly string[]
   readonly actions: number
@@ -28,7 +29,7 @@ export interface ModuleShapeInstall {
 export function startModuleShape(runtime: Runtime, router: CapabilityRouter): ModuleShapeInstall
 
 /** The graph half alone: `runtime.contribute(router.contributions())` in the router's activation order, answering the
- *  runtime's `{added, skipped}`; a parentless or throwing contribution is the runtime's named skip, never invented
+ *  runtime's `{added, skipped, changed}`; a parentless or throwing contribution is the runtime's named skip, never invented
  *  here (`C-6`, `D-313`). NO serializer round-trip: it drops the 30 authored handlers (`src/shared/demo-envelope.ts`). */
 export function composeModuleGraph(runtime: Runtime, router: CapabilityRouter): ContributionResult
 
@@ -67,5 +68,5 @@ export interface ActionRecord {
 - **No `src/**` byte is declared here**; the install is L4's (D-3).
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L3", "module": "renderer-wiring", "writes": [{"path": "docs/L3/renderer-wiring/module-shape-signatures.md", "d": "D-306", "why": "this page, rev 2 \u2014 the install, the action record's closure and the five pane tables; no sixth map"}]}
+{"unit": "modularity", "layer": "L3", "module": "renderer-wiring", "writes": [{"path": "docs/L3/renderer-wiring/module-shape-signatures.md", "d": "D-317", "why": "this page, rev 3 \u2014 `ModuleShapeInstall.standing` and the two idempotence guards"}]}
 ```

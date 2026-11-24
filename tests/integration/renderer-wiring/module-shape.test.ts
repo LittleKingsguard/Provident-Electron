@@ -54,7 +54,7 @@ describe('renderer-wiring — the module shape: the graph composition and the ac
       ctx.action('reset', () => { fired += 1 })
     })
     const install = startModuleShape(runtime, router)
-    expect(install.modules, 'the router\'s registration is what the install answers').toEqual(['alpha'])
+    expect(install.standing, 'the router\'s registration set is what the install answers (`AN-5`: cumulative, and named so)').toEqual(['alpha'])
     expect(install.added).toEqual(['alpha-panel', 'alpha-reset'])
     expect(install.skipped, 'nothing was refused').toEqual([])
     expect(install.actions, 'ONE action, installed on the two nodes that declare the key').toBe(2)
@@ -100,6 +100,22 @@ describe('renderer-wiring — the module shape: the graph composition and the ac
     expect(install.skipped, 'the refusal is answered BY NAME').toEqual(['absent'])
     expect(runtime.elementForNodeId('orphan'), 'never half-attached').toBe(null)
     expect(runtime.renderedHtmlResult().renderedHtml, 'and the page did not re-render for a refusal').toBe(before)
+  })
+
+  it('RW-M5 — an ID-LESS contribution is composed ONCE, not once per later module\'s frame (`AN-6`: the live-graph id check cannot see it, so the seat\'s per-router key set does)', () => {
+    const runtime = runtimeOf()
+    const router = routerOf()
+    router.registerModule('alpha', (ctx) => {
+      ctx.graph({ parent: 'host', nodes: [{ type: 'span', content: 'idless-marker' }] })
+    })
+    expect(startModuleShape(runtime, router).added, 'an id-less forest adds nothing to `added` (it has no id to report)').toEqual([])
+    const count = (): number => (runtime.renderedHtmlResult().renderedHtml.match(/idless-marker/g) ?? []).length
+    expect(count(), 'the id-less node was composed once').toBe(1)
+    router.registerModule('beta', (ctx) => {
+      ctx.graph({ parent: 'host', nodes: [{ type: 'div', css: { id: 'beta-panel' } }] })
+    })
+    expect(startModuleShape(runtime, router).added).toEqual(['beta-panel'])
+    expect(count(), 'and the later frame did NOT compose alpha\'s forest a second time').toBe(1)
   })
 
   it('RW-M4 — an action no node declares is installed nowhere and throws nothing', () => {

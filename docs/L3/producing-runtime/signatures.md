@@ -18,10 +18,16 @@ export interface RuntimeOptions {
   contributions?: () => readonly GraphContribution[]
 }
 
-/** What `contribute` answers (`S-20`): the authored ids it composed and the contributions it refused BY NAME. */
+/** What `contribute` answers (`S-20`): the authored ids it composed, the contributions it refused BY NAME, and whether
+ *  the document moved. **`changed` is the MERGE's and never `added.length > 0`** — an id-less forest reaches the document
+ *  with nothing to report in `added` (`AN-6`). **`skipped`'s three arms, stated once**: an authored `parent` for a
+ *  contribution the merge refused (a parent that does not stand, an uncloneable node list), the synthetic
+ *  `'contributions'` for a throwing reader, and **every** parent when the stored document is absent (`null`) — the string
+ *  is the subject, and the warning that rides beside it carries the reason (`AN-8`). */
 export interface ContributionResult {
   readonly added: readonly string[]
   readonly skipped: readonly string[]
+  readonly changed: boolean
 }
 
 export class Runtime {
@@ -76,5 +82,5 @@ private compileDirtyInMode(node: Node): CompiledState[]
 - **No `src/**` byte is declared here**: the runtime edits are L4's (D-3).
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L3", "module": "producing-runtime", "writes": [{"path": "docs/L3/producing-runtime/signatures.md", "d": "D-313", "why": "this page, rev 2 \u2014 the option, the stored document, `contribute` and the mode branch stubs, with their invariants"}]}
+{"unit": "modularity", "layer": "L3", "module": "producing-runtime", "writes": [{"path": "docs/L3/producing-runtime/signatures.md", "d": "D-317", "why": "this page, rev 3 \u2014 `ContributionResult` carries `changed` and `skipped`'s three arms (`AN-8`)"}]}
 ```

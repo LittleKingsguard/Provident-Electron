@@ -13,6 +13,8 @@
 | `RG-2` | `tests/module-e2e.test.ts` rows 1/4 | Same cause. Row 1 reads the delivered action's shape plus a live `fn`; row 4 compares the two arms' `{module, name}` projections and asserts a live `fn` on both, because two arms carry two distinct function objects. |
 | `RG-3` | `docs/L1/modularity.md` §2, three rows | Figures had lagged `strata/modules.json`: `module-system` `16 → 24`, `producing-runtime` `17 → 18` (+ `tests/integration/producing-runtime/`), `renderer-wiring` (+ `tests/integration/renderer-wiring/`). The map's bytes moved for the last two; `module-system`'s 24 was already the map's. |
 | `RG-4` | `docs/L1/modularity.md` §6, `M-2b` | Its third arm re-grained to `S-23`/`U6` and the battery split (`D-318`, `AN-3`). Text replaced inside the bullet so the ceiling was unmoved; no row weakened, skipped or re-titled. |
+| `RG-6` | `tests/e2e/modularity/map-figures.test.ts` | NEW, `MF-1`…`MF-3` — the figure-vs-map probe `AN-12` asked for: every §2 row stating an `endpoints` figure must state the map's last figure, the four named rows must still state one, and a one-off fixture reds BY NAME. |
+| `RG-7` | `tests/integration/renderer-wiring/module-shape.test.ts` | `RW-M5` added: an ID-LESS contribution composes **once**, not once per later module's frame. |
 | `RG-5` | `docs/L3/renderer-wiring/module-shape-signatures.md` §2 | An **invented** `paneNodeIds(ids)`/`PaneNodeMap` was replaced by the five tables that already stand (`PANE_NODE_IDS`, `PANE_HEAD_IDS`, `PANE_BODY_IDS`, `PANE_COLLAPSE_IDS`, `PANE_MOVE_GRIP_IDS`) and the rows that read them (`PM-1`/`PM-2`). The composed set is `U2`'s. |
 
 ## 2. Changes made that a page's or record's own words now have to carry
@@ -28,6 +30,9 @@
 | `CH-7` | `tests/integration/renderer-wiring/module-shape.test.ts` | NEW, `RW-M1`…`RW-M4`: the contribution under its parent with the closure dispatching by name (contributed and authored nodes), idempotence across frames, a parentless contribution named with the page byte-identical, an undeclared action installing nowhere. |
 | `CH-8` | `strata/decisions.md` | `D-317` (the composition route and its two measured refusals), `D-318` (the update-frame drop), `D-319` (this ledger's rule). |
 | `CH-9` | `strata/modules.json` | `producing-runtime` `endpoints` 17 → 18 + its integration path; `renderer-wiring` + its integration path. |
+| `CH-11` | `src/renderer/runtime.ts`, three pages | `ContributionResult` gained **`changed`**, set by the MERGE and never derived from `added` (`AN-6`). |
+| `CH-12` | `src/renderer/renderer.ts`, signatures page | `ModuleShapeInstall.modules` renamed **`standing`** — the router's cumulative set, named for what it is (`AN-5`). |
+| `CH-13` | `src/renderer/renderer.ts`, L2 §4 | `composeModuleGraph` keeps a per-router **`WeakMap` key set** beside the live-graph id check, so an id-less forest is not composed twice (`AN-6`). |
 | `CH-10` | `docs/L1/modularity.md` §6 | `M-30` **filed** (the boot census row, written since `D-316`, with `D-315`'s refused-install half). |
 
 ## 3. Anomalies standing (the sweep's worklist)
@@ -36,14 +41,10 @@
 - **`AN-2` — UPSTREAM-FACING, HOST-OWNED: `serializeNode` emits no `handlers`.** `src/shared/demo-envelope.ts` authors **30** `handlers:` entries; the engine's serializer emits none (`H-2`/`OWED-14`). This is why the serializer round-trip is refused for composition (`D-317`) and why `contribute` merges the AUTHORED document instead. **Sweep:** if reverse emission ever carries handlers, `D-317`'s refusal is re-weighable — but the authored-document route stays the cheaper one and no change is owed.
 - **`AN-3` — `module.update`'s new `client` source is never evaluated.** The executor sends a registration frame on install **and** update; `CapabilityRouter.registerModule`'s one-frame guard drops the second. Recorded as `D-318`; `M-2b`'s third arm waits on `S-23`/`U6`'s inverse. **Sweep:** with `U6`, add the replace-on-update path (withdraw listeners/actions/contributions, evaluate the new source, remove the old contributed subtree from the authored document) and file `M-2b`.
 - **`AN-4` — the fan-out's comment outruns its code.** `docs/L2/module-channel/interface.md` §4, `ASM-MC-3` and `docs/L3/module-channel/design.md` §7 say **one call per module**; `src/renderer/module-channel-client.ts` groups by module and then calls `options.fire(entry.listener, entry)` **per entry**. The observable a module can take (all entries of one turn sharing one `turn`) is unaffected, and `CH-*` measures the envelope. **Sweep:** settle when `M-11` is written — either give the receipt a per-module call carrying the batch, or re-word `ASM-MC-3` to "one message per turn, one firing per entry, in message order". Do not let `M-11` assert a grain the code lacks.
-- **`AN-5` — `ModuleShapeInstall.modules` is cumulative.** `startModuleShape` answers `[...router.modules()]` while the interface says "the modules it composed". **Sweep:** either rename the member (`standing`) or answer only the newly composed names.
-- **`AN-6` — a contribution with no authored ids can be composed twice.** `composeModuleGraph`'s pending filter skips a contribution only when **all** its ids are already live, so an id-less forest is always passed. **Sweep:** give `GraphContribution` an identity (the router already mints `moduleHandle(module, 'graph:'+parent)` and discards it) and filter by it, or state the id requirement in `S-15`.
 - **`AN-7` — `installModuleActions` re-applies every earlier module's closures on each new module.** One `state-slice` per matching node per call: idempotent in effect, N−1 redundant writes in cost, and each re-dirties the node. **Sweep:** install only the new module's actions, or skip nodes whose handler already carries a function body.
-- **`AN-8` — `contribute`'s `skipped` mixes two vocabularies.** Authored parent ids for a refused contribution, the synthetic `'contributions'` for a reader throw, and **every** parent when the stored document is `null`. **Sweep:** one shape — a `{parent|contributions, reason}` pair, or keep strings and document the three arms.
 - **`AN-9` — `prebuildWarnings` grows.** `contribute` appends every call's warnings, and they are re-emitted on every later load. **Sweep:** bound it, or keep only the last call's.
 - **`AN-10` — the re-drive depends on a boot read having landed.** `reDriveModuleShapePaints` drives from `tabsClientReading`/`getViewClient().reading()`; a module installed before either read drives nothing, and its paints land when the boot read does. Correct, and worth a sentence in the page rather than a change.
 - **`AN-11` — two claimed battery paths do not exist.** `strata/modules.json` claims `tests/e2e/module-channel/` (module-channel) and `tests/e2e/module-parity/` (module-system); neither directory exists. A `paths` entry is a CLAIM, and nothing distinguishes "built" from "planned" without a `stat`. **Sweep:** either create the batteries or mark the claims (`planned`) — a map whose paths are half aspirational measures nothing.
-- **`AN-12` — nothing compares `docs/L1`'s figures to `strata/modules.json`.** `module-system`'s 16 sat wrong for several passes and was found by hand (`RG-3`). **Sweep:** one source-probe row in the `PM-1` idiom that parses `docs/L1/modularity.md` §2's figures and compares them to the map. This is the single highest-value sweep in this ledger.
 - **`AN-13` — §6's "Proven by" column now mixes vocabularies.** `renderer-wiring`'s cell lists `RW-M1…RW-M4` (integration ids) beside `M-n` rows. **Sweep:** either the column states "rows that prove it, any battery" or the integration ids move to the module's own page.
 - **`AN-14` — two envelope fixtures in one battery.** `tests/integration/producing-runtime/prebuild.test.ts` carries `envelope()` (the pre-build rows) and `authoredEnvelope()` (the `D-317` rows). **Sweep:** merge, or name each for its subject.
 - **`AN-15` — ceiling pressure is now constant.** `docs/L2/module-system/interface.md` 149/150, `docs/L3/module-system/signatures.md` 149/150, `docs/L1/modularity.md` 148/150, `docs/L3/module-system/design.md` 148/150. Every pass that touches them pays for its sentence by deleting another, and the cure is `D-1`'s split-by-owner (as `renderer-wiring`'s module-shape pages already are). **Sweep:** split `module-system`'s L2/L3 by owner, and split `docs/L1/modularity.md` §4/§6 into a second L1 page.
@@ -52,6 +53,13 @@
 - **`AN-18` — `RT-2e` is a known load-sensitive flake.** `tests/ui-leg-contract.test.ts`'s 5 s timeout passes in isolation and on re-run; a red there is the machine's, not the row's.
 - **`AN-19` — no booted row installs a module with a `client` source.** All 11 `tests/e2e/` batteries ran inside `npm test` (163 files), so the bundle booted with this session's `renderer.ts` change and `M-1`…`M-5`/`M-30` stayed green — but every installed module in them declares only `entry`, so `startModuleShape` ran in a boot only through its empty-contribution path. The seat's real path is measured **under the node shim** (`RW-M1`…`RW-M4`, `D-317(a)`…`(c)`), never in a booted bundle. **Sweep:** the `M-11`/`M-13` battery closes it; until then, no claim of a booted module shape is made anywhere.
 - **`AN-20` — the harness is about to be copied a third time.** `tests/e2e/modularity/module-executor.test.ts` carries ~650 lines of host-wide lock, reap-with-proof, artifact ensure, bounded waits, profile seeding and the stdio transport. A second battery has to carry them again and a third after that. **Sweep:** extract `tests/e2e/harness/live-boot.ts` (or equivalent) and leave each battery declaring only its profile seed, its modules and its rows — weighed against the corpus's preference for a battery that stands alone, which is a design question, not a mechanical one.
+
+## 3a. Swept (what left this ledger, and where it went)
+
+- **`AN-12` → `RG-6`**: nothing compared the page's figures to the map; `MF-1`…`MF-3` do, and `MF-2` names the four rows that must keep stating one so a sentence cannot be deleted instead of moved.
+- **`AN-6` → `CH-11`/`CH-13`, `RG-7`** — and the sweep found something worse than the item stated: `contribute` derived its `changed` flag from `added.length`, so an **id-less** forest was not merely composed twice, it was **never loaded at all** (the merge happened on a clone the loader never saw). `RW-M5` is the instrument; `changed` is now the merge's.
+- **`AN-5` → `CH-12`**: the member is `standing`, which is what the answer actually is.
+- **`AN-8` → documentation**: `skipped`'s three arms are stated at `ContributionResult` in `signatures.md` (authored parent, the synthetic `'contributions'`, every parent on an absent document) rather than re-shaped — a string pair would be a contract change for a diagnostic.
 
 ## 4. Process rules this unit learned (keep them; they are cheaper than rediscovering them)
 
@@ -72,14 +80,14 @@
 
 ## 6. What the cleanup pass should do first, in order
 
-1. **`AN-12`** — the figure-vs-map probe. It is one row, it closes a class that has already cost a multi-pass debt, and it makes every later figure edit self-checking.
+1. ~~`AN-12`~~ — swept (`RG-6`). ~~`AN-5`/`AN-6`/`AN-8`~~ — swept (`CH-11`/`CH-12`/`CH-13`, `RG-7`), with `AN-6`'s measurement recorded in §3a.
 2. **`AN-15`/`AN-16`** — split `module-system`'s L2/L3 and `docs/L1/modularity.md` by owner (`D-1`), which removes the formatting casualty with it.
-3. **`AN-4`/`AN-5`/`AN-6`/`AN-7`/`AN-8`/`AN-9`** — the six implementation details around the fan-out and the install; each is small and each is cheaper before `M-11` is written than after.
+3. **`AN-4`/`AN-7`/`AN-9`** — the three that remain around the fan-out and the install (the other three left with the sweep above); each is small and each is cheaper before `M-11` is written than after.
 4. **`AN-11`** — the two claimed-but-absent battery paths.
 5. **`AN-20`** — the harness extraction, once `M-11`/`M-13` have shown what the second battery actually needs.
 6. **`AN-3`/`AN-19`** — `U6`'s inverse, then `M-2b`, then a booted module shape.
 7. **`AN-1`/`AN-2`/`AN-17`/`AN-18`/`AN-19`** — re-measure at the next pin, or leave named with their owners.
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/modularity-cleanup.md", "d": "D-319", "why": "this ledger, rev 1 NEW: every re-grain, change, anomaly, process rule and environment limit this session found, with the sweep order; no claim, no src byte"}]}
+{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/modularity-cleanup.md", "d": "D-319", "why": "this ledger, rev 2 \u2014 `AN-5`/`AN-6`/`AN-8`/`AN-12` swept, with the sweep's own finding recorded and the worklist re-ordered"}, {"path": "tests/e2e/modularity/map-figures.test.ts", "d": "D-319", "why": "`MF-1`\u2026`MF-3`, the figure-vs-map probe `AN-12` asked for \u2014 filed with the sweep that owed it", "by": "L0"}]}
 ```

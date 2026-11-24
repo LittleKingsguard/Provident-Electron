@@ -2100,7 +2100,7 @@ async function main(): Promise<void> {
         // (`S-20`, `D-317`): compose the graph, install the closure table, and re-drive the paints the re-render retired.
         if (moduleRouter.modules().length === before) return
         const install = startModuleShape(runtime, moduleRouter)
-        console.info(`[provident-module] shape: modules ${JSON.stringify(install.modules)}, added ${JSON.stringify(install.added)}, skipped ${JSON.stringify(install.skipped)}, actions ${install.actions}`)
+        console.info(`[provident-module] shape: standing ${JSON.stringify(install.standing)}, added ${JSON.stringify(install.added)}, skipped ${JSON.stringify(install.skipped)}, actions ${install.actions}`)
       },
       fire: (handle, entry) => { moduleRouter?.fire(handle, entry) },
     })
@@ -2179,9 +2179,11 @@ async function main(): Promise<void> {
  * a second frame at the same module — or a later module's frame that carries the earlier ones again — add nothing.
  * ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 
-/** The install's answer, for the log and the rows (`S-18`/`S-20`). `added` and `skipped` are `contribute`'s own. */
+/** The install's answer, for the log and the rows (`S-18`/`S-20`). `added` and `skipped` are `contribute`'s own;
+ *  `standing` is every module the router holds at the answer, which is cumulative by construction (`AN-5`: the router's
+ *  own list, named for what it is rather than for what this call did). */
 export interface ModuleShapeInstall {
-  readonly modules: readonly string[]
+  readonly standing: readonly string[]
   readonly added: readonly string[]
   readonly skipped: readonly string[]
   readonly actions: number
@@ -2192,27 +2194,48 @@ export interface ModuleShapeInstall {
 export function startModuleShape(runtime: Runtime, router: CapabilityRouter): ModuleShapeInstall {
   const composed = composeModuleGraph(runtime, router)
   const actions = installModuleActions(runtime, router)
-  if (composed.added.length > 0) reDriveModuleShapePaints(runtime)
-  return { modules: [...router.modules()], added: composed.added, skipped: composed.skipped, actions }
+  if (composed.changed) reDriveModuleShapePaints(runtime)
+  return { standing: [...router.modules()], added: composed.added, skipped: composed.skipped, actions }
 }
 
 /** THE GRAPH HALF: the contributions whose authored nodes are not yet in the live graph, in the router's order, merged by
  *  `Runtime.contribute`. A parentless contribution is the runtime's named skip, never invented here (`C-6`, `D-317`). */
 export function composeModuleGraph(runtime: Runtime, router: CapabilityRouter): ContributionResult {
   const records = router.contributions()
-  if (records.length === 0) return { added: [], skipped: [] }
+  if (records.length === 0) return { added: [], skipped: [], changed: false }
   const live = new Set<string>()
   for (const node of runtime.listTargets().nodes) {
     if (node.cssId !== undefined) live.add(node.cssId)
     if (node.propsId !== undefined) live.add(node.propsId)
   }
+  const done = composedByRouter.get(router) ?? new Set<string>()
   const pending = records
+    // THE TWO GUARDS, AND WHY ONE IS NOT ENOUGH (`AN-6`): the ID CHECK reads the live graph, so it catches a
+    // contribution whose nodes carry authored ids; a forest with NO ids cannot be seen that way and would be composed
+    // twice on a later module's frame. The SET is the exact identity for that case, keyed by what the record actually
+    // carries — no seat-local record of the GRAPH, only of what this seat has already handed to `contribute`.
+    .filter((record) => !done.has(contributionKey(record.module, record.contribution)))
     .map((record) => record.contribution)
     .filter((contribution) => {
       const ids = authoredIdsIn(contribution.nodes as readonly AuthoredShape[])
       return ids.length === 0 || !ids.every((id) => live.has(id))
     })
-  return pending.length === 0 ? { added: [], skipped: [] } : runtime.contribute(pending)
+  if (pending.length === 0) return { added: [], skipped: [], changed: false }
+  const answer = runtime.contribute(pending)
+  if (answer.changed) {
+    for (const record of records) done.add(contributionKey(record.module, record.contribution))
+    composedByRouter.set(router, done)
+  }
+  return answer
+}
+
+/** THE CONTRIBUTIONS THIS SEAT HAS ALREADY COMPOSED, PER ROUTER (`AN-6`): a `WeakMap` so a fresh registration surface
+ *  starts empty (a test's router is not the app's) and a discarded one leaves nothing behind. */
+const composedByRouter = new WeakMap<CapabilityRouter, Set<string>>()
+
+/** A contribution's identity as the record carries it: the module, the parent and the authored forest. */
+function contributionKey(module: string, contribution: { readonly parent: string; readonly nodes: readonly unknown[] }): string {
+  return `${module}\u0000${contribution.parent}\u0000${JSON.stringify(contribution.nodes)}`
 }
 
 /** THE ACTION HALF: each `ActionRecord.fn` into the live node's handler entry whose NAME is the record's, by one

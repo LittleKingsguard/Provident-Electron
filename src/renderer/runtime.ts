@@ -72,10 +72,13 @@ export interface RuntimeOptions {
   contributions?: () => readonly GraphContribution[]
 }
 
-/** What `contribute` answers (`S-20`): the authored ids it composed and the contributions it refused BY NAME. */
+/** What `contribute` answers (`S-20`): the authored ids it composed, the contributions it refused BY NAME, and whether
+ *  the document actually moved. **`changed` IS NOT `added.length > 0`**: a contributed forest that carries no authored
+ *  id still reaches the document, and deriving the flag from ids would silently drop it (`AN-6`'s measurement). */
 export interface ContributionResult {
   readonly added: readonly string[]
   readonly skipped: readonly string[]
+  readonly changed: boolean
 }
 
 export class Runtime {
@@ -144,15 +147,15 @@ export class Runtime {
    *  re-load renders the merged page, and a delivery's paint is that seat's turn. */
   contribute(contributions: readonly GraphContribution[]): ContributionResult {
     const base = this.envelope
-    if (base === null) return { added: [], skipped: contributions.map((entry) => entry.parent) }
+    if (base === null) return { added: [], skipped: contributions.map((entry) => entry.parent), changed: false }
     const merged = this.composeContributions(base, () => contributions)
     if (merged.warnings.length > 0) {
       this.prebuildWarnings = [...this.prebuildWarnings, ...merged.warnings]
       this.warnings = [...this.warnings, ...merged.warnings]
     }
-    if (!merged.changed) return { added: [], skipped: merged.skipped }
+    if (!merged.changed) return { added: [], skipped: merged.skipped, changed: false }
     this.loadEnvelope(merged.envelope)
-    return { added: merged.added, skipped: merged.skipped }
+    return { added: merged.added, skipped: merged.skipped, changed: true }
   }
 
   /** THE ONE MERGE IMPLEMENTATION (`S-14`, `S-15`, `S-20`; `C-6`): each contribution's nodes join the authored template
@@ -179,6 +182,7 @@ export class Runtime {
     const warnings: TranslatedWarning[] = []
     const added: string[] = []
     const skipped: string[] = []
+    let merged = false
     for (let index = 0; index < contributions.length; index += 1) {
       const contribution = contributions[index]
       const parent = this.findAuthoredNode(composed.template?.root, contribution.parent)
@@ -197,8 +201,9 @@ export class Runtime {
       }
       parent.children = [...(parent.children ?? []), ...nodes]
       added.push(...this.authoredIdsOf(nodes))
+      merged = true
     }
-    return { envelope: composed, warnings, added, skipped, changed: added.length > 0 }
+    return { envelope: composed, warnings, added, skipped, changed: merged }
   }
 
   /** Every authored id in a contributed forest, in document order — `css.id` first, then `props.id`, recursing. */
