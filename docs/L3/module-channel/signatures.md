@@ -94,7 +94,7 @@ export function createModuleChannel(options: ModuleChannelOptions): ModuleChanne
 ## 3. `src/renderer/module-channel-client.ts` — the realm's receipt, fan-out and proxy
 
 ```ts
-import type { Refusal, StoreSurface } from '../../shared/module-contract.js'
+import type { ClientStoreSurface, Refusal, StoreSurface } from '../../shared/module-contract.js'
 import type { ChannelEntry, ChannelMessage, ChannelTransportRealm, StoreRequest } from '../../shared/module-channels.js'
 
 export interface ModuleChannelClientOptions {
@@ -103,12 +103,12 @@ export interface ModuleChannelClientOptions {
   readonly evaluate: (frame: { readonly module: string; readonly client: string }) => void
   /** `module-system`'s ONE delivery entry, contained per handle; `ASM-MC-6` fires it with the ENTRY. */
   readonly fire: (handle: string, entry: ChannelEntry) => void
-  /** Under ONE realm the store is realm-side and the client proxy is the store itself (C-13, S-13b). */
+  /** Under ONE realm the store is realm-side and the proxy WRAPS its answers in resolved Promises (C-13, S-13b). */
   readonly store?: StoreSurface
 }
 export interface ModuleChannelClient {
-  /** The client ctx's `store` member: the data verbs, the registration verbs refused (ASM-MC-1). */
-  readonly store: StoreSurface
+  /** The client ctx's `store` member: the ASYNC data verbs, the registration verbs refused (ASM-MC-1). */
+  readonly store: ClientStoreSurface
   /** Registers both kinds on the transport; the returned function withdraws it. */
   start(): () => void
 }
@@ -116,8 +116,8 @@ export function createModuleChannelClient(options: ModuleChannelClientOptions): 
 
 /** `ASM-MC-1`'s refusal: the six registration verbs answer this by name, as a VALUE (D-105). */
 export type ClientRegistrationRefusal = Refusal & { readonly reason: 'client-registration-refused' }
-/** The two realms' proxy: a `StoreRequest` over the transport, or the store itself under one realm. */
-export function createClientStore(source: { readonly transport: ChannelTransportRealm } | { readonly store: StoreSurface }): StoreSurface
+/** The two realms' proxy: a `StoreRequest` over the transport, or the realm store's answers — each a resolved Promise. */
+export function createClientStore(source: { readonly transport: ChannelTransportRealm } | { readonly store: StoreSurface }): ClientStoreSurface
 ```
 
 ## 4. The invariants a stub reader must not lose

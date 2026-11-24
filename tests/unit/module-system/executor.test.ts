@@ -132,7 +132,7 @@ describe('module-system — unit grain: `createModuleExecutor` over a DECLARED s
     expect(toolsOf(activationNamed(executor, 'ms-ctx')), '§6 — the tool is there because the ENTRY registered it, and that is the name `activations()` carries').toEqual([handle])
   })
 
-  it('MS-3 — §3: the CLIENT ctx is EXACTLY five members, driven through the realm half that exists today', () => {
+  it('MS-3 — §3: the CLIENT ctx is EXACTLY five members, driven through the realm half that exists today', async () => {
     const router = new CapabilityRouter() // §12 I-2 constructs it with NO arguments: that stays lawful
     const seen: string[][] = []; let handle: unknown = null; let refusal: unknown = null
     try {
@@ -151,6 +151,9 @@ describe('module-system — unit grain: `createModuleExecutor` over a DECLARED s
     expect(typeof handle === 'string' && handle.length > 0, `§4 — \`onDelivery\` answers a non-empty DeliveryHandle: ${String(handle)}`).toBe(true)
     expect([str(memberOf(action, 'module')), str(memberOf(action, 'name'))], '§3 — `action` lands ONE record: the module and the action\'s own name').toEqual(['ms-probe', 'ms-act'])
     expect(asArray(callOn(view, 'contributions')).length, '§3 — `graph` contributes one record at the ordered pre-build point').toBe(1)
+    // THE CLIENT STORE IS ASYNC BY CONSTRUCTION (`D-311`): its act is a request the channel executes, so the default
+    // writer's `no-store-host` is a RESOLVED value and the row awaits it like a module's own client code does.
+    refusal = await Promise.resolve(refusal)
     expect([field(refusal, 'status'), field(refusal, 'reason')], `§3 — no writer handed in: a store verb answers a VALUE, 'no-store-host' (design §2): ${JSON.stringify(refusal)}`).toEqual(['refused', 'no-store-host'])
   })
 

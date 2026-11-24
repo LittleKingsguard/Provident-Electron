@@ -14,19 +14,19 @@
 import { moduleHandle } from '../shared/module-contract.js'
 import type {
   ClientHalfCtx,
+  ClientStoreSurface,
   ContributionHandle,
   DeliveryHandle,
   GraphContribution,
   Refusal,
-  StoreSurface,
 } from '../shared/module-contract.js'
 
 export type { ClientHalfCtx, GraphContribution, DeliveryHandle, ContributionHandle }
 
 /** What the realm is handed. An ABSENT store is the named refusal `no-store-host`, not a stub. */
 export interface ClientHalfDeps {
-  /** At `U3` the channel hands its own surface here and owns the write turn (`D-311`). */
-  readonly store?: StoreSurface
+  /** At `U3` the channel hands its own ASYNC surface here and owns the turn (`D-311`). */
+  readonly store?: ClientStoreSurface
   readonly log?: (line: string, detail?: unknown) => void
 }
 
@@ -61,7 +61,7 @@ export class CapabilityRouter {
   private contributionRecords: ContributionRecord[] = []
   private readonly bodies = new Map<DeliveryHandle, (data: unknown, address: readonly string[]) => void>()
   private readonly handlers = new Map<string, (ctx: never, ...args: unknown[]) => unknown>()
-  private noHost: StoreSurface | null = null
+  private noHost: ClientStoreSurface | null = null
 
   /** Zero-arg stays lawful (`L2` §12's `I-2` constructs it so). */
   constructor(deps: ClientHalfDeps = {}) {
@@ -162,7 +162,7 @@ export class CapabilityRouter {
   }
 
   /** The GIVEN writer, by identity — never a copy (`L2` §10, `D-311`). */
-  private storeSurface(): StoreSurface {
+  private storeSurface(): ClientStoreSurface {
     if (this.deps.store !== undefined) return this.deps.store
     this.noHost ??= noStoreHost()
     return this.noHost
@@ -178,32 +178,40 @@ function evaluate(source: string): (ctx: ClientHalfCtx) => void {
   return factory as (ctx: ClientHalfCtx) => void
 }
 
-/** No writer handed in: EVERY verb answers the named refusal `no-store-host` as a VALUE (`D-105`). */
-function noStoreHost(): StoreSurface {
+/** No writer handed in: EVERY data verb answers the named refusal `no-store-host`, as a RESOLVED value (`D-105`). */
+function noStoreHost(): ClientStoreSurface {
   const refused = (verb: string): Refusal => ({
     status: 'refused',
     reason: 'no-store-host',
     subject: verb,
     message: `the realm holds no store writer yet, so \`${verb}\` is a request the channel executes at U3`,
   })
+  const registration = (verb: string): Refusal => ({
+    status: 'refused',
+    reason: 'client-registration-refused',
+    subject: verb,
+    message: `the six registration verbs are the foundation's, not a client half's (${verb})`,
+  })
   const surface = {
-    read: () => refused('read'),
-    readLiteral: () => refused('readLiteral'),
-    readTiered: () => refused('readTiered'),
-    rollback: () => refused('rollback'),
-    write: () => refused('write'),
-    delete: () => refused('delete'),
-    constraints: () => refused('constraints'),
-    listen: () => refused('listen'),
-    unlisten: () => refused('unlisten'),
-    addConstraint: () => refused('addConstraint'),
-    constraintOn: () => refused('constraintOn'),
-    constraintOff: () => refused('constraintOff'),
-    removeConstraint: () => refused('removeConstraint'),
-    register: () => refused('register'),
-    removeListener: () => refused('removeListener'),
+    read: () => Promise.resolve(refused('read')),
+    readLiteral: () => Promise.resolve(refused('readLiteral')),
+    readTiered: () => Promise.resolve(refused('readTiered')),
+    rollback: () => Promise.resolve(refused('rollback')),
+    write: () => Promise.resolve(refused('write')),
+    delete: () => Promise.resolve(refused('delete')),
+    constraints: () => Promise.resolve(refused('constraints')),
+    constraintOn: () => Promise.resolve(refused('constraintOn')),
+    constraintOff: () => Promise.resolve(refused('constraintOff')),
+    // THE SIX REGISTRATION VERBS ANSWER THE PROXY'S OWN NAME, so a client half written in JS that reaches one gets a
+    // named refusal rather than `undefined` (`ASM-MC-1`); the TYPE omits them, because a typed client never calls one.
+    listen: () => Promise.resolve(registration('listen')),
+    unlisten: () => Promise.resolve(registration('unlisten')),
+    addConstraint: () => Promise.resolve(registration('addConstraint')),
+    removeConstraint: () => Promise.resolve(registration('removeConstraint')),
+    register: () => Promise.resolve(registration('register')),
+    removeListener: () => Promise.resolve(registration('removeListener')),
   }
-  return surface as unknown as StoreSurface
+  return surface as unknown as ClientStoreSurface
 }
 
 function message(error: unknown): string {

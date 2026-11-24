@@ -40,7 +40,7 @@ describe('imageResult — format an MCP image content block (M-r4, proposal §9)
 })
 
 describe('the rendered view is READ THROUGH THE STORE, never captured off the ctx (old rows 4/5: ctx.captureView + setCaptureProvider — L2 §3, §10)', () => {
-  it('4. `captureView` is ABSENT from the five-member ctx; the same read is a store verb, and with no writer handed it is the named refusal `no-store-host` AS A VALUE (old row 4: ctx.captureView() returned a data-URI)', () => {
+  it('4. `captureView` is ABSENT from the five-member ctx; the same read is a store verb, and with no writer handed it is the named refusal `no-store-host` as a RESOLVED value (old row 4: ctx.captureView() returned a data-URI)', async () => {
     const router = new CapabilityRouter()
     let handed: ClientHalfCtx | undefined
     router.registerModule('capture', (ctx: ClientHalfCtx) => {
@@ -50,9 +50,9 @@ describe('the rendered view is READ THROUGH THE STORE, never captured off the ct
     expect('captureView' in handed!).toBe(false)
     expect(Object.keys(handed!).sort()).toEqual(['action', 'graph', 'log', 'onDelivery', 'store'])
     // NO writer was handed: every verb refuses by name and still answers — a view read is a REQUEST.
-    const surface = handed!.store as unknown as Record<string, () => { status: string; reason: string; subject: string }>
+    const surface = handed!.store as unknown as Record<string, () => Promise<{ status: string; reason: string; subject: string }>>
     for (const verb of ['read', 'readLiteral', 'readTiered']) {
-      const out = surface[verb]!()
+      const out = await surface[verb]!()
       expect(out.status).toBe('refused')
       expect(out.reason).toBe('no-store-host')
       expect(out.subject).toBe(verb)

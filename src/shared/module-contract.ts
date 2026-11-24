@@ -81,6 +81,16 @@ export interface StoreSurface {
 
 export type DeclarationHandle = string
 export type DeliveryHandle = string
+
+/** **THE CLIENT HALF'S ASYNC DATA SURFACE** (`D-311`, `C-16`): a client half's `store` act is an e2e REQUEST the
+ *  channel executes, so every answer is a Promise of the store's own — the instance's sync `StoreSurface` above types
+ *  the MAIN side and the host, never this crossing. The six registration verbs are absent by declaration: they are the
+ *  foundation's and the client proxy refuses them by name (`ASM-MC-1`). */
+export type ClientStoreSurface = {
+  readonly [K in 'read' | 'readLiteral' | 'readTiered' | 'write' | 'delete' | 'rollback'
+    | 'constraints' | 'constraintOn' | 'constraintOff']:
+    (...args: Parameters<StoreSurface[K]>) => Promise<Awaited<ReturnType<StoreSurface[K]>>>
+}
 export type ContributionHandle = string
 /** The FULL published name, `module:<name>.<tool>` — never the declaration mint. */
 export type ToolHandle = string
@@ -108,6 +118,8 @@ export type RefusalName =
   | 'application-version-unsatisfied'
   | 'reentrant-call'
   | 'no-store-host'
+  /** THE CLIENT PROXY's one (`ASM-MC-1`): the six registration verbs are the foundation's, not a client half's. */
+  | 'client-registration-refused'
 
 /** THE DOOR's TWO answers, each a VALUE naming its subject (`L2` §11, `ASM-MS-4`): `tool-unknown` for a
  *  name that does not stand — its `subject` the requested `module:<name>.<tool>` — and `handler-threw`
@@ -139,8 +151,8 @@ export interface MainHalfCtx {
 
 /** EXACTLY five keys (`L2` §3, `ASM-MS-1`). */
 export interface ClientHalfCtx {
-  /** A verb is an e2e REQUEST the channel executes, so the channel owns the write turn (`D-311`). */
-  readonly store: StoreSurface
+  /** A verb is an e2e REQUEST the channel executes, so its answer is a Promise and the channel owns the turn (`D-311`). */
+  readonly store: ClientStoreSurface
   onDelivery(listener: string, fn: (data: unknown, address: readonly string[]) => void): DeliveryHandle
   action(name: string, fn: (ctx: never, ...args: unknown[]) => unknown): void
   graph(contribution: GraphContribution): ContributionHandle

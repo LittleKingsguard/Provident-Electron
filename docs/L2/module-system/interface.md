@@ -8,7 +8,7 @@
 
 ## 0. What this page fixes, and the three seams it borrows and never re-derives
 
-- **The store's interface is `C-16`'s and is not this page's to state**: the `store` member is typed by ONE host-agnostic interface declared in `src/shared/module-contract.ts` — the store instance's fifteen own members, satisfied by the Node addon and the WebAssembly arm alike — so this page names the member, cites the constraint, and re-lists nothing (L1 §4 `C-16`, `D-312`).
+- **The store's interface is `C-16`'s and is not this page's to state**: the MAIN half's `store` is the sync `StoreSurface` (the instance's fifteen own members, satisfied by both hosts), while the CLIENT half's is the async `ClientStoreSurface` — the same instance's data verbs, each answered as a Promise because the act is a request the channel executes (`D-311`) — so this page names the members, cites the constraints, and re-lists neither (L1 §4 `C-16`, `D-312`).
 - **The channel is `module-channel`'s and only its INPUT crosses here**: this page states what the executor *hands* `U3` (§8, §9) and where; the batch, the per-listener entry, the fan-out and per-module containment are that module's own page (L1 §2's row for it, `D-307`, `D-311`). **And the tool NAMES are `mcp-surface`'s, while the route a call comes BACK by is this page's**: `module:<name>.<tool>` is the namespace this module's registrations occupy, `docs/L2/mcp-surface/interface.md` §10 is the composition that publishes them and §11's `invoke` is the door its calls return through (L1 §3 `S-5`, §11).
 
 ## 1. The manifest — seven members, each with a type and a job
@@ -42,7 +42,7 @@
 
 | `ClientHalfCtx` (five) | Type | Why the client half has it |
 |---|---|---|
-| `store` | `StoreSurface` | the same type; here a verb is an E2E REQUEST the channel executes, so the channel owns the write turn and the receipt (§10) (`D-311`) |
+| `store` | `ClientStoreSurface` | **the ASYNC data half** (`ClientStoreSurface`, `src/shared/module-contract.ts`): here a verb is an E2E REQUEST the channel executes, so its answer is a Promise and the channel owns the write turn and the receipt (§10); the six registration verbs are absent by declaration and refused by the proxy (`ASM-MC-1`, `D-311`) |
 | `onDelivery` | `(listener: string, fn: (data: unknown, address: string[]) => void) => DeliveryHandle` | **THE REGISTRATION a listener's `client` half stands on**, fired on delivery under the store's prefix relation (§4) (`D-307`, L1 §3 `S-2b`) |
 | `action` | `(name: string, fn: (ctx: never, ...args: unknown[]) => unknown) => void` | a NAMED ACTION in the foundation's host-side name → function table, matched by the engine at dispatch; no source text enters graph data (L1 §4 `C-10`, `D-313`) |
 | `graph` | `(contribution: GraphContribution) => ContributionHandle` | graph DATA contributed at the ordered pre-build point, parent named by id, never a string transform (L1 §4 `C-6`, §3 `S-15`) |

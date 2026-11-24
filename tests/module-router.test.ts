@@ -264,18 +264,23 @@ describe('CapabilityRouter — ONE frame in, ONE five-member ctx out (L2 §3, D-
     expect(surface.read!()).toBe('the rendered fragment')
   })
 
-  it('17. with NO writer handed, all FIFTEEN store verbs answer the named refusal `no-store-host` as VALUES, each naming its own verb (L2 §3/§10: an absent store is a refusal, not a stub)', () => {
+  it('17. with NO writer handed, the NINE data verbs answer `no-store-host` and the SIX registration verbs `client-registration-refused`, each a RESOLVED value naming its own verb (L2 §3/§10, D-311)', async () => {
     const { ctx } = capture()
-    const verbs = [
-      'read', 'readLiteral', 'readTiered', 'rollback', 'write', 'delete', 'constraints', 'listen',
-      'unlisten', 'addConstraint', 'constraintOn', 'constraintOff', 'removeConstraint', 'register', 'removeListener',
-    ]
-    expect(verbs).toHaveLength(15)
-    const surface = ctx().store as unknown as Record<string, () => { status: string; reason: string; subject: string; message: string }>
-    for (const verb of verbs) {
-      const out = surface[verb]!()
+    const data = ['read', 'readLiteral', 'readTiered', 'rollback', 'write', 'delete', 'constraints', 'constraintOn', 'constraintOff']
+    const registration = ['listen', 'unlisten', 'addConstraint', 'removeConstraint', 'register', 'removeListener']
+    expect([...data, ...registration]).toHaveLength(15)
+    const surface = ctx().store as unknown as Record<string, () => Promise<{ status: string; reason: string; subject: string; message: string }>>
+    for (const verb of data) {
+      const out = await surface[verb]!()
       expect(out.status).toBe('refused')
       expect(out.reason).toBe('no-store-host')
+      expect(out.subject).toBe(verb)
+      expect(out.message).toContain(verb)
+    }
+    for (const verb of registration) {
+      const out = await surface[verb]!()
+      expect(out.status).toBe('refused')
+      expect(out.reason, 'the six registration verbs are the foundation\'s and the proxy refuses them by name').toBe('client-registration-refused')
       expect(out.subject).toBe(verb)
       expect(out.message).toContain(verb)
     }

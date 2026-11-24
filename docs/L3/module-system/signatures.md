@@ -51,7 +51,7 @@ export interface MainHalfCtx {                        // EXACTLY four keys
   log(line: string, detail?: unknown): void
 }
 export interface ClientHalfCtx {                      // EXACTLY five keys
-  readonly store: StoreSurface                        // a verb is an e2e REQUEST the channel executes (D-311)
+  readonly store: ClientStoreSurface                   // ASYNC: a verb is an e2e REQUEST the channel executes (D-311)
   onDelivery(listener: string, fn: (data: unknown, address: string[]) => void): DeliveryHandle
   action(name: string, fn: (ctx: never, ...args: unknown[]) => unknown): void
   graph(contribution: GraphContribution): ContributionHandle
@@ -119,7 +119,7 @@ export declare function satisfies(version: string, range: string): boolean      
 
 ```ts
 export interface ClientHalfDeps {                    // absent `store` → the named refusal 'no-store-host'
-  readonly store?: StoreSurface; readonly log?: (line: string, detail?: unknown) => void
+  readonly store?: ClientStoreSurface; readonly log?: (line: string, detail?: unknown) => void
 }
 export interface ClientListenerRecord { readonly module: string; readonly listener: string; readonly handle: DeliveryHandle }
 export interface ActionRecord { readonly module: string; readonly name: string }
