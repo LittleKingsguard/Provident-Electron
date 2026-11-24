@@ -38,7 +38,7 @@ Read `strata/brief.md` first, then `strata/decisions.md` from `D-304` onward.
 
 ## What a fresh session does next, in order
 
-1. **The e2e `M-2b`/`M-11`/`M-13` at `S-20`** — the composition and the install are landed and green in their integration rows; these three are L1's unmarked, gating boundary rows (`D-30`, `D-40`). Then `U2`'s declaration registry (which unblocks `S-18`/`M-18`), the `app-shell` L2/L3 eleventh-member re-grain, the **out-of-band activation sink**, and the earlier debts (the cap ruling, the ledger when `strata-state` returns).
+1. **The e2e battery, SPLIT BY `D-318`** — `M-11`/`M-13` file at `S-20` on one shared boot in `tests/e2e/module-channel/` (the harness is the executor battery's, ~650 lines of lock/reap/boot that must be carried or shared), and **`M-2b` moves to `S-23`/`U6`** because an update's second registration frame is dropped by the router's one-frame guard, so the updated `client` source is never evaluated and the arm's "old marker GONE" claim needs the inverse. Then `U2`'s declaration registry (which unblocks `S-18`/`M-18`), the `app-shell` L2/L3 eleventh-member re-grain, the **out-of-band activation sink**, and the earlier debts (the cap ruling, the ledger when `strata-state` returns).
 2. **The harness-cap ruling** (one rule, two readings in the corpus), then the ledger when `strata-state` returns.
 3. **`U2`–`U7`**, with **`U7`'s acceptance conversion last**.
 4. **Move the ledger** to L4 and its artifacts when the workflow checkout is restored.
