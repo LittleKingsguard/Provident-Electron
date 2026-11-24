@@ -25,6 +25,7 @@ Read `strata/brief.md` first, then `strata/decisions.md` from `D-304` onward.
 
 ## What is open, named not hidden
 
+- **An upstream finding (`D-5`, recorded in the unit record)**: the real store's `returnedValues` carries a SETTLED thenable's value, not a synchronous listener's return — so the channel's `return` arm is async-only and a synchronous returner reads `empty`. The fix shape is the store's.
 - **The U5 action/graph wiring**: the realm's `CapabilityRouter` records `action`/`graph` registrations but nothing dispatches them yet; and the **out-of-band activation sink** (`design.md` §5's third caller).
 - **The boot route's design filing**: L1 §6's reserved set ends at `M-29` and `docs/L2/app-shell/interface.md` has no rev naming the route — both owed even though the route and its row are landed.
 - **L1 currency**: `docs/L1/modularity.md` still reads `module-system` `endpoints` **16**; the map reads **24** and L2 rev 3 derives 24 member-by-member. The move is L1's to file (the page is at 150/150, so a re-grain must compress).
