@@ -1,4 +1,4 @@
-# L3 — `app-shell`: the declared signatures — the tenth member, its channel, the role vocabulary, and the delivery queue
+# L3 — `app-shell`: the declared signatures — the tenth member, its channel, the role vocabulary, the delivery queue, and the modularity unit's ELEVENTH (`channel`, `S-12`)
 
 - **Layer:** L3 · **Unit:** `app-layout` · **Artifact:** `l3-app-shell-signatures` · **Branch:** `strata` (D-6) · **Rev:** 2 — **THE DELIVERY QUEUE, ITS THREE MEMBERS, AND THE LISTENER ENTRY THIS FILE CONSUMES AND NEVER DECLARES** (`docs/L3/app-shell/delivery.md` §3, §6): §5 is new, §1's census is **unmoved** (the queue is `main()`'s private and crosses no bridge), and **no member, route, channel or type above §5 moves a byte** — the delta is one interface, one factory and one consumed element shape, all of them `main()`'s own (`D-219`, `D-218`). Rev 1 — **THIS PAGE WAS NEW**: `docs/L3/app-shell/signatures.md` did not exist, and rev 4's `G-7` declined one because the drag pair minted no signature of its own (the two members were the five commits' text verbatim). **This pass mints one member, one channel constant and one role vocabulary — and `docs/L2/app-shell/interface.md` rev 5 §2's `OWED-1` separately hands the unmoved `view` block's exact text DOWN to `docs/L3/`**, so both have a carrier here (`design.md` §4, D-45).
 - **Status:** DECLARED NAMES AND EXACT TEXT ONLY — every name this landing exposes or consumes is here; the structure, the hunks and the guardrails are `design.md`'s (D-3, D-45). **No type, no export and no new file is minted**: the answer is spelled inline at both preload sites and the two role sets are private to `main()` (`design.md` §4's `ASM-L3-1`/`ASM-L3-2`).
@@ -132,3 +132,7 @@ function createDeliveryQueue(push: () => void): DeliveryQueue
 ```
 
 - **AND NOTHING ELSE IS DECLARED HERE**: no answer type, no exported symbol, no second spelling of an address — **the four view roots and the one tabs root are the crossings' and `main.ts` names none of them** (`delivery.md` `G-5`, `D-53`, `D-101`).
+
+```boundary-declared
+{"unit": "modularity", "layer": "L3", "module": "app-shell", "writes": [{"path": "docs/L3/app-shell/signatures.md", "d": "D-307", "why": "this page, rev 3 — the title names the ELEVENTH member beside the tenth, because the wire carries eleven (`D-307`)"}]}
+```

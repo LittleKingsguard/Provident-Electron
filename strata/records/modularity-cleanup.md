@@ -13,6 +13,7 @@
 | `RG-2` | `tests/module-e2e.test.ts` rows 1/4 | Same cause. Row 1 reads the delivered action's shape plus a live `fn`; row 4 compares the two arms' `{module, name}` projections and asserts a live `fn` on both, because two arms carry two distinct function objects. |
 | `RG-3` | `docs/L1/modularity.md` §2, three rows | Figures had lagged `strata/modules.json`: `module-system` `16 → 24`, `producing-runtime` `17 → 18` (+ `tests/integration/producing-runtime/`), `renderer-wiring` (+ `tests/integration/renderer-wiring/`). The map's bytes moved for the last two; `module-system`'s 24 was already the map's. |
 | `RG-4` | `docs/L1/modularity.md` §6, `M-2b` | Its third arm re-grained to `S-23`/`U6` and the battery split (`D-318`, `AN-3`). Text replaced inside the bullet so the ceiling was unmoved; no row weakened, skipped or re-titled. |
+| `RG-8` | `docs/L2/app-shell/interface.md`, `docs/L3/app-shell/{design,signatures}.md` | The eleventh bridge member (`channel`, `S-12`) is now ON those pages: a table row, the "bridge's tenth" sentences, §5's census list and the signatures' title. The pages are `app-layout`'s and had under-counted the wire since `D-307`; the edit is in place (the L3 design stands at 149/150) and attributed to this unit as that cell's owner. |
 | `RG-6` | `tests/e2e/modularity/map-figures.test.ts` | NEW, `MF-1`…`MF-3` — the figure-vs-map probe `AN-12` asked for: every §2 row stating an `endpoints` figure must state the map's last figure, the four named rows must still state one, and a one-off fixture reds BY NAME. |
 | `RG-7` | `tests/integration/renderer-wiring/module-shape.test.ts` | `RW-M5` added: an ID-LESS contribution composes **once**, not once per later module's frame. |
 | `RG-5` | `docs/L3/renderer-wiring/module-shape-signatures.md` §2 | An **invented** `paneNodeIds(ids)`/`PaneNodeMap` was replaced by the five tables that already stand (`PANE_NODE_IDS`, `PANE_HEAD_IDS`, `PANE_BODY_IDS`, `PANE_COLLAPSE_IDS`, `PANE_MOVE_GRIP_IDS`) and the rows that read them (`PM-1`/`PM-2`). The composed set is `U2`'s. |
@@ -30,6 +31,7 @@
 | `CH-7` | `tests/integration/renderer-wiring/module-shape.test.ts` | NEW, `RW-M1`…`RW-M4`: the contribution under its parent with the closure dispatching by name (contributed and authored nodes), idempotence across frames, a parentless contribution named with the page byte-identical, an undeclared action installing nowhere. |
 | `CH-8` | `strata/decisions.md` | `D-317` (the composition route and its two measured refusals), `D-318` (the update-frame drop), `D-319` (this ledger's rule). |
 | `CH-9` | `strata/modules.json` | `producing-runtime` `endpoints` 17 → 18 + its integration path; `renderer-wiring` + its integration path. |
+| `CH-14` | `docs/L2/app-shell/interface.md`, `docs/L3/app-shell/*` | The three pages now carry a `boundary-declared` block of their own (they carried none, so a pass writing them could declare nothing). |
 | `CH-11` | `src/renderer/runtime.ts`, three pages | `ContributionResult` gained **`changed`**, set by the MERGE and never derived from `added` (`AN-6`). |
 | `CH-12` | `src/renderer/renderer.ts`, signatures page | `ModuleShapeInstall.modules` renamed **`standing`** — the router's cumulative set, named for what it is (`AN-5`). |
 | `CH-13` | `src/renderer/renderer.ts`, L2 §4 | `composeModuleGraph` keeps a per-router **`WeakMap` key set** beside the live-graph id check, so an id-less forest is not composed twice (`AN-6`). |
@@ -59,6 +61,7 @@
 - **`AN-12` → `RG-6`**: nothing compared the page's figures to the map; `MF-1`…`MF-3` do, and `MF-2` names the four rows that must keep stating one so a sentence cannot be deleted instead of moved.
 - **`AN-6` → `CH-11`/`CH-13`, `RG-7`** — and the sweep found something worse than the item stated: `contribute` derived its `changed` flag from `added.length`, so an **id-less** forest was not merely composed twice, it was **never loaded at all** (the merge happened on a clone the loader never saw). `RW-M5` is the instrument; `changed` is now the merge's.
 - **`AN-5` → `CH-12`**: the member is `standing`, which is what the answer actually is.
+- **the `app-shell` eleventh-member debt → `RG-8`/`CH-14`**: the two L2/L3 page-sets had counted TEN bridge members since `S-12` landed the eleventh; they now state ELEVEN, and the three pages carry blocks so a later pass can declare them.
 - **`AN-8` → documentation**: `skipped`'s three arms are stated at `ContributionResult` in `signatures.md` (authored parent, the synthetic `'contributions'`, every parent on an absent document) rather than re-shaped — a string pair would be a contract change for a diagnostic.
 
 ## 4. Process rules this unit learned (keep them; they are cheaper than rediscovering them)
@@ -89,5 +92,5 @@
 7. **`AN-1`/`AN-2`/`AN-17`/`AN-18`/`AN-19`** — re-measure at the next pin, or leave named with their owners.
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/modularity-cleanup.md", "d": "D-319", "why": "this ledger, rev 2 \u2014 `AN-5`/`AN-6`/`AN-8`/`AN-12` swept, with the sweep's own finding recorded and the worklist re-ordered"}, {"path": "tests/e2e/modularity/map-figures.test.ts", "d": "D-319", "why": "`MF-1`\u2026`MF-3`, the figure-vs-map probe `AN-12` asked for \u2014 filed with the sweep that owed it", "by": "L0"}]}
+{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/modularity-cleanup.md", "d": "D-319", "why": "this ledger, rev 2 \u2014 `AN-5`/`AN-6`/`AN-8`/`AN-12` swept, with the sweep's own finding recorded and the worklist re-ordered"}]}
 ```

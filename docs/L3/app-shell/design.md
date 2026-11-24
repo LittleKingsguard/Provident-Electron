@@ -59,7 +59,7 @@
 
 ## 5. What must not move
 
-- **Every other bridge member and every byte of its text**: `ready`, `onRequest`, `sendReply`, `notify`, `security`, `module`, `tabs`, `view`, `data` — the tenth member moves the census and touches nothing else (`D-18`, `D-112`, `D-123`).
+- **Every other bridge member and every byte of its text**: `ready`, `onRequest`, `sendReply`, `notify`, `security`, `module`, `tabs`, `view`, `data` — the tenth member moves the census and touches nothing else (`D-18`, `D-112`, `D-123`) — **AND THE MODULARITY UNIT'S `S-12` ADDS THE ELEVENTH, `channel`** (`D-307`: two internal IPC constants, `onMessage` and `request`, NO `RpcMethod`), so the bridge's member census stands at ELEVEN and this page's rows are joined by one this unit does not own.
 - **The `view` member's SEVEN routes and the two halves' lockstep**: unmoved, and their authority is `store-view-record`'s comparison row, which reads **the `view` block only** — so a `menu` member landing at ONE half reds nothing there (OWED-3, `D-112`).
 - **The boot's wiring**: one `createProfileStore`, the batch's declarations, the four surfaces, `IPC_VIEW_CHANGED`'s broadcast, `settingsSurface.attach(mcp)`, the transport setup, the three `ipcMain.on` sites and `mcp.start()` (`D-101`, `D-121`).
 - **`src/shared/types.ts` and the secure store**: no address, no declaration, no route, no member (`D-123`, `ISO-5`/`ISO-6`).
@@ -147,3 +147,7 @@ npx vitest run tests/e2e/app-layout/            # the unit's own rows — L1 aut
 ```
 
 - **What green does not say**: a node green is envelope-green, never app-green and never rendered-surface green (`brief` §6, `D-27`); the live readings are `AL-7`/`AL-9`/`AL-11`'s and the `ui` Electron leg's, and this module does not run them here.
+
+```boundary-declared
+{"unit": "modularity", "layer": "L3", "module": "app-shell", "writes": [{"path": "docs/L3/app-shell/design.md", "d": "D-307", "why": "this page, rev 6 — §5's census sentence names the ELEVENTH member (the modularity unit's `channel`, `S-12`), in place so the 149-line page does not grow"}]}
+```
