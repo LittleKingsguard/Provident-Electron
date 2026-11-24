@@ -52,7 +52,7 @@ export interface MainHalfCtx {                        // EXACTLY four keys
 }
 export interface ClientHalfCtx {                      // EXACTLY five keys
   readonly store: ClientStoreSurface                   // ASYNC: a verb is an e2e REQUEST the channel executes (D-311)
-  onDelivery(listener: string, fn: (data: unknown, address: string[]) => void): DeliveryHandle
+  onDelivery(listener: string, fn: (entry: ChannelEntry) => void): DeliveryHandle
   action(name: string, fn: (ctx: never, ...args: unknown[]) => unknown): void
   graph(contribution: GraphContribution): ContributionHandle
   log(line: string, detail?: unknown): void

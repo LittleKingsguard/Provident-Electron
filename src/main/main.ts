@@ -31,7 +31,9 @@ import {createModuleExecutor} from './modules/index.js'
 // row): `ModuleHost` is the FOUR members the executor is GIVEN (store, the one application number, the registration
 // sender, the log sink), `RegistrationFrame` is `C-15`'s ONE payload, and `appVersion` is the ONE version authority this
 // composition hands the resolver instead of spelling a number (`docs/L2/module-system/interface.md` §8, §11; L1 §4 `C-11`).
-import {appVersion, type ModuleHost, type RegistrationFrame} from '../shared/module-contract.js'
+import {appVersion, type Activation, type ModuleHost, type RegistrationFrame} from '../shared/module-contract.js'
+import {createModuleChannel, type ModuleChannel} from './module-channel/index.js'
+import type {ChannelTransportMain} from '../shared/module-channels.js'
 import {SecurityGate, type ToolGroup} from './security.js'
 // central-data (`docs/L1/central-data-census-exception.md` §2 E-3) — the module's surface enters the
 // composition here, and nothing else of this file moves: it constructs no store and touches no file
@@ -471,11 +473,23 @@ async function main(): Promise<void> {
       { cause: refusal },
     )
   }
-  storeHolder.current = centralStore
+  // ═══ THE STORE FACADE (`D-311`, `docs/L3/module-channel/design.md` §3) ═══
+  // The app's ONE store is handed to every consumer as the module channel's facade: `listen`/`register` are the binding
+  // and `write`/`delete`/`addConstraint` are the writer's entrance, so an app write that fires a module listener marks a
+  // turn. **THE TRANSPORT IS `S-12`'S ELEVENTH BRIDGE MEMBER AND IS NOT LANDED YET**: it is a no-op here, so the composed
+  // message is recorded and dropped rather than routed over an invented second channel (`D-301`/`D-302`).
+  let moduleBindings: () => readonly Activation[] = (): readonly Activation[] => []
+  const moduleTransport: ChannelTransportMain = {
+    push: (): void => { /* S-12's wire is owed; the turn is composed and dropped */ },
+    onRequest: (): void => { /* the client act's carrier is S-12's; no client half is delivered until then */ },
+  }
+  const moduleChannel: ModuleChannel = createModuleChannel({ store: centralStore, transport: moduleTransport, bindings: () => moduleBindings() })
+  const appStore = moduleChannel.surface
+  storeHolder.current = appStore
   // THE TAB RECORD'S SURFACE (D-63): the one reference the crossing holds, named by no MCP-reachable file — the crossing
   // is the bridge's and only the bridge's (L2 §2, L3 §6). It constructs nothing: the store above is its store.
   const tabsSurface = createTabsSurface({
-    store: centralStore,
+    store: appStore,
     // THE CROSSING'S DELIVERY, BUILT ABOVE AND ADOPTED BY THE CONSTRUCTION (A-2, A-3; `D-219`). The change push is the
     // QUEUE's now, so no `onChanged` option and no `attach()` stand here: two registrations for one address is the copy
     // `D-129` forbids (`D-93`).
@@ -484,7 +498,7 @@ async function main(): Promise<void> {
   // **THE VIEW RECORD'S SURFACE (D-87)** — the same shape at the other family: one reference, over the ONE store this
   // boot constructed, and one subscription that fires for any of its four roots. It constructs nothing.
   const viewSurface = createViewSurface({
-    store: centralStore,
+    store: appStore,
     // THE VIEW RECORD'S DELIVERY, on the tab record's own terms (A-2, A-3; `D-219`): the four entries are the construction's
     // and the push is the queue's — `attach()` is gone with its subject.
     delivery: viewDelivery,
@@ -665,10 +679,11 @@ async function main(): Promise<void> {
    *  stand either. **NOTHING IS SILENTLY DROPPED**: the frame's arrival is stated here, with the module's name and the
    *  source's LENGTH and never the source, so a boot log says what the executor delivered and to what. */
   const sendRegistration = (frame: RegistrationFrame): void => {
-    console.error(`[provident-main] module registration frame — module '${frame.module}', client source ${frame.client.length} chars; the wire (the eleventh bridge member, S-12) is OWED, so the realm receives nothing yet`)
+    // `S-12`'s wire is the transport's; the channel's `pushRegistration` is the ONE sender (`C-15`).
+    moduleChannel.pushRegistration(frame)
   }
   const moduleHost: ModuleHost = {
-    store: centralStore,
+    store: appStore,
     appVersion,
     sendRegistration,
     log: (line: string, detail?: unknown): void => {
@@ -679,6 +694,10 @@ async function main(): Promise<void> {
    *  and `invoke` the door a composed name's call returns through. One object, two answers, so the published set and the
    *  callable set can never describe two registries (`docs/L3/mcp-surface/design.md` §3, §5; `ASM-1`). */
   const modulePort = createModuleExecutor(moduleHost)
+  // **THE WRITER'S BINDING READER IS THE EXECUTOR'S PUBLIC `activations()`**, attached now that both objects stand: the
+  // facade's handler records a firing by HANDLE, and the writer reads the activation that publishes it to learn the module
+  // and whether the declaration names a `main` half (`docs/L3/module-channel/design.md` §3).
+  moduleBindings = (): readonly Activation[] => modulePort.activations()
   /** **THE BOOT CENSUS IS A DELIVERY, AND IT RUNS BEFORE THE TRANSPORT COMPOSES ITS SET** (`D-316`): the rows the census
    *  loads are already installed-source records, so they enter the executor as the ONE table delivery it already declares
    *  (`docs/L2/module-system/interface.md` §2) rather than through a second activation path. A quarantined or disabled row
@@ -708,7 +727,7 @@ async function main(): Promise<void> {
   // other instance wrote (measured 2026-11-02). Two instances are the ruling's whole number, so the handle is passed
   // and the surface constructs nothing — **and now it CANNOT**: `DataSurfaceOptions.store` is required and the
   // fallback construction is deleted, so this line is the surface's only source of an instance (D-80).
-  const dataSurface = createDataSurface({ profileDir: app.getPath('userData'), store: centralStore, declaredRoots: [...tabsDeclaredRoots(), ...viewDeclaredRoots()] })
+  const dataSurface = createDataSurface({ profileDir: app.getPath('userData'), store: appStore, declaredRoots: [...tabsDeclaredRoots(), ...viewDeclaredRoots()] })
   // **AND THE SURFACE IS NAMED ONCE HERE BECAUSE THE FIVE ROUTES ARE ANSWERED FROM IT** (`D-112`; `interface.md` §5): the
   // handlers below and the server's option are the SAME object, so a bridge request and a `provident.data.*` tool call
   // reach one adapter and cannot carry two answers. Nothing else about the options pass moves — it is still ONE line, the

@@ -20,6 +20,9 @@ import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { demoEnvelope } from '../src/shared/demo-envelope.js'
 import { Runtime } from '../src/renderer/runtime.js'
 import { CapabilityRouter, type ClientHalfCtx } from '../src/renderer/extensions.js'
+import type { ChannelEntry } from '../src/shared/module-channels.js'
+/** The legacy rows drive `fire` with a bare data/address pair: this is the ENTRY they mean. */
+const deliveredAt = (handle: string, data?: unknown, address: readonly string[] = []): ChannelEntry => ({ turn: 0, module: 'legacy', listener: handle, outcome: 'return', address, ...(data === undefined ? {} : { data }) })
 
 beforeAll(() => {
   installShim()
@@ -116,7 +119,7 @@ describe('U6 — the fragment transform is retired; the ordered contribution rep
         throw new Error('body boom')
       })
     })
-    const outcome = router.fire(boom!, {}, [])
+    const outcome = router.fire(boom!, deliveredAt(boom!, {}, []))
     expect(outcome.status).toBe('refused')
     expect(outcome.reason).toBe('body boom')
   })

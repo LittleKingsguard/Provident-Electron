@@ -26,6 +26,9 @@
 // or deny it.
 import { describe, it, expect } from 'vitest'
 import { CapabilityRouter, type ClientHalfCtx } from '../src/renderer/extensions.js'
+import type { ChannelEntry } from '../src/shared/module-channels.js'
+/** The legacy rows drive `fire` with a bare data/address pair: this is the ENTRY they mean. */
+const deliveredAt = (handle: string, data?: unknown, address: readonly string[] = []): ChannelEntry => ({ turn: 0, module: 'legacy', listener: handle, outcome: 'return', address, ...(data === undefined ? {} : { data }) })
 
 /** A module that registers all three realm-side members a client half may declare. */
 function routerWithCapture(): { router: CapabilityRouter; lines: string[] } {
@@ -58,7 +61,7 @@ describe('U9 — dynamic tool registration is NO LONGER the router’s: the real
 
   it('2. a TOOL-shaped name opens no listener: `fire("module:capture.screenshot")` is a refused VALUE naming the handle (old row 2/3: the server reached the router handler by tool name)', () => {
     const { router } = routerWithCapture()
-    const outcome = router.fire('module:capture.screenshot', { id: 7 }, [])
+    const outcome = router.fire('module:capture.screenshot', deliveredAt('module:capture.screenshot', { id: 7 }, []))
     expect(outcome.status).toBe('refused')
     expect(outcome.handle).toBe('module:capture.screenshot')
     expect(outcome.reason).toContain('no listener stands under this handle')
@@ -70,7 +73,7 @@ describe('U9 — dynamic tool registration is NO LONGER the router’s: the real
     router.registerModule('capture', (ctx) => {
       handle = ctx.onDelivery('screenshot', () => ({ shot: 'taken' }))
     })
-    const outcome = router.fire(handle!, { id: 7 }, [])
+    const outcome = router.fire(handle!, deliveredAt(handle!, { id: 7 }, []))
     expect(Object.keys(outcome).sort()).toEqual(['handle', 'status'])
     expect(outcome).toEqual({ status: 'delivered', handle })
   })

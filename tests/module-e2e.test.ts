@@ -20,10 +20,13 @@
 // and callable), re-grained to the surface this landing ships.
 import { describe, it, expect } from 'vitest'
 import { CapabilityRouter, type ClientHalfCtx } from '../src/renderer/extensions.js'
+import type { ChannelEntry } from '../src/shared/module-channels.js'
+/** The legacy rows drive `fire` with a bare data/address pair: this is the ENTRY they mean. */
+const deliveredAt = (handle: string, data?: unknown, address: readonly string[] = []): ChannelEntry => ({ turn: 0, module: 'legacy', listener: handle, outcome: 'return', address, ...(data === undefined ? {} : { data }) })
 
 /** The manifest's `client` member: a function-STRING, which is what the registry row already holds (§9). */
 const CLIENT_SOURCE = `(ctx) => {
-  ctx.onDelivery('render', (data, address) => { ctx.log('realm delivered', { data: data, address: address }) })
+  ctx.onDelivery('render', (entry) => { ctx.log('realm delivered', { data: entry.data, address: entry.address }) })
   ctx.action('screenshot', () => 'shot')
 }`
 
@@ -58,7 +61,7 @@ describe('U9-FIX — the crossing: one frame in, a live realm registration out (
     router.registerModule('capture', CLIENT_SOURCE)
     const [listener] = router.listeners()
     expect(listener).toBeDefined()
-    const outcome = router.fire(listener!.handle, { nodes: ['a', 'b'] }, ['panes', 'main'])
+    const outcome = router.fire(listener!.handle, deliveredAt(listener!.handle, { nodes: ['a', 'b'] }, ['panes', 'main']))
     expect(outcome).toEqual({ status: 'delivered', handle: 'module:capture#render' })
     // the body the DELIVERED STRING registered ran, and it ran with the realm's own ctx: its log line
     // carries the data and the triggering address the channel handed `fire`.
@@ -85,7 +88,7 @@ describe('U9-FIX — the crossing: one frame in, a live realm registration out (
     expect(router.modules()).toEqual([])
     expect(router.listeners()).toEqual([])
     expect(router.actions()).toEqual([])
-    const outcome = router.fire('module:capture#render', {}, [])
+    const outcome = router.fire('module:capture#render', deliveredAt('module:capture#render', {}, []))
     expect(outcome.status).toBe('refused')
     expect(outcome.reason).toContain('no listener stands under this handle')
   })
@@ -97,10 +100,10 @@ describe('U9-FIX — the crossing: one frame in, a live realm registration out (
     expect(router.withdraw('capture')).toBe(true)
     expect(router.modules()).toEqual([])
     expect(router.actions()).toEqual([])
-    expect(router.fire(handle, {}, []).status).toBe('refused')
+    expect(router.fire(handle, deliveredAt(handle, {}, [])).status).toBe('refused')
     // the name is free again: the inverse withdraws ONE frame, it does not bar the module for good (§6).
     router.registerModule('capture', CLIENT_SOURCE)
     expect(router.modules()).toEqual(['capture'])
-    expect(router.fire(router.listeners()[0]!.handle, {}, []).status).toBe('delivered')
+    expect(router.fire(router.listeners()[0]!.handle, deliveredAt(router.listeners()[0]!.handle, {}, [])).status).toBe('delivered')
   })
 })

@@ -119,7 +119,7 @@ export function activate(module: LoadedModule, host: ModuleHost): ActivationOutc
       host.store.listen(handle, [declaration.address])
       // The body the store holds: the entry's own main half, or the PASSTHROUGH arm the channel reads —
       // never an absence (`D-307`). `contained` is the containment `U3`'s binding inherits.
-      host.store.register(handle, contained(main ?? passthrough(declaration.address)))
+      host.store.register(handle, bindable(main ?? passthrough(declaration.address)))
     } catch (error) {
       return { ok: false, reason: 'entry-threw', subject: `${handle}: ${message(error)}` }
     }
@@ -196,14 +196,11 @@ function passthrough(address: readonly string[]): (delivered: readonly string[])
   }
 }
 
-function contained(body: (address: readonly string[]) => unknown): Listener {
-  return (address: Address) => {
-    try {
-      return body(address as readonly string[])
-    } catch {
-      return undefined
-    }
-  }
+/** The store's `Listener` is `(Address) => void`; the declaration's half is `(string[]) => unknown`. This is a TYPE
+ *  adapter and NOT containment: the MAIN HALF'S THROW IS THE CHANNEL BINDING'S to contain (`S-11`, `D-105`), and the
+ *  value the body answers must reach the store's loop so the receipt carries it. */
+function bindable(body: (address: readonly string[]) => unknown): Listener {
+  return ((address: Address) => body(address as readonly string[])) as Listener
 }
 
 /** A function-STRING compiled in the main realm — a half that will not compile is `entry-malformed`. */

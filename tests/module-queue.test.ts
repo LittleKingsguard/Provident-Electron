@@ -16,6 +16,9 @@
 // refused VALUE instead of raising (L2 Â§3, `D-105`, `D-307`).
 import { describe, it, expect } from 'vitest'
 import { CapabilityRouter, type ClientHalfCtx } from '../src/renderer/extensions.js'
+import type { ChannelEntry } from '../src/shared/module-channels.js'
+/** The legacy rows drive `fire` with a bare data/address pair: this is the ENTRY they mean. */
+const deliveredAt = (handle: string, data?: unknown, address: readonly string[] = []): ChannelEntry => ({ turn: 0, module: 'legacy', listener: handle, outcome: 'return', address, ...(data === undefined ? {} : { data }) })
 
 function capture(): { router: CapabilityRouter; ctx: () => ClientHalfCtx; lines: string[] } {
   const lines: string[] = []
@@ -47,12 +50,12 @@ describe('U7 â€” the async-queue data-hook: RETIRED, no replacement (M-r12, L2 Â
     let got: { data: unknown; address: readonly string[] } | undefined
     let handle: string | undefined
     router.registerModule('embed', (ctx) => {
-      handle = ctx.onDelivery('render', (data, address) => {
-        got = { data, address }
+      handle = ctx.onDelivery('render', (entry) => {
+        got = { data: entry.data, address: entry.address ?? [] }
       })
     })
     expect(got).toBeUndefined()
-    expect(router.fire(handle!, 'node-a', ['panes', 'main'])).toEqual({ status: 'delivered', handle })
+    expect(router.fire(handle!, deliveredAt(handle!, 'node-a', ['panes', 'main']))).toEqual({ status: 'delivered', handle })
     // delivered on the CALL, in order, with no buffer between the call and the body.
     expect(got).toEqual({ data: 'node-a', address: ['panes', 'main'] })
   })
@@ -77,7 +80,7 @@ describe('U7 â€” the async-queue data-hook: RETIRED, no replacement (M-r12, L2 Â
     expect(typeof handed.onDelivery('render', () => {})).toBe('string')
     expect(typeof handed.graph({ parent: 'root', nodes: [] })).toBe('string')
     expect(handed.log('a line')).toBeUndefined()
-    const outcome = router.fire('module:embed#render', {}, [])
+    const outcome = router.fire('module:embed#render', deliveredAt('module:embed#render', {}, []))
     expect(outcome).not.toBeInstanceOf(Promise)
     expect(outcome.status).toBe('delivered')
   })
@@ -93,14 +96,14 @@ describe('U7 â€” the async-queue data-hook: RETIRED, no replacement (M-r12, L2 Â
       bad = ctx.onDelivery('render-a', () => {
         throw new Error('processor boom')
       })
-      good = ctx.onDelivery('render-b', (item: unknown) => {
-        received.push(String(item))
+      good = ctx.onDelivery('render-b', (entry: ChannelEntry) => {
+        received.push(String(entry.data))
       })
     })
-    const refused = router.fire(bad!, 'a', [])
+    const refused = router.fire(bad!, deliveredAt(bad!, 'a', []))
     expect(refused.status).toBe('refused')
     expect(refused.reason).toBe('processor boom')
-    expect(router.fire(good!, 'b', [])).toEqual({ status: 'delivered', handle: good })
+    expect(router.fire(good!, deliveredAt(good!, 'b', []))).toEqual({ status: 'delivered', handle: good })
     expect(received).toEqual(['b'])
   })
 

@@ -12,6 +12,7 @@
 // NO dispatch-time resolver and no source text in graph data: `action` installs a LIVE closure keyed by
 // name (`C-10`, `D-313`). The batch that calls `fire` is `module-channel`'s and never this file's.
 import { moduleHandle } from '../shared/module-contract.js'
+import type { ChannelEntry } from '../shared/module-channels.js'
 import type {
   ClientHalfCtx,
   ClientStoreSurface,
@@ -59,7 +60,7 @@ export class CapabilityRouter {
   private listenerRecords: ClientListenerRecord[] = []
   private actionRecords: ActionRecord[] = []
   private contributionRecords: ContributionRecord[] = []
-  private readonly bodies = new Map<DeliveryHandle, (data: unknown, address: readonly string[]) => void>()
+  private readonly bodies = new Map<DeliveryHandle, (entry: ChannelEntry) => void>()
   private readonly handlers = new Map<string, (ctx: never, ...args: unknown[]) => unknown>()
   private noHost: ClientStoreSurface | null = null
 
@@ -133,12 +134,14 @@ export class CapabilityRouter {
     return [...this.contributionRecords]
   }
 
-  /** The realm's ONE delivery entry: contained per handle, so one half's throw stops no other (`D-307`). */
-  fire(handle: DeliveryHandle, data: unknown, address: readonly string[]): DeliveryOutcome {
+  /** The realm's ONE delivery entry: contained per handle, so one half's throw stops no other (`D-307`). The CLIENT
+   *  half is fired with the ENTRY, so it reads the arm, the address, the data and the refusal it was handed
+   *  (`ASM-MC-6`, `L1` §6 `M-11`). */
+  fire(handle: DeliveryHandle, entry: ChannelEntry): DeliveryOutcome {
     const body = this.bodies.get(handle)
-    if (body === undefined) return { status: 'refused', handle, reason: 'no-store-host: no listener stands under this handle' }
+    if (body === undefined) return { status: 'refused', handle, reason: 'no-client-half: no listener stands under this handle' }
     try {
-      body(data, address)
+      body(entry)
       return { status: 'delivered', handle }
     } catch (error) {
       return { status: 'refused', handle, reason: message(error) }

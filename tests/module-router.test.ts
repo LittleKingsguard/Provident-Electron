@@ -11,6 +11,9 @@
 // The class marker above stays: these rows report ON NOTICE (`D-30`), and the un-marking is L2's.
 import { describe, it, expect } from 'vitest'
 import { CapabilityRouter, type ClientHalfCtx } from '../src/renderer/extensions.js'
+import type { ChannelEntry } from '../src/shared/module-channels.js'
+/** The legacy rows drive `fire` with a bare data/address pair: this is the ENTRY they mean. */
+const deliveredAt = (handle: string, data?: unknown, address: readonly string[] = []): ChannelEntry => ({ turn: 0, module: 'legacy', listener: handle, outcome: 'return', address, ...(data === undefined ? {} : { data }) })
 
 /** Capture the ctx a `client` half is handed, and the log sink the realm writes through (L2 §3's `log`). */
 function capture(): { router: CapabilityRouter; ctx: () => ClientHalfCtx; lines: string[] } {
@@ -113,11 +116,11 @@ describe('CapabilityRouter — ONE frame in, ONE five-member ctx out (L2 §3, D-
     let handle: string | undefined
     let got: { data: unknown; address: readonly string[] } | undefined
     router.registerModule('embed', (ctx) => {
-      handle = ctx.onDelivery('render', (data, address) => {
-        got = { data, address }
+      handle = ctx.onDelivery('render', (entry) => {
+        got = { data: entry.data, address: entry.address ?? [] }
       })
     })
-    const outcome = router.fire(handle!, { nodes: ['a', 'b'] }, ['panes', 'main', 'body'])
+    const outcome = router.fire(handle!, deliveredAt(handle!, { nodes: ['a', 'b'] }, ['panes', 'main', 'body']))
     expect(outcome).toEqual({ status: 'delivered', handle })
     // synchronous, and the payload the channel carried is what the body saw (§3, §9).
     expect(outcome).not.toBeInstanceOf(Promise)
@@ -126,7 +129,7 @@ describe('CapabilityRouter — ONE frame in, ONE five-member ctx out (L2 §3, D-
 
   it('7. fire on an unregistered handle is a REFUSED VALUE that names the handle — never a throw (old row 12: invokeTool on an unregistered tool threw)', () => {
     const router = new CapabilityRouter()
-    const outcome = router.fire('module:nope#missing', {}, [])
+    const outcome = router.fire('module:nope#missing', deliveredAt('module:nope#missing', {}, []))
     expect(outcome.status).toBe('refused')
     expect(outcome.handle).toBe('module:nope#missing')
     expect(typeof outcome.reason).toBe('string')
@@ -148,10 +151,10 @@ describe('CapabilityRouter — ONE frame in, ONE five-member ctx out (L2 §3, D-
         delivered.push('good')
       })
     })
-    const refused = router.fire(bad!, {}, [])
+    const refused = router.fire(bad!, deliveredAt(bad!, {}, []))
     expect(refused.status).toBe('refused')
     expect(refused.reason).toBe('listener boom')
-    expect(router.fire(good!, {}, [])).toEqual({ status: 'delivered', handle: good })
+    expect(router.fire(good!, deliveredAt(good!, {}, []))).toEqual({ status: 'delivered', handle: good })
     expect(delivered).toEqual(['good'])
   })
 
@@ -229,7 +232,7 @@ describe('CapabilityRouter — ONE frame in, ONE five-member ctx out (L2 §3, D-
     expect(router.modules()).toEqual(['dup'])
     expect(router.listeners().map((record) => record.listener)).toEqual(['one'])
     expect(router.actions().map((record) => record.name)).toEqual(['one'])
-    expect(router.fire(first!, {}, []).status).toBe('delivered')
+    expect(router.fire(first!, deliveredAt(first!, {}, [])).status).toBe('delivered')
   })
 
   it('14. the old row 16 subject — a non-function tool handler rejected at registration — has NO replacement on this half: `action` takes a live closure and its dispatch-time check is the engine\'s, so the row pins what the realm DOES own: a malformed entry is contained by NAME (D-105)', () => {
@@ -248,7 +251,7 @@ describe('CapabilityRouter — ONE frame in, ONE five-member ctx out (L2 §3, D-
       throw new Error('entry boom')
     })
     expect(lines).toContain('entry-threw')
-    expect(() => router.fire('module:capture#never', {}, [])).not.toThrow()
+    expect(() => router.fire('module:capture#never', deliveredAt('module:capture#never', {}, []))).not.toThrow()
   })
 
   it('16. ctx.store is the GIVEN writer by IDENTITY and every verb of it is what runs — the read the old captureView performed is a store verb the channel executes (old row 9: ctx.captureView(); L2 §10, D-311)', () => {
@@ -300,6 +303,6 @@ describe('CapabilityRouter — ONE frame in, ONE five-member ctx out (L2 §3, D-
     expect(router.listeners()).toEqual([])
     expect(router.actions()).toEqual([])
     expect(router.contributions()).toEqual([])
-    expect(router.fire(handle!, {}, []).status).toBe('refused')
+    expect(router.fire(handle!, deliveredAt(handle!, {}, [])).status).toBe('refused')
   })
 })

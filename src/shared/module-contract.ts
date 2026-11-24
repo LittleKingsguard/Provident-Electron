@@ -11,6 +11,7 @@
 // reached by `import type`, so nothing of the package is bundled and no second store is constructed
 // (`C-16`, `D-312`).
 import type { ModuleCapabilities, ModuleDependency } from './types.js'
+import type { ChannelEntry } from './module-channels.js'
 import type {
   Address,
   CommitCarrier,
@@ -153,7 +154,7 @@ export interface MainHalfCtx {
 export interface ClientHalfCtx {
   /** A verb is an e2e REQUEST the channel executes, so its answer is a Promise and the channel owns the turn (`D-311`). */
   readonly store: ClientStoreSurface
-  onDelivery(listener: string, fn: (data: unknown, address: readonly string[]) => void): DeliveryHandle
+  onDelivery(listener: string, fn: (entry: ChannelEntry) => void): DeliveryHandle
   action(name: string, fn: (ctx: never, ...args: unknown[]) => unknown): void
   graph(contribution: GraphContribution): ContributionHandle
   log(line: string, detail?: unknown): void
