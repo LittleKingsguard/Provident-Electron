@@ -104,6 +104,7 @@ const OVERREG = 'function (ctx) { ctx.tool("declared", function () { return 1 })
 const LEAKY = 'function (ctx) { var raw = window.provident; ctx.tool("leak", function () { return raw === null }) }'
 const SQUATTER = 'function (ctx) { ctx.tool("provident.dispatch", function () { return 1 }) }'
 const REENTRANT = 'function (ctx) { ctx.log("store-verdict", ctx.store.write(["ms-probe"], "mem", 1)) }'
+const THROWING = 'function (ctx) { ctx.tool("boom", function () { throw new Error("ms-boom") }) }'
 const MAIN_HALF = 'function (address) { return { heard: address } }'
 const LISTEN_ENTRY = `function (ctx) { ctx.declare({ kind: "listener", address: ["ms-listen"], main: ${MAIN_HALF} }) }`
 const LISTENERS: Json = { capabilities: { tools: [], listeners: [{ address: ['ms-listen'], main: MAIN_HALF }] } }
@@ -242,5 +243,30 @@ describe('module-system — unit grain: `createModuleExecutor` over a DECLARED s
     const again = deliver(executor, 'MS-8', { kind: 'source', source: withClient() })
     expect([field(again[0], 'status'), received.length], '§9 — the same name at the same version is a `no-op` that RE-SENDS the frame: the boot read adds no member').toEqual(['no-op', 2])
     expect(loose(received[1]), '§9 — the re-send is the same frame, by value').toEqual(frame)
+  })
+
+  it('MS-9 — §11: the DOOR answers the registered handler\'s OWN value, and its two refusals are VALUES that name the subject', async () => {
+    // THE ROW THE L3 PAGE NAMED AND NO PASS HAD WRITTEN (`design.md` §13, `L2` §12 `I-9`): the door is the ONE route
+    // from the transport to a `module:<n>.<t>` handler, so a green activation with no invocation row behind it is a
+    // claim and not a control (`examiner.md` §2, D-16).
+    const { executor } = await harness()
+    install(executor, 'MS-9', 'ms-door', '1.0.0', ANSWER, declares('answer'))
+    expect(callOn(executor, 'invoke', 'module:ms-door.answer', { carried: true }), '§11 — the door answers the closure the ENTRY registered, verbatim, with the caller\'s args and no re-compile').toBe(1)
+    const missing = callOn(executor, 'invoke', 'module:ms-door.missing', {})
+    expect([field(missing, 'status'), field(missing, 'reason'), field(missing, 'subject')], '§11 — a name no standing record publishes is refused BY VALUE (`D-105`) and the refusal names it').toEqual(['refused', 'tool-unknown', 'module:ms-door.missing'])
+
+    // A THROWING BODY IS CONTAINED AND NAMED: the door is the boundary the transport relies on, so the throw must not
+    // cross as itself (a handler's own error is exactly the class `D-105` refuses to leak).
+    install(executor, 'MS-9', 'ms-boom', '1.0.0', THROWING, declares('boom'))
+    const threw = callOn(executor, 'invoke', 'module:ms-boom.boom', {})
+    expect([field(threw, 'status'), field(threw, 'reason'), field(threw, 'subject'), field(threw, 'message').includes('ms-boom')], '§11 — a throwing handler answers `handler-threw`, naming the tool AND carrying its own sentence').toEqual(['refused', 'handler-threw', 'module:ms-boom.boom', true])
+
+    // THE DOOR RE-READS THE STANDING RECORDS AT THE TURN, and the positive control is a handler that still stands: the
+    // refusal below is the ABSENT record, never a closed door.
+    install(executor, 'MS-9', 'ms-keep', '1.0.0', ANSWER, declares('answer'))
+    callOn(executor, 'deactivate', 'ms-door')
+    const gone = callOn(executor, 'invoke', 'module:ms-door.answer', {})
+    expect([field(gone, 'status'), field(gone, 'reason')], '§11 — a name `deactivate` has deleted is refused at the next turn rather than run').toEqual(['refused', 'tool-unknown'])
+    expect(callOn(executor, 'invoke', 'module:ms-keep.answer', {}), 'the POSITIVE CONTROL: the still-standing handler answers, so the refusal above is an absent record and not a dead door').toBe(1)
   })
 })

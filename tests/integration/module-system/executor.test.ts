@@ -196,6 +196,7 @@ const BASE_ENTRY = 'function (ctx) { ctx.tool("ping", function () { return { fro
 const DEPENDENT_ENTRY = 'function (ctx) { ctx.tool("tick", function () { return { from: "matrix-dep" } }) }'
 const CLIENT_ENTRY = 'function (ctx) { ctx.onDelivery("note", function (data) { return data }) }'
 const REENTRANT = 'function (ctx) { ctx.log("store-verdict", ctx.store.write(["probe"], "mem", 1)) }'
+const THROWING_ENTRY = 'function (ctx) { ctx.tool("boom", function () { throw new Error("matrix-boom") }) }'
 
 describe('module-system — U1: the contract, the two halves, admission, the resolver and the crossing (docs/L2/module-system/interface.md §1-§11)', () => {
   it('I-1 — S-1: an installed source string and a bundled table reach ONE loader and BOTH activate (§2)', async () => {
@@ -373,5 +374,25 @@ describe('module-system — U1: the contract, the two halves, admission, the res
     // THE POSITIVE CONTROL: the SAME store, written by the row's own hand, is unmoved — so the refusal is the
     // CTX's and never the store's, which is what makes it a contract and not a broken seam.
     expect(store.write(['probe'], 'mem', 1), '§10 — the store itself answers the same write: the refusal stands in THIS module\'s ctx (L1 §3 S-11)').toBeTruthy()
+  })
+
+  it('I-9 — §11: the DOOR answers the handler\'s own value, and its two refusals are VALUES that name the subject', async () => {
+    // THE ROW THE L2 PAGE NAMED AND NO PASS HAD WRITTEN (`interface.md` §12; `L3` §13's `MS-9` is the unit twin). It
+    // drives the REAL store and the REAL executor, so the door's answers are read at the integration grain.
+    const { executor } = await harness()
+    verdictsOf('I-9 install', () => callOn(executor, 'install', { kind: 'source', source: manifestOf('matrix-door', '1.0.0', ALPHA_ENTRY, declares('answer')) }))
+    expect(callOn(executor, 'invoke', 'module:matrix-door.answer', {}), '§11 — the door answers the closure the ENTRY registered, verbatim, over the real store').toEqual({ from: 'delivery-alpha', value: 42 })
+    const missing = callOn(executor, 'invoke', 'module:matrix-door.missing', {})
+    expect([str(memberOf(missing, 'status')), str(memberOf(missing, 'reason')), str(memberOf(missing, 'subject'))], '§11 — a name no standing record publishes is refused BY VALUE and the refusal names it').toEqual(['refused', 'tool-unknown', 'module:matrix-door.missing'])
+
+    verdictsOf('I-9 throwing install', () => callOn(executor, 'install', { kind: 'source', source: manifestOf('matrix-boom', '1.0.0', THROWING_ENTRY, declares('boom')) }))
+    const threw = callOn(executor, 'invoke', 'module:matrix-boom.boom', {})
+    expect([str(memberOf(threw, 'status')), str(memberOf(threw, 'reason')), String(memberOf(threw, 'message')).includes('matrix-boom')], '§11 — a throwing handler answers `handler-threw`, carrying its own sentence').toEqual(['refused', 'handler-threw', true])
+
+    verdictsOf('I-9 keep install', () => callOn(executor, 'install', { kind: 'source', source: manifestOf('matrix-keep', '1.0.0', ALPHA_ENTRY, declares('answer')) }))
+    answered('I-9 deactivate', () => callOn(executor, 'deactivate', 'matrix-door'))
+    const gone = callOn(executor, 'invoke', 'module:matrix-door.answer', {})
+    expect([str(memberOf(gone, 'status')), str(memberOf(gone, 'reason'))], '§11 — the door re-reads the standing records AT THE TURN, so a deactivated name is refused rather than run').toEqual(['refused', 'tool-unknown'])
+    expect(callOn(executor, 'invoke', 'module:matrix-keep.answer', {}), 'the POSITIVE CONTROL: the still-standing handler answers, so the refusal above is an absent record and not a dead door').toEqual({ from: 'delivery-alpha', value: 42 })
   })
 })
