@@ -261,6 +261,18 @@ function createPendingChange(send: () => void): PendingChange {
   }
 }
 
+/** The installed registry row's `client` source, read off the manifest TEXT; a non-JSON source states none (`S-20`). */
+function clientSourceOf(source: string): string {
+  const text = source.trim()
+  if (!text.startsWith('{')) return ''
+  try {
+    const manifest = JSON.parse(text) as { client?: unknown }
+    return typeof manifest.client === 'string' ? manifest.client : ''
+  } catch {
+    return ''
+  }
+}
+
 async function main(): Promise<void> {
   console.error(`[provident-main] node ${process.versions.node} electron ${process.versions.electron} crypto=${typeof globalThis.crypto}`)
   // ADDITIVE SEAM (docs/specs/ci-ui-leg.md §4): honour a user-data override
@@ -1121,6 +1133,14 @@ async function main(): Promise<void> {
     securityChanged.flush()
     // `A-7` — the appearance repaint rides this same arrival (its rationale stands outside the body, as above).
     repaintTitleBarOverlay()
+    // ═══ THE REALM'S BOOT READ (`S-20`, `C-15`) ═══
+    // The census activated BEFORE the window existed, so its registration frames were dropped by the transport. Re-send
+    // them now that the renderer's channel listener stands: one frame per ACTIVE module that carries a `client` source.
+    for (const activation of modulePort.activations()) {
+      const record = moduleSurface.get(activation.name)
+      const client = record === undefined ? '' : clientSourceOf(record.source)
+      if (client !== '') moduleChannel.pushRegistration({ module: activation.name, client })
+    }
     console.error('[provident-main] renderer ready — MCP backend armed')
   })
   ipcMain.on(IPC_REPLY, (_event, reply: RpcReply) => {

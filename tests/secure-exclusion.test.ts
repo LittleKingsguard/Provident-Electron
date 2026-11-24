@@ -976,7 +976,7 @@ async function loadSecurityExports(): Promise<Record<string, unknown>> {
  *  returned body is that handler's WHOLE body.  A body that outgrew the window
  *  would NOT be silently truncated at 1800: the controls' handler-signature
  *  pin fails first. */
-const HANDLER_BODY_WINDOW = 1800
+const HANDLER_BODY_WINDOW = 2600
 
 function handlerAnchorOf(src: string, channelConst: string): number {
   const handleAt = Math.max(

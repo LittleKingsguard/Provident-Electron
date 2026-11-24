@@ -2,6 +2,8 @@
 // Bootstraps the provident-ssr producing process into #app and serves the
 // MCP-facing operations over the preload bridge (main process = MCP server).
 import { Runtime } from './runtime.js'
+import { CapabilityRouter } from './extensions.js'
+import { createModuleChannelClient } from './module-channel-client.js'
 import { demoEnvelope, gutterSeamExample, GUTTER_AFFORDANCE_ID, GUTTER_STATUS_ID, GUTTER_TARGET_ID, TABS_LANDING_PAGE_ID, TABS_ERROR_PAGE_ID, TABS_ROWS_ID, TABS_ROW_PROTOTYPE_ID, TABS_ADD_ID, APP_ROOT_ID, OVERLAY_STATE_ID, OVERLAY_OPEN_ID, OVERLAY_CLOSE_ID, OVERLAY_DIALOG_ID, MENUS_AFFORDANCE_ID, MENUS_RECEIPT_ID, LAYOUT_MEASURED_ID } from '../shared/demo-envelope.js'
 import { overlayTransition, overlayInertDeclaration, type OverlayState } from '../shared/overlay.js'
 import { SecurePanels } from './secure-panels.js'
@@ -2080,6 +2082,23 @@ async function main(): Promise<void> {
     }).then((reply) => {
       bridge.sendReply(reply)
     })
+  }
+  // ═══ THE MODULE CHANNEL'S REALM END (`S-20`, `D-307`) ═══
+  // The bridge's ELEVENTH member is the transport; the client source is evaluated in the router's ctx and each delivery
+  // fires the listener's client half with the ENTRY (`ASM-MC-6`). **STARTED BEFORE `ready()`** so main's boot re-send of
+  // the census's registration frames is received rather than dropped.
+  if (bridge?.channel) {
+    let moduleRouter: CapabilityRouter | null = null
+    const moduleChannel = createModuleChannelClient({
+      transport: bridge.channel,
+      evaluate: (frame) => { moduleRouter?.registerModule(frame.module, frame.client) },
+      fire: (handle, entry) => { moduleRouter?.fire(handle, entry) },
+    })
+    moduleRouter = new CapabilityRouter({
+      store: moduleChannel.store,
+      log: (line, detail) => { console.log(`[provident-module] ${line}`, detail) },
+    })
+    moduleChannel.start()
   }
   bridge.onRequest(replyRoute)
   bridge.ready()

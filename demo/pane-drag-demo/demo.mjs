@@ -6,7 +6,7 @@
 // generated body itself. A source that moved, an import that appeared, or a hand-edited body makes --check exit 1
 // and the suite's DB-1 row red.
 // @generated-by demo/pane-drag-demo/build.mjs
-// @source-count 39
+// @source-count 43
 // @body-sha256 7f8471201f5f5ad9f37696b14b69e669f15be253db5dfc9732900e197f204956
 // @source b9d0892225756daaaef6b40b5cf27eb1aa69c19e3b96252aa57d085797204324 demo/pane-drag-demo/build.mjs
 // @source b6d243f4ee16061a333055125d803a4b5ceef5c116a9c6a71d17e3849dff8aa5 demo/pane-drag-demo/demo.ts
@@ -34,8 +34,11 @@
 // @source 24099326489f88d46e1a6c3073750e8ea2b15c4160d151e0953aef6c0805e93a node_modules/provident-ssr/dist/core/translate.js
 // @source bb13de7bf36aee1ce3774654851711d4890a1b696a06f4c92440c06d21b75189 node_modules/provident-ssr/dist/core/validation.js
 // @source 51d0de26c97b41b0976c3c011c8c74b51b7e674107124e46b6d70560e408e57b node_modules/provident-ssr/dist/index.js
+// @source 61b10b41dc4ba87f797eb76bd463a622e45e8109b99c42e0753f353d29c40e41 package.json
+// @source f09f8882e55cea419e47d10eb6ccbda163cbabb895f967091763d7ab9a07197e src/renderer/extensions.ts
+// @source ea7c049354abcc631983d4db2048c18ba15cbf1f577ee477c752c3e8bc6bb6ba src/renderer/module-channel-client.ts
 // @source eabf4c62fe382ad327e362872700106e460c15ebda1608142104025366069be8 src/renderer/module-client.ts
-// @source a09b6c30da4cb979e73bd7f8df788fac76066107671b77b763eea72a4726412f src/renderer/renderer.ts
+// @source aa7c334742ae1c55c53f2632ce90832229936fb5166efe7183e62cf48c348b83 src/renderer/renderer.ts
 // @source 349be66ed861b79368344e58235faf44019b3de26bd0a82e44306f31516d0cbd src/renderer/runtime.ts
 // @source 8e97e789ce38a9318cc6348aab5d734e5efd084310bfb173ca972382d0a09882 src/renderer/secure-panels.ts
 // @source bbdfae90fd2190eb71c9f3b5b909b401f36be67872f88bd42820b1753608c8a4 src/renderer/security-client.ts
@@ -45,6 +48,7 @@
 // @source 5b7830e578400652386405ccc2a56da623f5ad428f999eefdd4f0a4abde29754 src/shared/gesture-session.ts
 // @source a334e345cc61c48ba095269a0e04cf81825e452b8f913afaf66a92b3c0c8a356 src/shared/gutter-affordance.ts
 // @source 260559b259261d0a6826037788a74ed5b1180bac213c9ac459f8acbd0c7a6ab3 src/shared/gutter.ts
+// @source 53a9faf737eee919dff26ce55063a89a57d07ecc1a0edc2a4eae84a403b4bd16 src/shared/module-contract.ts
 // @source 40138fcc97cf13306712cc8ebf36a081302915b240ec87ff76cbafb83f898194 src/shared/overlay.ts
 // @source d77188de0139c7fecfc9150c50bc5725b6ec1942593e56d5cf8e830f9f81d8c7 src/shared/view-shape.ts
 // @end-sources
