@@ -679,6 +679,27 @@ async function main(): Promise<void> {
    *  and `invoke` the door a composed name's call returns through. One object, two answers, so the published set and the
    *  callable set can never describe two registries (`docs/L3/mcp-surface/design.md` §3, §5; `ASM-1`). */
   const modulePort = createModuleExecutor(moduleHost)
+  /** **THE BOOT CENSUS IS A DELIVERY, AND IT RUNS BEFORE THE TRANSPORT COMPOSES ITS SET** (`D-316`): the rows the census
+   *  loads are already installed-source records, so they enter the executor as the ONE table delivery it already declares
+   *  (`docs/L2/module-system/interface.md` §2) rather than through a second activation path. A quarantined or disabled row
+   *  is never in `status().loaded`, so the boot activates exactly what the census admits; a refused row is answered by the
+   *  executor AS A VALUE and logged, never fatal (D-105). **THE ORDER IS THE POINT**: the composition reads
+   *  `activations()` at construction (`registerTools`'s dynamic arm), so a census activated after `new
+   *  ProvidentMcpServer` would be listed only after the next re-publish — the gap this route closes. */
+  const bootCensus = moduleSurface.status().loaded
+    .map((name) => moduleSurface.get(name))
+    .filter((record): record is ModuleRecord => record !== undefined)
+  if (bootCensus.length > 0) {
+    const verdicts = modulePort.install({
+      kind: 'table',
+      entries: bootCensus.map((record) => ({ name: record.name, source: record.source })),
+    })
+    for (const verdict of verdicts) {
+      if (verdict.status === 'rejected') {
+        console.error(`[provident-main] boot census: '${verdict.name}' refused — ${verdict.reason ?? '(no reason)'}`)
+      }
+    }
+  }
   // THE ONE-LINE OPTIONS PASS (§2.8 item 3): the server's construction options receive the
   // re-pointed module surface — the module tools' REPLY SHAPES are UNCHANGED.
   // **AND THE `data` SURFACE IS HANDED THE BOOT'S OWN STORE** (D-79, D-80): `centralStore` was constructed above

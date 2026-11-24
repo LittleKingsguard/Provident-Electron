@@ -680,9 +680,12 @@ async function boot(profile: string): Promise<Boot> {
 }
 
 let booted: Boot | null = null
+/** The profile the first boot stands on, kept so a row can RE-BOOT the SAME census (`M-30`). */
+let bootProfile: string | null = null
 
 beforeAll(async () => {
-  booted = await boot(makeProfile('provident-modularity'))
+  bootProfile = makeProfile('provident-modularity')
+  booted = await boot(bootProfile)
 }, ROW_MS)
 
 afterAll(async () => {
@@ -925,6 +928,31 @@ describe('modularity — U1: the executor, its admission, its resolver and the s
     const refused = reasonOf(future)
     expect(refused, `the resolver judged '${published}' yet its refusal reads '${refused}', so the refusal carries no number`).toMatch(/\d+\.\d+\.\d+/)
     expect(refused, `the resolver's refusal reads '${refused}' and the transport publishes '${published}' — two spellings, not one authority`).toContain(published)
+  }, ROW_MS)
+
+  it('M-30 — the boot census: the profile\'s installed rows are ACTIVE at the NEXT boot, with no `module.install` call (D-316)', async () => {
+    // **THE GAP THIS ROW CLOSES** (the unit record's named absent route): before `D-316` a census-loaded module was
+    // listed by `module.list` and answered by NO tool — the only activation path was the MCP tool's. The first boot
+    // persisted its rows through `module.install` (M-1..M-5); a restart over the SAME profile must activate them from
+    // the census BEFORE the transport composes its set, so the tools answer on a boot that installs nothing.
+    const first = booted
+    if (first === null || bootProfile === null) throw new Error('PREREQUISITE — no first boot stood, so there is no census to re-boot')
+    await first.stop()
+    booted = null
+    const second = await boot(bootProfile)
+    booted = second
+
+    const listed = await call(second.client, 'module.list')
+    const names = (Array.isArray(listed.value) ? listed.value : []).map((entry) => str(memberOf(entry, 'name')) ?? '')
+    expect(names, `the census carries the rows the first boot persisted: ${listed.text}`).toEqual(expect.arrayContaining([ALPHA, BASE, DEP, NOW]))
+    expect(names, 'and a refused install was never persisted, so the census carries no row for it (D-315)').not.toContain('matrix-future')
+
+    // NO `module.install` WAS CALLED ON THIS BOOT. Each tool answers because the census activated it at boot.
+    const answer = await call(second.client, `module:${ALPHA}.answerB`, {})
+    expect(answer.ok, `the census-loaded module's tool did not answer at boot, with no install call: ${answer.text}`).toBe(true)
+    expect(answer.value, 'and it answers the module\'s own value — the entry was evaluated at the boot activation').toEqual({ from: ALPHA, value: 'two' })
+    const tick = await call(second.client, `module:${DEP}.tick`, {})
+    expect(tick.value, 'the dependent pair the resolver ordered at the first boot is active again, in the resolver\'s order').toEqual({ from: DEP })
   }, ROW_MS)
 })
 

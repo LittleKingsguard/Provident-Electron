@@ -6571,6 +6571,20 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 
 **ITS REGISTER IS `D-304` TO `D-314`** as prose, unchanged and extended by this row only. **This row records the user's ruling, the measured cause, and the order the census and the activation now take.**
 
+---
+
+## D-316 — THE BOOT CENSUS IS A TABLE DELIVERY APPLIED BEFORE THE TRANSPORT COMPOSES ITS SET: a persisted module is ACTIVE at boot, and no second activation path exists
+
+**Status:** ACTIVE · **Date:** 2026-11-24 · **Source (measured):** the unit record's named absent route — *"a census-loaded module has no activation path after `syncModuleRouter`'s retirement"* — and `M-30`'s two-boot measurement.
+
+**THE CAUSE, MEASURED.** The only activation arm was the MCP `module.install`/`module.update` handler. `moduleSurface.status().loaded` listed the rows and `module.list` answered them, but no `install` call was made at boot, so a persisted module was listed-and-silent: its tools answered nothing until a client re-installed it.
+
+**THE ROUTE.** `src/main/main.ts` hands the census's loaded rows to the executor as ONE `{kind:'table'}` delivery — the table arm `docs/L2/module-system/interface.md` §2 already declares — **before** `new ProvidentMcpServer`, because the composition reads `activations()` at construction. A quarantined or disabled row is never in `status().loaded`, so the boot activates exactly what the census admits; a refused row is answered BY VALUE and logged, never fatal (D-105). **No member is added** to `ModulePort`, `ModuleHost` or the bridge: the delivery is the declared one, and the route is a composition call.
+
+**THE ROW.** `M-30` in `tests/e2e/modularity/module-executor.test.ts` installs through M-1…M-5, stops the boot, re-boots the SAME profile, asserts the census carries the rows (and no refused install's), and calls `module:matrix-alpha.answerB` and `module:matrix-dep.tick` with NO install call. **The design filing is owed to L1** (its §6 reserved set ends at `M-29`) and the composition's L2 page (`docs/L2/app-shell/interface.md`) is owed a rev that states the route; neither is rewritten here.
+
+**ITS REGISTER IS `D-304` TO `D-315`** as prose, unchanged and extended by this row only. **This row records the measured gap, the declared delivery that closes it, and the row that proves it.**
+
 ```boundary-declared
-{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/decisions.md", "d": "D-315", "why": "the user's ruling on the refused-install order, its measured cause and the order the census and activation now take"}]}
+{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/decisions.md", "d": "D-316", "why": "the boot census route: the table delivery before the transport composition, no new member, and M-30 as its witness"}]}
 ```
