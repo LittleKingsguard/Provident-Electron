@@ -36,6 +36,12 @@ Read `strata/brief.md` first, then `strata/decisions.md` from `D-304` onward.
 
 `H-1`/`H-2` → `provident-ssr`: delivered, answered, the arm handed over; **`H-1` discharged at 0.6.0** (rev 15's `C-7` is the host-side adoption), **`H-2` withdrawn**. `H-3`/`H-4` → `provident-storeroom`: superseded/answered at 2.0.0. `H-5` → the WebAssembly arm: delivered and **discharged at 2.0.1**. Release summary: `Preempt-Providence/docs/handoffs-update-0.6.0-2026-11-23.md`.
 
+## The worklist
+
+The unit keeps one ledger of what its passes owe — re-grains performed, anomalies standing, process rules and environment limits — at
+`strata/records/modularity-cleanup.md` (`D-319`). A cleanup pass sweeps it; a working pass appends to it. It carries no claim
+about behaviour, so nothing cites it as authority.
+
 ## What a fresh session does next, in order
 
 1. **The e2e battery, SPLIT BY `D-318`** — `M-11`/`M-13` file at `S-20` on one shared boot in `tests/e2e/module-channel/` (the harness is the executor battery's, ~650 lines of lock/reap/boot that must be carried or shared), and **`M-2b` moves to `S-23`/`U6`** because an update's second registration frame is dropped by the router's one-frame guard, so the updated `client` source is never evaluated and the arm's "old marker GONE" claim needs the inverse. Then `U2`'s declaration registry (which unblocks `S-18`/`M-18`), the `app-shell` L2/L3 eleventh-member re-grain, the **out-of-band activation sink**, and the earlier debts (the cap ruling, the ledger when `strata-state` returns).

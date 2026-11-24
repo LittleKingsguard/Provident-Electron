@@ -6609,6 +6609,16 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 
 **WHAT THIS DOES NOT CHANGE.** The runtime composition (`D-317`) and the module shape (`RW-M1`…`RW-M4`) stand: a FIRST install's client source crosses, is evaluated, composes its graph and installs its closures — that is measured. What no row measures at this head, and what this row records rather than implies, is the SECOND source for a name already standing.
 
+## D-319 — IMPLEMENTATION ANOMALIES LIVE IN ONE LEDGER AND ARE SWEPT IN A CLEANUP PASS, BECAUSE A DESIGN PAGE IS NOT A WORKLIST
+
+**Status:** ACTIVE · **Date:** 2026-11-24 · **Source:** the unit's own passes — every one of them found something true that was not a step's subject: a row that had to be re-grained, a page that had invented a member, a figure that had lagged the map, a comment that outran its code, a battery path claimed and never built.
+
+**THE RULE.** `strata/records/modularity-cleanup.md` is this unit's **worklist**, and it is not a design page: it carries no claim about behaviour, no `C-n`/`S-n`/`M-n` id, and nothing in the tree may cite it as authority. Each pass **appends or updates** the item it found — with the site, the measured fact, what still stands and what the sweep would do — and a cleanup pass **sweeps** items out only by fixing them or by moving the residue to where it belongs (a page, a decision, a battery row). An item is never deleted for being inconvenient, and the ledger never becomes a second design.
+
+**WHY ONE LEDGER RATHER THAN A SECTION PER PAGE.** The anomalies cut across layers — a router guard, a page's ceiling, an e2e battery's grain, an absent tool — so filing each beside the page it touches would scatter one worklist across five documents, and the next pass would rediscover it. The unit record states what the unit **knows**; the L1/L2/L3 pages state what the unit **claims**; this ledger states what the passes **owe**. Three registers, three readers (`D-26`/`D-43`'s rule: state is read, not restated).
+
+**WHAT IT IS NOT.** Not a defect tracker with owners and dates (the corpus has no such instrument), not a substitute for a row that can red (an item that can be measured must be measured), and not a channel for a design change — an anomaly whose cure is a design decision gets a `D-n` and the ledger item points at it.
+
 ```boundary-declared
-{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/decisions.md", "d": "D-318", "why": "the measured update-frame drop: the router's one-frame guard against the executor's per-update send, why the arms split across S-20 and U6, and what still stands; no src byte"}]}
+{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/decisions.md", "d": "D-319", "why": "the ledger rule: one worklist at strata/records/modularity-cleanup.md, appended per pass and swept by a cleanup pass, carrying no claims; no src byte"}]}
 ```
