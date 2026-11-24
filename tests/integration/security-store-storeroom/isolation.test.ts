@@ -448,7 +448,12 @@ describe('security-store-storeroom · the isolation absences (D-18, L1 §6)', ()
     // LIMB THREE — THE RAW-CALL SITE. `ipcRenderer` is obtainable only from `electron`, so the one
     // file in `src/**` that imports it is the bridge: any other file able to `invoke` a channel
     // would carry a security write outside the three, and it cannot, because it cannot reach one.
-    const holders = ALL_SRC.filter((file) => /\bipcRenderer\b/.test(commentElided(textOf(file))))
+    // **THE READ IS THE BINDING AND NOT THE WORD** (`D-305`/`D-314`): `src/main/modules/admission.ts` names
+    // `ipcRenderer` in a refusal vocabulary, where it is a string and reaches no channel.
+    const holdsIpcRenderer = (file: string): boolean =>
+      (commentElided(textOf(file)).match(/import\s*\{([^}]*)\}\s*from\s*['"]electron['"]/g) ?? [])
+        .some((block) => /\bipcRenderer\b/.test(block))
+    const holders = ALL_SRC.filter(holdsIpcRenderer)
     expect(holders.map(rel).sort(), 'only the preload bridge holds `ipcRenderer`; no file may reach a channel behind its back').toEqual(['main/preload.ts'])
 
     // LIMB FOUR — THE CHANNEL CENSUS, BY VALUE AND LIVE. Three security channels exist in the

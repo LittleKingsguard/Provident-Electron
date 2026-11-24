@@ -452,23 +452,31 @@ async function call(client: Client, name: string, args: Record<string, unknown> 
     const answer = await client.callTool({ name, arguments: args })
     const first: unknown = Array.isArray(answer.content) ? answer.content[0] : undefined
     const text = asObject(first) !== null && typeof asObject(first)?.['text'] === 'string' ? (asObject(first)?.['text'] as string) : ''
+    // THE SDK'S TOOL-ERROR ARM IS A REFUSAL AND NOT AN ANSWER (`docs/L2/mcp-surface/interface.md` §10): a name
+    // the live server no longer holds answers `isError: true` with a protocol `-32602` body, which is exactly
+    // the withdrawal a row reads. The door's own refusals stay `ok` — their body is JSON and `isError` is ABSENT.
+    const isError = asObject(answer)?.['isError'] === true
     try {
-      return { ok: true, value: JSON.parse(text), text }
+      return { ok: !isError, value: JSON.parse(text), text }
     } catch {
-      return { ok: true, value: { __unparsable: text }, text }
+      return { ok: !isError, value: { __unparsable: text }, text }
     }
   } catch (error) {
     return { ok: false, value: null, text: `MCP ERROR: ${error instanceof Error ? error.message : String(error)}` }
   }
 }
 /** A `module.install`/`module.update` answer's own `status` member, read as the closed set it is — and a refusal that
- *  arrived as a THROW is named as one, because `D-105` says every refusal is a value. */
+ *  arrived as a THROW is named as one, because `D-105` says every refusal is a value. The tool answers THE
+ *  VERDICTS `install` returns (`docs/L2/mcp-surface/interface.md` §10: "answer the verdicts it returns"), which is
+ *  an array even for the one-delivery arm, so the verdict is read off the answer's first entry. */
+const verdictOf = (answer: CallAnswer): unknown =>
+  Array.isArray(answer.value) ? answer.value[0] : answer.value
 const statusOf = (answer: CallAnswer): string => {
-  const status = str(memberOf(answer.value, 'status'))
+  const status = str(memberOf(verdictOf(answer), 'status'))
   if (status !== null) return status
   return answer.ok ? '(no `status` member)' : '(refused as a throw)'
 }
-const reasonOf = (answer: CallAnswer): string => str(memberOf(answer.value, 'reason')) ?? '(no `reason` member)'
+const reasonOf = (answer: CallAnswer): string => str(memberOf(verdictOf(answer), 'reason')) ?? '(no `reason` member)'
 /** **THE ONE MANIFEST SHAPE EVERY SOURCE BELOW SPELLS** — a module's declared source is its manifest, and `entry` is
  *  the function-STRING `src/shared/types.ts:220-230` already declares (`needsCode` says `entry !== ''`). The `entry`
  *  text is the module's own code and nothing here rewrites it. */

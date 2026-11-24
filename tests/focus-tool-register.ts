@@ -579,12 +579,22 @@ export const S1_OWNED_SECURITY_EXPORTS: string[] = [
   // read-side return widening; `S1`'s addition, NOT this unit's.
   'ExclusionState',
 ]
+/** **THE SECOND CROSS-UNIT DECLARATION (`2026-11-24`, `modularity`'s landing) — the same discipline as `S1`'s,
+ *  in its own list so neither unit's ownership is renamed.** `registrationAllowed` is the `module`/`code` pair
+ *  factored out of `registeredToolNames` and REQUIRED by the modularity unit's two-gate: `module.install`/
+ *  `module.update` register only while both groups stand, and every other name registers by its group alone
+ *  (`docs/L1/modularity.md` §3 `S-5`, §4; `docs/L2/mcp-surface/interface.md` §10). It lives in `security.ts`
+ *  because that is where the gate lives. An entry is admissible ONLY with an owner and the clause that
+ *  requires it, exactly as above. */
+export const MODULARITY_OWNED_SECURITY_EXPORTS: string[] = [
+  'registrationAllowed',
+]
 /** **THE EXPORT-NAME READ (`§5.5.2` item 4b's fence), RE-SCOPED TO THE CLAIM:** every `export` name in
  *  `security.ts` that is NOT declared — neither in the frozen baseline nor by an owning unit below. Driven
  *  by `P-FT-RT-5` drive `(2)` for the live file and by that row's own controls over synthetic text, so the
  *  instrument is exercised in both directions. */
 export function addedSecurityExports(security: string): string[] {
-  const declared = new Set([...SECURITY_EXPORTS_AT_FILING, ...S1_OWNED_SECURITY_EXPORTS])
+  const declared = new Set([...SECURITY_EXPORTS_AT_FILING, ...S1_OWNED_SECURITY_EXPORTS, ...MODULARITY_OWNED_SECURITY_EXPORTS])
   return [...security.matchAll(/export\s+(?:function|class|const|let|interface|type)\s+([A-Za-z0-9_$]+)/g)]
     .map((m) => m[1])
     .filter((n) => !declared.has(n))
@@ -1735,7 +1745,7 @@ export const REGISTER: readonly RegisterRow[] = [
         // `S1` names — the measured cause of this amendment, reproduced rather than asserted.
         const asFiled = [...live.matchAll(/export\s+(?:function|class|const|let|interface|type)\s+([A-Za-z0-9_$]+)/g)]
           .map((m) => m[1]).filter((n) => !SECURITY_EXPORTS_AT_FILING.includes(n))
-        expect(asFiled.sort(), "RT-5 control (iv) — the PRE-AMENDMENT form reports `S1`'s two DECLARED additions over the live file, so the narrowing was owed, not convenient.").toEqual([...S1_OWNED_SECURITY_EXPORTS].sort())
+        expect(asFiled.sort(), "RT-5 control (iv) — the PRE-AMENDMENT form reports EVERY declared sibling addition over the live file (`S1`'s two and `modularity`'s `registrationAllowed`), so the narrowing was owed, not convenient.").toEqual([...S1_OWNED_SECURITY_EXPORTS, ...MODULARITY_OWNED_SECURITY_EXPORTS].sort())
         expect(addedSecurityExports(live), 'RT-5 control (iv) — the AMENDED form reports NOTHING undeclared: the fence holds with the sibling\'s declared additions in view.').toEqual([])
       } },
     ],

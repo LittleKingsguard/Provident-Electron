@@ -405,8 +405,36 @@ describe('central-data-management · the twelve L1 scenarios through their decla
     // that work: the two fail for different reasons, and the figure below reds on a package that grew while the
     // declaration stood still exactly as `SC-1` reds on a declaration that drifted from a package that moved.
     expect(STOREROOM_DECLARED_SURFACE.symbolCount, 'and fourteen own symbols at construction — the BARE arm, no batched constraint (D-298)').toBe(14)
-    const importers = walk(SRC).filter((file) => readFileSync(file, 'utf8').includes("from 'provident-storeroom'")).map(rel).sort()
-    expect(importers, 'L1 §5 S-9 — the package is imported in exactly the seam, the operator-settings instance and (D-63) the tab record\'s own instance').toEqual(['main/operator-settings/index.ts', 'main/storeroom.ts', 'main/tabs-record/index.ts'])
+    // **THE IMPORT CENSUS READS VALUE IMPORTS, AND A TYPE POSITION IS NAMED RATHER THAN COUNTED AS A CROSSING**
+    // (`D-310`/`D-312`; the row's own construction-census comment below states the same rule): `1.9.x`'s census
+    // counted any `from 'provident-storeroom'` mention, and the modularity landing adds two `import type` sites
+    // (`src/shared/module-contract.ts`, `src/main/modules/activation.ts`) — positions erased at build that
+    // construct nothing and open no crossing. The claim is unmoved: the package is imported FOR VALUE in exactly
+    // three files. Statements are read whole (this tree omits semicolons, so a span cannot be delimited by `;`).
+    const mentions = walk(SRC).filter((file) => readFileSync(file, 'utf8').includes("from 'provident-storeroom'"))
+    const importStatements = (text: string): string[] => {
+      const lines = text.split('\n')
+      const out: string[] = []
+      for (let i = 0; i < lines.length; i += 1) {
+        if (!/^\s*import\b/.test(lines[i])) continue
+        let statement = lines[i].trim()
+        let j = i
+        while (!/\bfrom\s+['"][^'"]+['"]/.test(statement) && j + 1 < lines.length) {
+          j += 1
+          statement += `\n${lines[j].trim()}`
+        }
+        out.push(statement)
+        i = j
+      }
+      return out
+    }
+    const valueImport = (text: string): boolean =>
+      importStatements(text).some((statement) =>
+        /from\s+['"]provident-storeroom['"]/.test(statement) && !/^import\s+type\b/.test(statement))
+    const importers = mentions.filter((file) => valueImport(readFileSync(file, 'utf8'))).map(rel).sort()
+    const typeOnly = mentions.filter((file) => !valueImport(readFileSync(file, 'utf8'))).map(rel).sort()
+    expect(importers, 'L1 §5 S-9 — the package is imported FOR VALUE in exactly the seam, the operator-settings instance and (D-63) the tab record\'s own instance').toEqual(['main/operator-settings/index.ts', 'main/storeroom.ts', 'main/tabs-record/index.ts'])
+    expect(typeOnly, 'and the modularity contract\'s `StoreSurface` and the activation\'s `Address`/`Listener` are TYPE-ONLY imports — they construct nothing and open no crossing (D-312)').toEqual(['main/modules/activation.ts', 'shared/module-contract.ts'])
     expect(importers.filter((file) => file.startsWith('main/data/')), 'and nowhere under src/main/data/: this module reaches the store through the seam').toEqual([])
     expect(walk(join(SRC, 'main', 'data')).filter((file) => readFileSync(file, 'utf8').includes('provident-storeroom')).map(rel), 'no file of this module spells the package at all').toEqual([])
     // THE CONSTRUCTION CENSUS (D-80). Reaching the package through the seam was never the whole of it: the surface

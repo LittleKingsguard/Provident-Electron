@@ -125,8 +125,11 @@ const toolNamesOf = (activation: unknown): readonly string[] =>
 const namesOf = (executor: Json): readonly string[] =>
   activationsOf(executor).map((entry) => str(memberOf(entry, 'name')) ?? '')
 interface LogLine { line: string; detail: unknown }
+/** The activation logs through the host as `module:<name>: <line>` (`docs/L3/module-system/design.md`
+ *  §4's one site), so a row reads its own line by the SUFFIX it named and not by a bare spelling the
+ *  design never writes. The claim is the DETAIL (the ctx's key set), which is what the row asserts. */
 const detailFor = (logs: readonly LogLine[], line: string): unknown =>
-  logs.find((entry) => entry.line === line)?.detail
+  logs.find((entry) => entry.line === line || entry.line.endsWith(`: ${line}`))?.detail
 
 // ---- the harness -----------------------------------------------------------
 interface Harness {

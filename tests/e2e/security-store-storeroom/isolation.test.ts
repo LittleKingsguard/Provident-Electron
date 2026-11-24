@@ -319,7 +319,14 @@ describe('security-store-storeroom · the isolation absences through the MCP sta
     expect(preloadRoutes, 'the security member carries exactly the four manual-UI requests plus the record’s one delivery').toEqual(['get', 'onChanged', 'set', 'setExclusion', 'setPane'])
     expect(preloadRoutes.filter((route) => route !== 'onChanged'), 'and the request set is one wider by name: four routes, spelled once each').toEqual(['get', 'set', 'setExclusion', 'setPane'])
     expect(securityRoutesOf(sourceOf('src/renderer/secure-panels.ts'), 'src/renderer/secure-panels.ts'), 'and the renderer’s `declare global` half carries the same five').toEqual(preloadRoutes)
-    expect(ALL_SRC.filter((file) => /\bipcRenderer\b/.test(commentElided(textOf(file)))).map(rel).sort(), 'only the preload bridge can reach a channel: no file invokes one behind its back').toEqual(['main/preload.ts'])
+    // **THE HOLDER READ IS A BINDING READ AND NOT A WORD SCAN** (`D-305`/`D-314`): `ipcRenderer` is obtainable
+    // only by importing it from `electron`, and `src/main/modules/admission.ts` now names it as a FORBIDDEN TOKEN
+    // in a refusal vocabulary — a string in a census that reaches no channel. The claim is unmoved: the only file
+    // that BINDS `ipcRenderer` is the preload bridge.
+    const holdsIpcRenderer = (file: string): boolean =>
+      (commentElided(textOf(file)).match(/import\s*\{([^}]*)\}\s*from\s*['"]electron['"]/g) ?? [])
+        .some((block) => /\bipcRenderer\b/.test(block))
+    expect(ALL_SRC.filter(holdsIpcRenderer).map(rel).sort(), 'only the preload bridge can reach a channel: no file invokes one behind its back').toEqual(['main/preload.ts'])
     const vocabulary: unknown[] = [...Object.values(sharedTypes), ...Object.values(storeChannels)]
     expect(
       vocabulary.filter((value): value is string => typeof value === 'string' && /security/i.test(value)).sort(),
