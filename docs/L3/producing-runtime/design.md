@@ -13,11 +13,11 @@
 
 ## 2. The pre-build point — `bootstrap()`, after the register and before the first compile
 
-- **`RuntimeOptions` gains `contributions?: () => readonly GraphContribution[]`** (`L2` §2, `ASM-PR-1`). The constructor keeps the envelope's translate + `registerNode` loop; **`bootstrap()` invokes the reader ONCE, composes the contributions, and only then calls `render()`** — the first compile sees the module's nodes (`S-14`).
-- **EACH CONTRIBUTION IS TRANSLATED BY THE SAME `translateLegacy` THE ENVELOPE USES**, as a document whose nodes are the contribution's; its translated nodes are registered the way the constructor registers the envelope's, and each contribution ROOT is `attach`ed under `parent` — resolved by the runtime's own `resolveTarget` (the id index, then `getNode`) — **before the first compile** (`C-6`; the graph is the only source of UI).
+- **`RuntimeOptions` gains `contributions?: () => readonly GraphContribution[]`** (`L2` §2, `ASM-PR-1`). The constructor keeps the envelope's translate + `registerNode` loop; **THE CONSTRUCTOR invokes the reader ONCE and merges the contributions into the authored template BEFORE `translateLegacy`** (`C-6`); `bootstrap()` is unchanged — the first compile sees the module's nodes (`S-14`).
+- **EACH CONTRIBUTION'S NODES ARE MERGED INTO THE AUTHORED TEMPLATE UNDER THEIR `parent`'s `children`**, found by the authored id (`css.id`/`props.id`) in the template tree, **before `translateLegacy`** — no synthetic document, no wrapper element and no second translate (`C-6`; the graph is the only source of UI).
 - **THE ORDER IS THE READER'S, AND THE RUNTIME SORTS NOTHING** (`S-15`): the foundation's nodes are already in the graph, so a module's addition follows them by construction; a later contribution may name an earlier one's parent.
 - **A THROWING CONTRIBUTION IS CAUGHT, NAMED AND SKIPPED, and the boot continues** (`ASM-PR-2`, `D-124`): the name goes through the runtime's existing warnings channel (the one `load`/`validate`/`op` surface), never a throw and never the fatal arm. **A contribution whose `parent` does not resolve is the same class**, named rather than silently dropped — an addition with no parent would be an orphan, not a composition (`C-6`).
-- **NO SECOND COMPOSITION AUTHORITY**: after `bootstrap()` the reader is not called again; an addition after the first compile is a graph command (`applyCommand`) and never a second pre-build (`ASM-PR-1`, `D-129`).
+- **NO SECOND COMPOSITION AUTHORITY**: after the constructor the reader is not called again; an addition after the first compile is a graph command (`applyCommand`) and never a second pre-build (`ASM-PR-1`, `D-129`).
 
 ## 3. The mode-aware compile — `applyCommand`'s dirty loop
 
