@@ -73,7 +73,7 @@ const RPC_METHODS = [
 // is MEASURED — the declared tenth is the ONE member the tree may still be missing, and a member the declaration does not
 // carry reddens in EITHER state.
 const MENUS_BRIDGE_MEMBER = 'menu'
-const BRIDGE_MEMBERS = ['data', 'menu', 'module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'tabs', 'view'] as const // ⟶ D-63: eight; D-87: nine; D-93: eight; D-112: nine; D-181: ten
+const BRIDGE_MEMBERS = ['channel', 'data', 'menu', 'module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'tabs', 'view'] as const // ⟶ D-63: eight; D-87: nine; D-93: eight; D-112: nine; D-181: ten; S-12: eleven
 
 const SRC_DIR = fileURLToPath(new URL('../../../src', import.meta.url))
 const MAIN_DIR = join(SRC_DIR, 'main')
@@ -307,7 +307,7 @@ describe('security-store-storeroom · the isolation absences through the MCP sta
       'the bridge carries NO top-level member the TEN-member declaration does not name — six base plus the tab record\'s crossing (D-63), the view record\'s (D-87), the five `data.*` routes\' member (D-112) and the menus route\'s `menu` (D-181); the `store` namespace left the set at D-93, with its own two members gone (interface.md §5 A-1)',
     ).toEqual([])
     expect(declaredMissing.filter((member) => member !== MENUS_BRIDGE_MEMBER), 'the bridge carries every declared member but the TENTH, which is the menus route\'s `menu` (D-181) and is missing only until that member lands').toEqual([])
-    expect([9, 10].includes(members.length), 'and the carried count reads NINE until the menus member lands and TEN after it, and no other figure: the widening is the menus route\'s alone').toBe(true)
+    expect(members.length, 'and the carried count reads ELEVEN: the widenings named above plus S-12\'s channel member, and no other figure').toBe(11)
     const preloadRoutes = securityRoutesOf(preload, 'src/main/preload.ts')
     /* ⟶ **RE-GRAINED `2026-11-03` (`D-106`): FOUR ROUTES, THREE OF THEM REQUESTS.** The set was exactly the three manual-UI
      * requests. `D-106` gives the record a DELIVERY, so `onChanged` joins it — a `security` member that carries a push and

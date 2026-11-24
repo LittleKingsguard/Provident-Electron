@@ -10,6 +10,7 @@ import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, I
 // from `D-181`'s menus route, the role route's one beside them — THREE specifiers off a file that carries three
 // constants, and this file carries exactly those three.
 import { IPC_SECURITY_EXCLUSION, IPC_SECURITY_PANE, IPC_MENU_ROLE } from '../main/store-channels.js'
+import { IPC_CHANNEL_MESSAGE, IPC_CHANNEL_REQUEST, type ChannelMessage, type StoreRequest, type StoreAnswer } from '../shared/module-channels.js'
 import type { TabsRecordRow } from '../shared/types.js'
 import {IPC_TABS_READ, IPC_TABS_COMMIT, IPC_TABS_REMOVE, IPC_TABS_CHANGED} from '../shared/tabs-channels.js'
 import {IPC_VIEW_READ, IPC_VIEW_PANE_COMMIT, IPC_VIEW_ZONES_COMMIT, IPC_VIEW_THEME_COMMIT, IPC_VIEW_DRAG_COMMIT, IPC_VIEW_DRAG_CLEAR, IPC_VIEW_CHANGED} from '../shared/view-channels.js'
@@ -155,6 +156,12 @@ export interface ProvidentBridge {
   // successor, because the thing it existed for has none. **AND THIS COUNT IS NOT RESTATED FROM MEMORY**: two sibling rows
   // (`ISO-4` in both `isolation` files) and `S-11` in `settings-carrier-retirement`'s e2e scenarios set-equality it against
   // their own `BRIDGE_MEMBERS`, and each was moved with a dated note on this pass rather than left to disagree.
+  // **AND THE ELEVENTH IS `channel`** (`S-12`, `D-307`): one member with TWO directions — the channel's message kinds and
+  // the client act's request/answer. `src/renderer/secure-panels.ts`'s `declare global` half declares it in LOCKSTEP.
+  channel: {
+    onMessage(handler: (message: ChannelMessage) => void): () => void
+    request(request: StoreRequest): Promise<StoreAnswer>
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -434,6 +441,18 @@ const bridge: ProvidentBridge = {
   // declaration moves with it.
   menu(role: string): Promise<{ status: 'admitted'; role: string } | { status: 'refused'; role: string; reason: 'role-not-admitted' | 'role-unknown' | 'role-malformed'; message: string }> {
     return ipcRenderer.invoke(IPC_MENU_ROLE, role, witnessedGestureFor(role))
+  },
+  // **THE CHANNEL'S ONE MEMBER — `S-12`'s ELEVENTH** (`D-307`, `C-15`): two directions and no third. The message arrives
+  // on ONE internal channel and the client act's request/answer on the other; neither is an `RpcMethod`.
+  channel: {
+    onMessage(handler: (message: ChannelMessage) => void): () => void {
+      const listener = (_event: unknown, message: ChannelMessage): void => { handler(message) }
+      ipcRenderer.on(IPC_CHANNEL_MESSAGE, listener)
+      return () => { ipcRenderer.removeListener(IPC_CHANNEL_MESSAGE, listener) }
+    },
+    request(request: StoreRequest): Promise<StoreAnswer> {
+      return ipcRenderer.invoke(IPC_CHANNEL_REQUEST, request)
+    },
   },
   // ⟶ **THE `store` MEMBER'S IMPLEMENTATION IS DELETED** (`D-93`): the three members above are gone with the frozen graph
   // store, and with them the `STORE_FILE_CHANGED` preload LOCAL that carried the Y-3 push. **NO CHANNEL SPELLING SURVIVES

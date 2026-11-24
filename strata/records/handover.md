@@ -14,7 +14,7 @@ Read `strata/brief.md` first, then `strata/decisions.md` from `D-304` onward.
 - **The boot census route landed (`D-316`)**: `src/main/main.ts` hands `status().loaded` to the executor as one table delivery **before** the transport composition, so a persisted module is active at boot instead of listed-and-silent. No member was added; `M-30` re-boots the same profile and calls the tools with no install. The L1 filing (`§6` ends at `M-29`) and an `app-shell` L2 rev are owed.
 - **`docs/L2/module-channel/interface.md` rev 1 is NEW**: the managed passthrough's transport half at the I/O grain — the five members (binding, envelope, registration, fan-out, containment), the five arms, the one message's two kinds, the prefix relation, the parity, and four assumptions with alternatives. Its integration battery is owed with the steps that green it; the L3 page is the next rung.
 - **`docs/L3/module-channel/` rev 1 is NEW**: `design.md` states the store facade (the binding and the writer's entrance), the turn at the settled receipt, the two-kind message, the registration frame, the realm fan-out, the client proxy's data verbs and the one transport seam `S-12` supplies; `signatures.md` fixes the stubs. **Seven** assumptions carry the contested cells — the client verb set, the flag's one source, the store-act envelope, the registry key, the entry's address, the client half's payload, and the handle's key (client-keyed when the declaration names a client half).
-- **The channel's main half landed**: `src/shared/module-channels.ts` (data), `src/main/module-channel/{writer,facade,index}.ts` (the facade's binding, the settled turn and the five arms) and `tests/unit/module-channel/channel.test.ts` (`MC-1`…`MC-8`). The realm client and the boot facade pass also landed; only `S-12`'s wire, the renderer's channel start and the batteries remain.
+- **The channel's main half landed**: `src/shared/module-channels.ts` (data), `src/main/module-channel/{writer,facade,index}.ts` (the facade's binding, the settled turn and the five arms) and `tests/unit/module-channel/channel.test.ts` (`MC-1`…`MC-8`). The realm client and the boot facade pass also landed, and **`S-12`'s wire landed**: the eleventh `channel` member on both lockstep sites, the real transport, and the three census rows at ELEVEN. The renderer's channel start (`S-20`) and the batteries remain; the `app-shell` L2/L3 pages owe the member's re-grain.
 - **The client store is now `ClientStoreSurface`**: the async data half — each act a request the channel executes, each answer a Promise — while the main half's store stays the sync `StoreSurface`. `MS-3` awaits the default `no-store-host` refusal, as a module's client code must.
 - **The pins stand**: `provident-storeroom ^2.0.0` (lock 2.0.1), `provident-ssr ^0.6.0`; the demo bundle regenerated; `SC-1` reads `15`/`14`; the map's `module-system` `endpoints` **24** (cap **290**, D-14).
 
@@ -24,7 +24,7 @@ Read `strata/brief.md` first, then `strata/decisions.md` from `D-304` onward.
 
 ## What is open, named not hidden
 
-- **The client-half crossing and its wire** (`S-2b`/`S-12`): the registration frame's eleventh bridge member + `secure-panels` lockstep + `module-channel`'s receiver + three census rows; and the **out-of-band activation sink** (`design.md` §5's third caller).
+- **The renderer's channel start (`S-20`)**: the app renderer has no `CapabilityRouter` instance or named-action table for the channel client to evaluate and fire into; and the **out-of-band activation sink** (`design.md` §5's third caller).
 - **The boot route's design filing**: L1 §6's reserved set ends at `M-29` and `docs/L2/app-shell/interface.md` has no rev naming the route — both owed even though the route and its row are landed.
 - **L1 currency**: `docs/L1/modularity.md` still reads `module-system` `endpoints` **16**; the map reads **24** and L2 rev 3 derives 24 member-by-member. The move is L1's to file (the page is at 150/150, so a re-grain must compress).
 - **The harness-cap rule is stated two ways**: `bundle-boot-seam`'s pages say a product battery is EVIDENCE and does not count; `module-system`'s L2/L3 count the 246-line battery against the cap. One ruling is owed.
@@ -36,7 +36,7 @@ Read `strata/brief.md` first, then `strata/decisions.md` from `D-304` onward.
 
 ## What a fresh session does next, in order
 
-1. **`S-12`'s wire and the renderer's channel start** (`S-2b`/`S-12`), then the channel batteries; then the **out-of-band activation sink**.
+1. **The renderer's channel start (`S-20`) and the channel batteries**, then the `app-shell` L2/L3 re-grain; then the **out-of-band activation sink**.
 2. **L1's `16 → 24` re-grain** and the `M-30` filing, then the cap-rule ruling.
 3. **`U2`–`U7`**, with **`U7`'s acceptance conversion last**.
 4. **Move the ledger** to L4 and its artifacts when the workflow checkout is restored.

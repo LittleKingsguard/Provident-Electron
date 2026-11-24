@@ -33,7 +33,7 @@ import {createModuleExecutor} from './modules/index.js'
 // composition hands the resolver instead of spelling a number (`docs/L2/module-system/interface.md` §8, §11; L1 §4 `C-11`).
 import {appVersion, type Activation, type ModuleHost, type RegistrationFrame} from '../shared/module-contract.js'
 import {createModuleChannel, type ModuleChannel} from './module-channel/index.js'
-import type {ChannelTransportMain} from '../shared/module-channels.js'
+import {IPC_CHANNEL_MESSAGE, IPC_CHANNEL_REQUEST, type ChannelTransportMain, type StoreRequest} from '../shared/module-channels.js'
 import {SecurityGate, type ToolGroup} from './security.js'
 // central-data (`docs/L1/central-data-census-exception.md` §2 E-3) — the module's surface enters the
 // composition here, and nothing else of this file moves: it constructs no store and touches no file
@@ -476,12 +476,15 @@ async function main(): Promise<void> {
   // ═══ THE STORE FACADE (`D-311`, `docs/L3/module-channel/design.md` §3) ═══
   // The app's ONE store is handed to every consumer as the module channel's facade: `listen`/`register` are the binding
   // and `write`/`delete`/`addConstraint` are the writer's entrance, so an app write that fires a module listener marks a
-  // turn. **THE TRANSPORT IS `S-12`'S ELEVENTH BRIDGE MEMBER AND IS NOT LANDED YET**: it is a no-op here, so the composed
-  // message is recorded and dropped rather than routed over an invented second channel (`D-301`/`D-302`).
+  // turn. **THE TRANSPORT IS `S-12`'S ELEVENTH BRIDGE MEMBER**: its main end sends the message to the live renderer and
+  // answers the client act's request over the ONE member — no `RpcMethod`, no second route (`C-15`, `D-307`).
   let moduleBindings: () => readonly Activation[] = (): readonly Activation[] => []
+  let channelWindow: BrowserWindow | null = null
   const moduleTransport: ChannelTransportMain = {
-    push: (): void => { /* S-12's wire is owed; the turn is composed and dropped */ },
-    onRequest: (): void => { /* the client act's carrier is S-12's; no client half is delivered until then */ },
+    push: (message): void => { channelWindow?.webContents.send(IPC_CHANNEL_MESSAGE, message) },
+    onRequest: (handler): void => {
+      ipcMain.handle(IPC_CHANNEL_REQUEST, async (_event, request: StoreRequest) => handler(request))
+    },
   }
   const moduleChannel: ModuleChannel = createModuleChannel({ store: centralStore, transport: moduleTransport, bindings: () => moduleBindings() })
   const appStore = moduleChannel.surface
@@ -1191,6 +1194,7 @@ async function main(): Promise<void> {
       nodeIntegration: false,
     },
   })
+  channelWindow = win
   backend.attachWindow(win)
 
   // ═══ `A-8` — THE PAINTER, ASSIGNED WHERE BOTH OF ITS SUBJECTS STAND: THE RECORD AND THE WINDOW (`D-247`) ═══
@@ -1227,6 +1231,7 @@ async function main(): Promise<void> {
   mcp.followExclusion(settingsSurface.read().exclusion)
 
   win.on('closed', () => {
+    channelWindow = null
     void mcp.close()
     app.quit()
   })

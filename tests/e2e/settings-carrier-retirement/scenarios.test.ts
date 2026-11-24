@@ -332,7 +332,7 @@ describe('settings-carrier-retirement · the twelve L1 scenarios through their d
     // IT** — the claim this row makes is unchanged (nothing a bridge channel carries can grant the operator's capabilities
     // to an agent, and a `data.*` route reaches the PROFILE store, not the security record: `ISO-1` drives all five tools and
     // asserts no answer of theirs names `provident-operator-settings.json`, the record address or the exclusion address).
-    expect(bridge.length === 9 || bridge.length === 10, 'ISO-4: the carried count reads NINE until the menus route\'s member lands and TEN after it, and no other figure').toBe(true)
+    expect(bridge.length, 'ISO-4: the carried count reads ELEVEN — nine crossings, the menus member and the channel member — and no other figure').toBe(11)
     /* ⟶ **RE-GRAINED `2026-11-09` (`D-181`, `D-195`): THE BRIDGE'S CENSUS MOVES `9 -> 10` AND THE TENTH MEMBER IS NAMED.**
      * `app-layout`'s `app-shell` route gives the realm a menus member — `window.provident.menu(role)`, ONE preload member
      * behind ONE channel constant (`IPC_MENU_ROLE`, in `src/main/store-channels.ts`, whose own census moves `2 -> 3`) and ONE
@@ -344,7 +344,7 @@ describe('settings-carrier-retirement · the twelve L1 scenarios through their d
      * `data.*` tools and asserts no answer of theirs names `provident-operator-settings.json`, the record address or the
      * exclusion address). **THE BOUND IS KEPT**: a member the declaration does not carry fails in either state, and so does
      * a declared member missing after the route lands. */
-    const declaredBridge = ['data', 'menu', 'module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'tabs', 'view']
+    const declaredBridge = ['channel', 'data', 'menu', 'module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'tabs', 'view']
     const menusBridgeMember = 'menu'
     expect(
       bridge.filter((member) => !declaredBridge.includes(member)),

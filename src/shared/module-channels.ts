@@ -51,5 +51,10 @@ export interface ChannelTransportRealm {
 export const MODULE_HANDLE_PREFIX = 'module:'
 export const isModuleHandle = (handle: string): boolean => handle.startsWith(MODULE_HANDLE_PREFIX)
 
+/** `S-12`'s ONE bridge member's two internal channels: the main→realm message and the realm→main act. NEITHER is an
+ *  `RpcMethod` and neither creates a request envelope in the shared RPC vocabulary (`C-15`, `D-307`). */
+export const IPC_CHANNEL_MESSAGE = 'provident:channel:message'
+export const IPC_CHANNEL_REQUEST = 'provident:channel:request'
+
 export const isWriteTurn = (m: ChannelMessage): m is Extract<ChannelMessage, { kind: 'write-turn' }> => m.kind === 'write-turn'
 export const isRegistration = (m: ChannelMessage): m is Extract<ChannelMessage, { kind: 'registration' }> => m.kind === 'registration'

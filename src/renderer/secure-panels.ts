@@ -27,6 +27,7 @@ import {
 } from 'provident-ssr'
 import { createIsolatedScope, type GraphScope } from 'provident-ssr/core/registry.js'
 import type { SecuritySettings, RpcRequest, RpcReply } from '../shared/types.js'
+import type { ChannelMessage, StoreRequest, StoreAnswer } from '../shared/module-channels.js'
 // G3 §1.3 item 4 — the NEW `SecurityWriteReceipt` type lives in
 // `src/main/settings-surface/index.ts` and reaches the pane's bridge DECLARATION by
 // IMPORT (type-only — erased at build; no runtime coupling to the main side).
@@ -156,6 +157,12 @@ declare global {
       // lives in `main`, so a `disabled` mark on a pane item is a courtesy and this declaration carries no guard of its own.
       // The member is OPTIONAL here and required in `src/main/preload.ts`, which is the same asymmetry `data` carries.
       menu?(role: string): Promise<{ status: 'admitted'; role: string } | { status: 'refused'; role: string; reason: 'role-not-admitted' | 'role-unknown' | 'role-malformed'; message: string }>
+      /** **THE CHANNEL'S ONE MEMBER — THE ELEVENTH, LOCKSTEP WITH `preload.ts`** (`S-12`, `D-307`): the realm's receipt of
+       *  the channel's two kinds and the client act's request/answer. A half-declaration FAILS. */
+      channel: {
+        onMessage(handler: (message: ChannelMessage) => void): () => void
+        request(request: StoreRequest): Promise<StoreAnswer>
+      }
     }
   }
 }

@@ -102,7 +102,7 @@ const MUTATING = ['dispatch', 'load', 'op', 'teardown', 'code.load', 'code.loadB
 // because it is a PRECONDITION of that unit's floor rather than a consequence of it, so the state is MEASURED: the declared
 // tenth is the ONE member the tree may still be missing, and a member the declaration does not carry fails in EITHER state.
 const MENUS_BRIDGE_MEMBER = 'menu'
-const BRIDGE_MEMBERS = ['data', 'menu', 'module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'tabs', 'view'] as const // ⟶ D-63: eight; D-87: nine; D-93: eight; D-112: nine; D-181: ten
+const BRIDGE_MEMBERS = ['channel', 'data', 'menu', 'module', 'notify', 'onRequest', 'ready', 'security', 'sendReply', 'tabs', 'view'] as const // ⟶ D-63: eight; D-87: nine; D-93: eight; D-112: nine; D-181: ten; S-12: eleven
 
 const SRC_DIR = fileURLToPath(new URL('../../../src', import.meta.url))
 const MAIN_DIR = join(SRC_DIR, 'main')
@@ -426,7 +426,7 @@ describe('security-store-storeroom · the isolation absences (D-18, L1 §6)', ()
       declaredMissing.filter((member) => member !== MENUS_BRIDGE_MEMBER),
       'the bridge carries every declared member but the TENTH, which is the menus route\'s `menu` (D-181): the `store` namespace left at D-93 and no member replaced it, and this one is not yet landed',
     ).toEqual([])
-    expect([9, 10].includes(members.length), 'and the carried count reads NINE until the menus member lands and TEN after it, and no other figure: the widening is the menus route\'s alone').toBe(true)
+    expect(members.length, 'and the carried count reads ELEVEN: the widenings named above plus S-12\'s channel member, and no other figure').toBe(11)
     expect(preload.split("contextBridge.exposeInMainWorld('provident'").length - 1, 'one exposure of one bridge').toBe(1)
 
     // LIMB TWO — THE LOCKSTEP HALF. `preload.ts` and `secure-panels.ts` re-declare the same
