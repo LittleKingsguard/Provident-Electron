@@ -104,11 +104,24 @@ export function createChannelWriter(options: ChannelWriterOptions): ChannelWrite
     return { kind: 'write-turn', turn: current, entries }
   }
 
+  const thenable = (value: unknown): value is PromiseLike<unknown> =>
+    value !== null && (typeof value === 'object' || typeof value === 'function')
+    && typeof (value as { then?: unknown }).then === 'function'
+
   const act = (verb: 'write' | 'delete' | 'addConstraint', args: readonly unknown[]): unknown => {
-    const receipt = (options.store[verb] as unknown as (...passed: readonly unknown[]) => unknown)(...args)
+    const answer = (options.store[verb] as unknown as (...passed: readonly unknown[]) => unknown)(...args)
+    // THE EDGE IS THE SETTLED ANSWER (`D-310`, `H-4`): a suspending set answers a Promise, so the turn is marked at its
+    // resolution and the message composed from the SETTLED record — never from the thenable itself (`C-2`).
+    if (thenable(answer)) {
+      return Promise.resolve(answer).then((settled) => {
+        turn += 1
+        options.transport.push(compose(turn, settled))
+        return settled
+      })
+    }
     turn += 1
-    options.transport.push(compose(turn, receipt))
-    return receipt
+    options.transport.push(compose(turn, answer))
+    return answer
   }
 
   return {

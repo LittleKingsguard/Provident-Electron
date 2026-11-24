@@ -5,7 +5,7 @@
 - **Charter:** `D-304`'s must-haves this module carries — *"main-side module code … a listener or the managed channel can reference"* and *"client/Renderer-side module code"* — under `D-307`'s two-half listener and `D-311`'s writer ruling. **`L1` below is `docs/L1/modularity.md` rev 15**: its §2 row for this module, §3 `S-11`/`S-13`/`S-13b`, §4 `C-2`/`C-3`/`C-13`/`C-15`/`C-16`, §6 `M-2b`/`M-11`/`M-13`/`M-29`
 - **Inputs:** `docs/L2/module-system/interface.md` §4 (the listener declaration and its handle), §9 (the registration frame this page carries); `docs/L3/module-system/design.md` §4; `strata/records/modularity-unit.md`; `D-307`, `D-310`, `D-311`, `D-312`, `D-313`, `D-314`, `D-105`
 - **Write scope:** `docs/L2/module-channel/` and `tests/integration/module-channel/` (brief §3). `src/**` is read-only at this layer and neither package is ever modified (D-3, D-5)
-- **Status:** DESIGN — and it fixes **no structure, signature or pseudocode**: `docs/L3/module-channel/` is that grain (brief §3, D-1). **Its battery is OWED**: `tests/integration/module-channel/` is written with the steps that green it (`S-11`/`S-13`), and the e2e rows `M-2b`/`M-11`/`M-13` are L1's, filed at `S-20`'s realm driver (`D-30`, `D-40`). **At this head `src/main/module-channel/`, `src/shared/module-channels.ts` and `src/renderer/module-channel-client.ts` do not exist** — the module is NEW, and this page is the first rung of its ladder
+- **Status:** DESIGN — and it fixes **no structure, signature or pseudocode**: `docs/L3/module-channel/` is that grain (brief §3, D-1). **Its battery is WRITTEN** — `CH-1`…`CH-6` in `tests/integration/module-channel/channel.test.ts`, over a real `createProfileStore` and a connected transport pair — and the e2e rows `M-2b`/`M-11`/`M-13` are L1's, filed at `S-20`'s realm driver (`D-30`, `D-40`). **At this head all three file groups stand**, the wire is `S-12`'s and the boot's transport is real.
 
 ## 0. What this page fixes, and the four seams it borrows and never re-derives
 
@@ -66,7 +66,7 @@
 
 ## 8. The battery, and the rows that will judge this page
 
-- **`tests/integration/module-channel/` is this page's battery and is OWED** (`CH-1`…`CH-6`, named when the step that greens them is written): the binding's one-handle registration and its inverse; the five arms at the envelope grain; the registration frame's string payload and its no-answer; the fan-out's one-call-per-module and its prefix relation; containment; and the `reentrant-call` flag crossing the two seats. **Every row is unmarked and gating when authored** (`D-30`, `D-40`).
+- **`tests/integration/module-channel/` is this page's battery and is WRITTEN** (`CH-1`…`CH-6`): the binding's one-handle registration and its inverse; the five arms at the envelope grain; the registration frame's string payload and its no-answer; the fan-out's one-call-per-module and its prefix relation; containment; and the `reentrant-call` flag crossing the two seats. **Every row is unmarked and gating when authored** (`D-30`, `D-40`).
 - **The e2e rows are L1's and are filed at `S-20`'s realm driver**: `M-2b` (the client half delivered and evaluated), `M-11` (the batch's six readings) and `M-13` (the fan-out's address relation), all in `tests/e2e/module-channel/`; `M-29` is the parity's, reserved in its own battery (`L1` §6).
 
 ## 9. Assumptions, each with its rejected alternative
