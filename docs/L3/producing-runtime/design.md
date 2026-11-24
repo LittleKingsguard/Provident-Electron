@@ -4,7 +4,7 @@
 - **Ceiling:** 150 lines (class max); replaced, never appended (D-1, D-2) · **Citations:** a source cite names its site and never an offset (D-41)
 - **Inputs:** `docs/L2/producing-runtime/interface.md` rev 2 §2–§5; `docs/L1/modularity.md` rev 15 §3 `S-14`/`S-15`/`S-16`, §4 `C-6`/`C-7`, §6 `M-14`/`M-15`/`M-16`; `docs/L3/module-system/design.md` §4/§6; `src/renderer/runtime.ts` by site (`RuntimeOptions`, `bootstrap`, `applyCommand`, `focusedSlice`, the constructor's register loop); `node_modules/provident-ssr/dist/core/supervisor.d.ts` (`CompileMode`, `SupervisorOptions.compileMode`, `getCompileMode`/`setCompileMode` — the first not re-exported by the barrel) and `dist/core/supervisor.js` (the pass-2 switch, register-if-new `attach`); `D-124`, `D-252`, `D-310`, `D-314`
 - **Write scope:** `docs/L3/producing-runtime/` (brief §3); `src/**` is read-only at this layer (D-3)
-- **Status:** DESIGN — the pre-build point and the mode branch are OWED to `src/renderer/runtime.ts`; the module's existing tests stand and are not replaced
+- **Status:** DESIGN — **THE TWO CELLS LANDED** in `src/renderer/runtime.ts` (the construction-time merge before `translateLegacy`, and the `getCompileMode()` branch in `applyCommand`); the `M-14`/`M-15` integration battery is written and `M-16` is the e2e row; the module's existing tests stand.
 
 ## 1. The file, and the two cells
 
@@ -36,9 +36,9 @@
 
 ## 5. The battery
 
-- **`tests/integration/producing-runtime/` is the new path** (the map row owes it): `M-14` — a contribution's nodes composed before the first compile (a rendered read finds the child inside its parent), and a throwing contribution NAMED in the warnings while the boot continues; `M-15` — the order, a later contribution attaching under an earlier one's node.
+- **`tests/integration/producing-runtime/prebuild.test.ts` is WRITTEN** (`M-14`, `M-14b`, `M-14c`, `M-15`): the child composed inside its parent, a reader throw named while the boot continues, a missing parent named and not half-attached, and a later contribution under an earlier one's node. **The map row does not yet claim the path** — that filing is L1's.
 - **`M-16`** — the mode adoption, reserved in `tests/e2e/modularity/`; `M-14`/`M-15`'s e2e twins stay L1's. The module's existing flat runtime tests stand (`tests/runtime*.test.ts` and the engine-pin family).
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L3", "module": "producing-runtime", "writes": [{"path": "docs/L3/producing-runtime/design.md", "d": "D-314", "why": "this page, rev 1 NEW: the ordered pre-build contribution and the mode-aware post-bootstrap compile, with their guardrails and battery — no `src/**` byte"}]}
+{"unit": "modularity", "layer": "L3", "module": "producing-runtime", "writes": [{"path": "docs/L3/producing-runtime/design.md", "d": "D-314", "why": "this page, rev 1 NEW: the ordered pre-build contribution and the mode-aware post-bootstrap compile, with their guardrails and battery \u2014 no `src/**` byte"}, {"path": "src/renderer/runtime.ts", "why": "the L4 of the two cells: `contributions` + `composeContributions` before `translateLegacy`, and `compileDirtyInMode` honouring `getCompileMode()`", "d": "D-314"}, {"path": "tests/integration/producing-runtime/prebuild.test.ts", "why": "the M-14/M-14b/M-14c/M-15 pre-build battery", "d": "D-314"}, {"path": "demo/pane-drag-demo/demo.mjs", "why": "the demo bundle regenerated against the runtime its @source digests name (D-118)", "d": "D-118"}]}
 ```

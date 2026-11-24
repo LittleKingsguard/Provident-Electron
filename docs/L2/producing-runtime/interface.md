@@ -4,7 +4,7 @@
 - **Inputs:** `docs/L1/modularity.md` rev 15 §2's `producing-runtime` row, §3 `S-14`/`S-15`/`S-16`, §4 `C-6`/`C-7`, §6 `M-14`/`M-15`/`M-16`; `docs/L1/app-layout.md` §2/§3 (`S-1`); `docs/L3/module-system/design.md` §4/§6 (the resolver's order and the contributions' shape); `src/renderer/runtime.ts` by site (`RuntimeOptions`, `bootstrap`, `applyCommand`, `load`, `op`); `D-124`, `D-177`, `D-179`, `D-182`, `D-252`, `D-310`, `D-314`
 - **Write scope:** `docs/L2/producing-runtime/` and `tests/integration/producing-runtime/` (brief §3); `src/**` is read-only at this layer and neither package is ever modified (D-3, D-5)
 - **Ceiling:** 150 lines; at the ceiling it splits by owner and is never appended (D-1, D-2) · **Citations:** a source cite names its **site** and never an offset (`D-41`)
-- **Status:** DESIGN — no structure or signature (that is `docs/L3/producing-runtime/`); **the two cells are OWED to the runtime's code**: the pre-build point does not exist at this head, and `applyCommand`'s compile is still mode-blind (`D-314`'s host-side adoption)
+- **Status:** DESIGN — no structure or signature (that is `docs/L3/producing-runtime/`); **THE TWO CELLS LANDED**: `RuntimeOptions.contributions` merges the ordered contributions before `translateLegacy`, and `applyCommand`'s compile honours `getCompileMode()`; `M-14`/`M-15` are written and `M-16` is the e2e row
 
 ## 1. The command surface as it stands, and the rev-1 cell carried unmoved
 

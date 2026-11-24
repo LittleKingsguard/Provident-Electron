@@ -21,12 +21,12 @@ Read `strata/brief.md` first, then `strata/decisions.md` from `D-304` onward.
 
 ## The readings (clean tree)
 
-`typecheck` **0**, `typecheck:tests` **0**, `build` **0**; **`npm test` GREEN — `0 failed / 3,053 passed / 2 skipped` of `3,055` over `161` files**; the unit batteries **29/29** (9 + 7 + 8 + 5); the boundary **10/10**. **ALL FOUR LEGS ARE GREEN** (`npm test`, `typecheck`, `typecheck:tests`, `build`; `AGENTS.md`, `brief.md` §6). `strata-lint` **211** stands as the last reading and was NOT re-taken — `../Agent Harness/` is absent from this checkout.
+`typecheck` **0**, `typecheck:tests` **0**, `build` **0**; **`npm test` GREEN — `0 failed / 3,057 passed / 2 skipped` of `3,059` over `162` files**; the unit batteries **29/29** (9 + 7 + 8 + 5); the boundary **10/10**. **ALL FOUR LEGS ARE GREEN** (`npm test`, `typecheck`, `typecheck:tests`, `build`; `AGENTS.md`, `brief.md` §6). `strata-lint` **211** stands as the last reading and was NOT re-taken — `../Agent Harness/` is absent from this checkout.
 
 ## What is open, named not hidden
 
 - **An upstream finding (`D-5`, recorded in the unit record)**: the real store's `returnedValues` carries a SETTLED thenable's value, not a synchronous listener's return — so the channel's `return` arm is async-only and a synchronous returner reads `empty`. The fix shape is the store's.
-- **The `producing-runtime` L4**: the pre-build point and the mode-aware compile are designed (`L2` rev 2, `L3` rev 1) and not implemented; then the U5 action/graph wiring — the realm's `CapabilityRouter` records `action`/`graph` registrations but nothing dispatches them yet; and the **out-of-band activation sink** (`design.md` §5's third caller).
+- **The U5 action/graph wiring** — the realm's `CapabilityRouter` records `action`/`graph` registrations but nothing dispatches them yet; and the **out-of-band activation sink** (`design.md` §5's third caller).
 - **The boot route's design filing**: L1 §6's reserved set ends at `M-29` and `docs/L2/app-shell/interface.md` has no rev naming the route — both owed even though the route and its row are landed.
 - **L1 currency**: `docs/L1/modularity.md` still reads `module-system` `endpoints` **16**; the map reads **24** and L2 rev 3 derives 24 member-by-member. The move is L1's to file (the page is at 150/150, so a re-grain must compress).
 - **The harness-cap rule is stated two ways**: `bundle-boot-seam`'s pages say a product battery is EVIDENCE and does not count; `module-system`'s L2/L3 count the 246-line battery against the cap. One ruling is owed.
@@ -38,7 +38,7 @@ Read `strata/brief.md` first, then `strata/decisions.md` from `D-304` onward.
 
 ## What a fresh session does next, in order
 
-1. **The `producing-runtime` L4** (the ordered pre-build point and the `getCompileMode()` branch) — its L2 rev 2 and L3 pair are written — then **the U5 action installation and the e2e M rows**, then the `app-shell` L2/L3 re-grain; then the **out-of-band activation sink**.
+1. **The U5 action installation and the e2e M rows** — the `producing-runtime` L4 landed (the pre-build merge and the `getCompileMode()` branch, with `M-14`/`M-15`) — then the `app-shell` L2/L3 re-grain; then the **out-of-band activation sink**.
 2. **L1's `16 → 24` re-grain** and the `M-30` filing, then the cap-rule ruling.
 3. **`U2`–`U7`**, with **`U7`'s acceptance conversion last**.
 4. **Move the ledger** to L4 and its artifacts when the workflow checkout is restored.

@@ -27,11 +27,13 @@ import {
   Node,
   type RenderOp,
   type LegacyInitialData,
+  type LegacyNodeData,
   type RenderOptions,
   type SerializedRenderDoc,
   type Payload,
 } from 'provident-ssr'
 import type { CompiledState } from 'provident-ssr/core/types.js'
+import type { CompileMode } from 'provident-ssr/core/supervisor.js'
 import type {
   DispatchRequest,
   DispatchResult,
@@ -57,6 +59,7 @@ import type {
   JournalResult,
 } from '../shared/types.js'
 import type { TranslatedWarning } from 'provident-ssr/core/translate.js'
+import type { GraphContribution } from '../shared/module-contract.js'
 
 export interface RuntimeOptions {
   mount: HTMLElement
@@ -64,6 +67,9 @@ export interface RuntimeOptions {
   /** Maximum journal entries before auto-condense (undefined = never condense).
    *  Passed to the provident-ssr Supervisor constructor. */
   maxJournalLength?: number
+  /** THE ORDERED PRE-BUILD READER (`S-14`, `S-15`): the module-system resolver's answer, consumed ONCE at CONSTRUCTION
+   *  and merged into the authored template BEFORE `translateLegacy` (`C-6`). The runtime sorts nothing. */
+  contributions?: () => readonly GraphContribution[]
 }
 
 export class Runtime {
@@ -99,11 +105,16 @@ export class Runtime {
    *  load/validate/op/teardown so a CSP-eval-block or a handler-body-invalid
    *  is MCP-visible, never a silently dead page. */
   private warnings: TranslatedWarning[] = []
+  /** The pre-build composition's warnings, kept so a later load still names them (`S-14`). */
+  private prebuildWarnings: TranslatedWarning[] = []
 
   constructor(opts: RuntimeOptions) {
     this.mount = opts.mount
     this.maxJournalLength = opts.maxJournalLength
-    const translated = translateLegacy(opts.envelope)
+    const composed = this.composeContributions(opts.envelope, opts.contributions)
+    this.prebuildWarnings = composed.warnings
+    const translated = translateLegacy(composed.envelope)
+    this.warnings = [...(translated.warnings ?? []), ...composed.warnings]
     this.rootNode = translated.root
     this.nodes = translated.nodes
     this.supervisor = new Supervisor({ events: new EventBridge(), maxJournalLength: opts.maxJournalLength })
@@ -111,6 +122,59 @@ export class Runtime {
     this.adapter = new DomAdapter(opts.mount, { onEvent: this.handleDomEvent })
     this.payloads = this.buildPayloads(translated.content, opts.envelope.content)
     this.rebuildIdIndex()
+  }
+
+  /** THE PRE-BUILD COMPOSITION (`S-14`, `S-15`; `C-6`): each contribution's nodes join the authored template under its
+   *  `parent`'s children, in the reader's order, BEFORE `translateLegacy`. A reader throw, an uncloneable envelope/node
+   *  and a missing parent are NAMED in the warnings and skipped — never a throw and never a silent drop. */
+  private composeContributions(
+    envelope: LegacyInitialData,
+    reader?: () => readonly GraphContribution[],
+  ): { envelope: LegacyInitialData; warnings: TranslatedWarning[] } {
+    if (reader === undefined) return { envelope, warnings: [] }
+    let contributions: readonly GraphContribution[]
+    try {
+      contributions = reader()
+    } catch {
+      return { envelope, warnings: [{ code: 'contribution-reader-threw', path: 'contributions' }] }
+    }
+    let composed: LegacyInitialData
+    try {
+      composed = structuredClone(envelope)
+    } catch {
+      return { envelope, warnings: [{ code: 'contribution-envelope-uncloneable', path: 'envelope' }] }
+    }
+    const warnings: TranslatedWarning[] = []
+    for (let index = 0; index < contributions.length; index += 1) {
+      const contribution = contributions[index]
+      const parent = this.findAuthoredNode(composed.template?.root, contribution.parent)
+      if (parent === null) {
+        warnings.push({ code: 'contribution-parent-missing', path: `contributions[${index}].parent` })
+        continue
+      }
+      let nodes: LegacyNodeData[]
+      try {
+        nodes = structuredClone(contribution.nodes) as unknown as LegacyNodeData[]
+      } catch {
+        warnings.push({ code: 'contribution-nodes-uncloneable', path: `contributions[${index}].nodes` })
+        continue
+      }
+      parent.children = [...(parent.children ?? []), ...nodes]
+    }
+    return { envelope: composed, warnings }
+  }
+
+  /** The authored node carrying `id` on `css.id` or `props.id` — the same two spellings the live id index resolves. */
+  private findAuthoredNode(root: LegacyNodeData | undefined, id: string): LegacyNodeData | null {
+    if (root === undefined) return null
+    if (root.css?.id === id) return root
+    const propsId = root.props?.['id']
+    if (typeof propsId === 'string' && propsId === id) return root
+    for (const child of root.children ?? []) {
+      const found = this.findAuthoredNode(child, id)
+      if (found !== null) return found
+    }
+    return null
   }
 
   /** Wire real DOM events (browser interaction) to the same graph dispatch
@@ -356,7 +420,7 @@ export class Runtime {
     for (const n of translated.nodes) this.supervisor.registerNode(n)
     this.payloads = this.buildPayloads(translated.content, translated.userData)
     this.envelope = env
-    this.warnings = translated.warnings ?? []
+    this.warnings = [...(translated.warnings ?? []), ...this.prebuildWarnings]
     this.rebuildIdIndex()
     this.resetRenderState()
     this.render()
@@ -382,7 +446,7 @@ export class Runtime {
     for (const n of nodes) this.supervisor.registerNode(n)
     this.payloads = this.buildPayloads(nodes, undefined)
     this.envelope = null
-    this.warnings = []
+    this.warnings = [...this.prebuildWarnings]
     this.rebuildIdIndex()
     this.resetRenderState()
     this.render()
@@ -532,10 +596,17 @@ export class Runtime {
     }
     const result = this.supervisor.apply(payload)
     const dirty = (result.dirtied ?? []).filter((id) => this.supervisor.getNode(id)?.isInTree)
+    // THE MODE IS THE SUPERVISOR'S OWN (`S-16`, `C-7`, `D-314`): `'path'` compiles each member of the focused slice with
+    // `compilePath()`; `'family'` keeps `node.compile` byte-for-byte. Never the pass-2, whose states arrive in a microtask
+    // after the command's synchronous answer.
+    const compileMode: CompileMode = this.supervisor.getCompileMode()
     for (const id of dirty) {
       const node = this.supervisor.getNode(id)
       if (!node) continue
-      const cr = node.compile(this.focusedSlice(node), { focusNodeId: node.id })
+      const slice = this.focusedSlice(node)
+      const cr = compileMode === 'path'
+        ? { actionable: slice.flatMap((member) => member.compilePath().actionable as CompiledState[]) }
+        : node.compile(slice, { focusNodeId: node.id })
       const grouped = new Map<string, CompiledState[]>()
       for (const s of cr.actionable) {
         const arr = grouped.get(s.nodeId) ?? []
