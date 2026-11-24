@@ -118,9 +118,10 @@
         "tests/loadbatch-adversarial.test.ts",
         "tests/blind-battery-hooks-handlers.test.ts",
         "tests/gemma4-blind-battery.test.ts",
-        "tests/0-2-regression-adversarial.test.ts"
+        "tests/0-2-regression-adversarial.test.ts",
+        "tests/integration/producing-runtime/"
       ],
-      "endpoints": 17
+      "endpoints": 18
     },
     {
       "name": "renderer-wiring",
@@ -137,7 +138,8 @@
         "tests/unit/renderer-wiring/signatures.test.ts",
         "tests/unit/renderer-wiring/pane-node-map.test.ts",
         "tests/e2e/focus-retirement/",
-        "tests/e2e/pane-drag-temp/"
+        "tests/e2e/pane-drag-temp/",
+        "tests/integration/renderer-wiring/"
       ],
       "endpoints": 22
     },
