@@ -466,9 +466,10 @@ describe('mcp-surface — the set the transport publishes is the registry\'s com
       ).toEqual(['module:live-module.probe'])
       expect(
         delivery.censusStood,
-        '§10, §5 — the persisted census row STOOD when the delivery arrived: the arm writes the census first and ' +
-          'activates second, and a red here means the order was reversed (a row activated for a module no census knows)',
-      ).toBe(true)
+        '§10, §5 — the persisted census row did NOT stand when the delivery arrived: since `D-315` the arm asks the ' +
+          'census READ-ONLY first, activates second, and writes the row only on a non-refused verdict — a row standing ' +
+          'here would mean the refused-install leak returned (a stored module no admission passed)',
+      ).toBe(false)
 
       // (5) **THE ANSWER IS THE PORT'S OWN ANSWER, VERBATIM** (§10; D-105): the surface carries the executor's verdicts
       // and MINTS NONE — not an envelope, not a status of its own, not a `refused` wrapper.
@@ -706,9 +707,10 @@ describe('mcp-surface — the set the transport publishes is the registry\'s com
       ).toBe('1.0.0')
       expect(
         port.deliveries[0]?.censusStood,
-        '§10, §5 — and the PORT says the same thing from its own side: the census row already stood when the delivery ' +
-          'arrived. Two independent readings of ONE order — the row is written first, the activation second',
-      ).toBe(true)
+        '§10, §5 — and the PORT says the same thing from its own side: NO census row stood when the delivery arrived, ' +
+          'because `D-315` makes the check read-only and the write follow admission. Two independent readings of ONE order ' +
+          '— the check first, the activation second, the row only on a non-refused verdict',
+      ).toBe(false)
 
       // (2) **THE SAME SOURCE WENT TO THE PORT'S `install`** — one delivery, the caller's text, the composed names, and
       // the census fact beside them.
@@ -716,7 +718,7 @@ describe('mcp-surface — the set the transport publishes is the registry\'s com
         port.deliveries,
         '§10 — ONE delivery, and it carries the caller\'s own source (by value), the module it names, the composed names ' +
           'it activated and the order fact: a second entry, a dropped member or a re-keyed source reds here',
-      ).toEqual([{ kind: 'source', source, name: 'live-module', tools: ['module:live-module.probe'], censusStood: true }])
+      ).toEqual([{ kind: 'source', source, name: 'live-module', tools: ['module:live-module.probe'], censusStood: false }])
       expect(
         port.answers.length,
         '§10 — and `install` was called ONCE: the answers the port gave are the count of its own deliveries, so an arm ' +

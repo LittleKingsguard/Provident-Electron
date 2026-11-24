@@ -95,17 +95,18 @@ const liveDoor = (): ModulePort | null => this._modulePort
 // (1) CONSTRUCTION — the landed call, `router` dropped and two arguments wider: the callback the install/update arm calls, and the DOOR reader.
 ProvidentMcpServer.registerTools(server, this.backend, this.allowedToolNames(), this.registered,
   this.moduleStore, this.dataSurface, liveGate, rePublish, liveDoor)
-// (2) THE DELIVERY AXIS — TWO FACTS ON TWO STORES, in this order (design.md §5; L2 §10): the PERSISTED registry row FIRST through
-// the landed helper, which is the census `module.list` and `status().loaded` read, and a `rejected`/`no-op` answer ENDS the arm;
-// THEN, where a port stands, the SAME source goes to `install`, which IS the activation, and its verdicts are the answer; then the
-// re-publish, in the same act. The executor's registry is its own activation table (`activations()`/`invoke`) and NEVER this census
-// — `ModuleHost.store` is the profile store, not it (src/shared/module-contract.ts) — so a delivery is written once to each and
-// neither is renamed the other. The retired line here was `syncModuleRouter(router, moduleStore)`, whose target is a tool table the
-// realm half does not declare (L2 §10); that function retires whole in app-shell's pass (design.md §2's RETIRE row).
-const landed = handleModuleTool(this.moduleStore, name, args) as { status?: string }   // the SAME narrowing the landed arm takes here
-if (landed.status === 'rejected' || landed.status === 'no-op') return text(landed)        // nothing moved: the arm ENDS, nothing is activated
-const answered = this._modulePort ? this._modulePort.install({kind: 'source', source}) : landed
-rePublish(); return text(answered)
+// (2) THE DELIVERY AXIS — THE CENSUS CHECK IS READ-ONLY AND THE ROW IS WRITTEN ONLY AFTER ADMISSION (`D-315`; design.md §5; L2 §10):
+// the READ-ONLY census verdict comes FIRST (`handleModuleTool(..., false)`, no `put`), a `rejected`/`no-op` answer ENDS the arm,
+// the SAME source then goes to `install` (the activation) and its verdicts are the answer, and ONLY a non-refused verdict
+// PERSISTS THE ROW (the same helper writing) before the re-publish; the executor's registry is its own table, never this census
+// (`ModuleHost.store` is the profile store), so a delivery is written once to each; the retired line was `syncModuleRouter`.
+const census = handleModuleTool(this.moduleStore, name, args, false) as { status?: string }   // the SAME narrowing, NO write
+if (census.status === 'rejected' || census.status === 'no-op') return text(census)            // nothing moved: the arm ENDS
+if (!this._modulePort) { const landed = handleModuleTool(this.moduleStore, name, args) as { status?: string }; rePublish(); return text(landed) }
+const answered = this._modulePort.install({kind: 'source', source})
+const refused = (Array.isArray(answered) ? answered : [answered]).some((v) => (v as { status?: string } | null)?.status === 'rejected')
+if (!refused) { handleModuleTool(this.moduleStore, name, args); rePublish() }               // the row is written only after admission
+return text(answered)
 // (3) THE GROUP AXIS — the re-gate's widen arm becomes the SAME act for TOOLS, so the two axes cannot describe two sets;
 // its RESOURCE half stays where it is, because `ALL_RESOURCES` and the resource widen are not this composition's (§5).
 this.syncPublishedTools()
@@ -145,5 +146,5 @@ export function invokeModuleTool(door: ModulePort | null, gate: SecurityGate, to
 ```
 
 ```boundary-declared
-{"unit":"modularity","layer":"L3","module":"mcp-surface","writes":[{"path":"docs/L3/mcp-surface/signatures.md","why":"this page, rev 3 — the route re-grained at the signature grain on L2 rev 8 §13's list: `ActivationSource` and the `activations` option are replaced by `ModulePort` (the executor's members this surface reads, `install`/`activations`/`invoke`) and `McpServerOptions.modulePort?`, with `router?` retained and read by nothing here so no other module's typecheck reds on this move; §4's three transcribed members read the port at their own instant, no router, and are NAMED as outside the `D-45` row's reader; §5's call sites are re-pointed — `liveDoor`, `invokeModuleTool(door, gate, tool, args)` declared with the door as its first parameter and its null arm re-grained off the router's words, the DELIVERY written as two facts on two stores (the persisted census row through the landed helper first, the activation through `install` second, its verdicts the answer, the re-publish in the same act), the widen arm keeping its resource half, and the dynamic arm's registration carrying the memberless passthrough schema beside the door's call so the declaration and the call site move in ONE act (G-12). No claim is moved that `design.md` rev 3 does not make.","d":"D-105"}]}
+{"unit":"modularity","layer":"L3","module":"mcp-surface","writes":[{"path":"docs/L3/mcp-surface/signatures.md","why":"this page, rev 3 — the route re-grained at the signature grain on L2 rev 8 §13's list: `ActivationSource` and the `activations` option are replaced by `ModulePort` (the executor's members this surface reads, `install`/`activations`/`invoke`) and `McpServerOptions.modulePort?`, with `router?` retained and read by nothing here so no other module's typecheck reds on this move; §4's three transcribed members read the port at their own instant, no router, and are NAMED as outside the `D-45` row's reader; §5's call sites are re-pointed — `liveDoor`, `invokeModuleTool(door, gate, tool, args)` declared with the door as its first parameter and its null arm re-grained off the router's words, the DELIVERY written as two facts on two stores (the persisted census row through the landed helper first, the activation through `install` second, its verdicts the answer, the re-publish in the same act), the widen arm keeping its resource half, and the dynamic arm's registration carrying the memberless passthrough schema beside the door's call so the declaration and the call site move in ONE act (G-12). REV 4 RE-GRAINS THE DELIVERY'S CALL to `D-315`'s order — the census verdict READ-ONLY first, the activation next, the row persisted only on a non-refused verdict. No claim is moved that `design.md` does not make.","d":"D-315"}]}
 ```

@@ -311,7 +311,7 @@ export interface ModuleStore {
  *  secure crossing's `file.modules.<id>` rows — the legacy store and its `put`/`remove`/`setDisabled`
  *  FILE writers are deleted, `D-81`). The module tools are NOT routed to the renderer. Exported for
  *  direct unit testing. */
-export function handleModuleTool(store: ModuleStore | null, name: string, args: Record<string, unknown>): unknown {
+export function handleModuleTool(store: ModuleStore | null, name: string, args: Record<string, unknown>, write = true): unknown {
   if (!store) throw new Error(`${name}: no module store configured`)
   const nameArg = typeof args.name === 'string' ? args.name : ''
   const source = typeof args.source === 'string' ? args.source : ''
@@ -355,13 +355,15 @@ export function handleModuleTool(store: ModuleStore | null, name: string, args: 
       if (existing.version === v) return { status: 'no-op', name: nameArg, version: v }
       if (!force) return { status: 'rejected', name: nameArg, version: v, reason: `version conflict: ${existing.version} installed; ${v} requested (pass force:true)` }
     }
-    store.put({ name: nameArg, version: v, source, capabilities: parseCapabilities(source, args.capabilities) })
+    // THE CENSUS CHECK IS READ-ONLY (`D-315`): the install/update arm first asks this function for its verdict
+    // with `write=false`, activates the source, and only a NON-REFUSED verdict comes back here to persist the row.
+    if (write) store.put({ name: nameArg, version: v, source, capabilities: parseCapabilities(source, args.capabilities) })
     return { status: 'installed', name: nameArg, version: v }
   }
   if (name === 'module.update') {
     if (nameArg === '' || source === '') throw new Error('module.update: name and source required')
     const v = version ?? '0.0.0'
-    store.put({ name: nameArg, version: v, source, capabilities: parseCapabilities(source, args.capabilities) })
+    if (write) store.put({ name: nameArg, version: v, source, capabilities: parseCapabilities(source, args.capabilities) })
     return { status: 'updated', name: nameArg, version: v }
   }
   if (name === 'module.list') {
@@ -1216,26 +1218,43 @@ export class ProvidentMcpServer {
         // registry the composition hands this server — the legacy store and its `put`/`remove`/`setDisabled`
         // FILE writers are deleted, `D-81`), NOT routed to the renderer. They are handled here directly.
         if (name.startsWith('module.')) {
-          // (1) THE PERSISTED REGISTRY ROW FIRST — the census `module.list` and `status().loaded` read, through
-          // the landed helper, and the SAME narrowing the landed arm takes on its `unknown` answer.
-          const landed = handleModuleTool(moduleStore, name, args) as { status?: string }
-          if (name !== 'module.install' && name !== 'module.update') return text(landed)
-          // (2) A REFUSED OR UNMOVED ROW ENDS THE ARM: nothing moved, so there is nothing to activate and no
-          // re-publish to make (`docs/L3/mcp-surface/design.md` §5).
-          if (landed.status === 'rejected' || landed.status === 'no-op') return text(landed)
-          // (3) THE SAME SOURCE GOES TO THE PORT'S `install` WHERE ONE STANDS, AND THAT CALL IS THE ACTIVATION:
-          // the verdicts it returns are this arm's ANSWER, and the re-publish follows in the same act. THE TWO
-          // STORES ANSWER TWO QUESTIONS AND ARE NOT ONE REGISTRY — the `ModuleStore` above is the census of
-          // INSTALLED rows, the executor's registry is its own activation table reached only through
-          // `activations()`/`invoke` — so a delivery is written once to each and neither is renamed the other.
-          // THE LINE THAT STOOD HERE WAS `syncModuleRouter(router, moduleStore)`, and what replaced it is not a
-          // call: that target is a tool table the realm half never declared, so the function retired WHOLE in the
-          // coupled app-shell pass and what stands in its place is this arm's one `install` and one `rePublish()` —
-          // `design.md` §5; `docs/L2/mcp-surface/interface.md` §10.
+          // (0) EVERY OTHER `module.*` TOOL IS THE LANDED HELPER'S ANSWER — `module.list` is a read, and the
+          // unknown-name arm is the helper's own throw (`D-81`).
+          if (name !== 'module.install' && name !== 'module.update') return text(handleModuleTool(moduleStore, name, args))
+          // (1) THE CENSUS CHECK IS READ-ONLY AND COMES FIRST (`D-315`): the same verdict the landed helper
+          // answers, with NO `put`, so a rejected/no-op answer ends the arm before anything is stored or activated.
+          const census = handleModuleTool(moduleStore, name, args, false) as { status?: string }
           const source = typeof args.source === 'string' ? args.source : ''
           const door = liveDoor()
-          const answered = door === null ? landed : door.install({ kind: 'source', source })
-          rePublish()
+          // (2) NO PORT: the census row is the whole act, exactly the landed fallback's answer.
+          if (door === null) {
+            const landed = handleModuleTool(moduleStore, name, args) as { status?: string }
+            rePublish()
+            return text(landed)
+          }
+          // (3) A REFUSED OR UNMOVED CENSUS ROW ENDS THE ARM: nothing moved, so there is nothing to activate and no
+          // re-publish to make (`docs/L3/mcp-surface/design.md` §5).
+          if (census.status === 'rejected' || census.status === 'no-op') return text(census)
+          // (4) THE SAME SOURCE GOES TO THE PORT'S `install`, AND THAT CALL IS THE ACTIVATION: the verdicts it
+          // returns are this arm's ANSWER. **A REFUSED ACTIVATION WRITES NOTHING TO THE CENSUS** (`D-315`), so a
+          // refused module is never listed and a retry reaches the resolver; ONLY a non-refused verdict persists
+          // the row, and the re-publish follows in the same act. THE TWO STORES ANSWER TWO QUESTIONS AND ARE NOT
+          // ONE REGISTRY — the `ModuleStore` above is the census of INSTALLED rows, the executor's registry is its
+          // own activation table reached only through `activations()`/`invoke` — so a delivery is written once to
+          // each and neither is renamed the other. THE LINE THAT STOOD HERE WAS `syncModuleRouter(router,
+          // moduleStore)`, and what replaced it is not a call: that target is a tool table the realm half never
+          // declared, so the function retired WHOLE in the coupled app-shell pass and what stands in its place is
+          // this arm's one `install` and one `rePublish()` — `design.md` §5; `docs/L2/mcp-surface/interface.md` §10.
+          const answered = door.install({ kind: 'source', source })
+          const verdicts: readonly unknown[] = Array.isArray(answered) ? answered : [answered]
+          const refused = verdicts.some((verdict) => {
+            const held = typeof verdict === 'object' && verdict !== null ? (verdict as { status?: unknown }) : null
+            return held?.status === 'rejected'
+          })
+          if (!refused) {
+            handleModuleTool(moduleStore, name, args)
+            rePublish()
+          }
           return text(answered)
         }
         const method = dispatch(name)

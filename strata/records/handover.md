@@ -1,4 +1,4 @@
-# handover — 2026-11-24: the `modularity` unit is at L4; eight of the eleven suite reds are closed by instrument re-grains, and the three that stand share ONE design conflict
+# handover — 2026-11-24: all eleven `modularity` suite reds are closed and the four legs are green; the next acts are the door's row, the boot census route and the two named halves
 
 Read `strata/brief.md` first, then `strata/decisions.md` from `D-304` onward.
 
@@ -8,19 +8,15 @@ Read `strata/brief.md` first, then `strata/decisions.md` from `D-304` onward.
 
 ## What landed this pass
 
-- **Eight reds closed, all by instrument re-grains that keep their claims**: `I-3`/`I-8` (the activation's `module:<name>:` log prefix), `M-1`/`M-2` (the verdicts array, and the SDK's `isError` arm as a refusal), `S-9` (value imports only: three, with two `import type` sites named), `S-11`/`ISO-4` (an `electron` binding, not the word `ipcRenderer`, which `admission.ts` names in its forbidden-token census), and `REGISTER-EXEC-1` (declaring `registrationAllowed`, a real modularity export, in the focus register's cross-unit fence).
+- **Eleven reds closed.** Eight by instrument re-grains that keep their claims: `I-3`/`I-8` (the activation's `module:<name>:` log prefix), `M-1`/`M-2` (the verdicts array, and the SDK's `isError` arm as a refusal), `S-9` (value imports only: three, with two `import type` sites named), `S-11`/`ISO-4` (an `electron` binding, not the word `ipcRenderer`, which `admission.ts` names in its forbidden-token census), and `REGISTER-EXEC-1` (declaring `registrationAllowed` in the focus register's cross-unit fence).
+- **`M-3`/`M-4`/`M-5` closed on the user's ruling (`D-315`, "Activate first, persist on success")**: the census check is READ-ONLY, a rejected/no-op verdict ends the arm, the source goes to the port's `install`, and the row is persisted only on a non-refused verdict before `rePublish()`. A refused install is never stored, so a retry reaches the resolver. L3 §5 and `signatures.md` §5 are re-grained to that order.
 - **The pins stand**: `provident-storeroom ^2.0.0` (lock 2.0.1), `provident-ssr ^0.6.0`; the demo bundle regenerated; `SC-1` reads `15`/`14`; the map's `module-system` `endpoints` **24** (cap **290**, D-14).
-- **The executor, door, transport and coupled act stand as the record states them.**
 
 ## The readings (clean tree)
 
-`typecheck` **0**, `typecheck:tests` **0**, `build` **0**; **`npm test` RED — `3 failed / 3,028 passed / 2 skipped` of `3,033` over `158` files**; the unit batteries **15/15** (8 + 7); the boundary **10/10**. **The four legs are `npm test`, `typecheck`, `typecheck:tests`, `build` (`AGENTS.md`, `brief.md` §6): THREE OF FOUR ARE GREEN, and the unit cannot close on a red floor.** `strata-lint` **211** stands as the last reading and was NOT re-taken — `../Agent Harness/` is absent from this checkout.
+`typecheck` **0**, `typecheck:tests` **0**, `build` **0**; **`npm test` GREEN — `0 failed / 3,031 passed / 2 skipped` of `3,033` over `158` files**; the unit batteries **15/15** (8 + 7); the boundary **10/10**. **ALL FOUR LEGS ARE GREEN** (`npm test`, `typecheck`, `typecheck:tests`, `build`; `AGENTS.md`, `brief.md` §6). `strata-lint` **211** stands as the last reading and was NOT re-taken — `../Agent Harness/` is absent from this checkout.
 
-## The three standing reds, and their one cause
-
-`M-3`, `M-4`, `M-5` share a **design conflict, not a test defect**: the install/update arm persists the `ModuleStore` census row FIRST (`handleModuleTool`'s `put`) and only then calls the port's `install`, exactly as `docs/L3/mcp-surface/design.md` §5 says — so an install admission REFUSES is stored anyway. `M-3` finds the three refused names in `module.list`; `M-4`'s retry at the same name+version answers `no-op` before the resolver runs; `M-5`'s published set is two where it expects four. **L1 §3 `S-3`/`S-4` and L3 §5 contradict each other.** The fix is L2/L3's: (a) activate first and persist only on a non-refused verdict, or (b) roll back the row on refusal (`ModuleStore.remove`; restore the previous record for an update). L4 implements; this seat does not design around it.
-
-## What else is open, named not hidden
+## What is open, named not hidden
 
 - **The `invoke` door has no row**: the unit battery is `MS-1`…`MS-8`; `MS-9`/`I-9` are named and unwritten in both L2 and L3 pages (`examiner.md` §2, D-16).
 - **The boot census activation route**: a census-loaded module has no activation path after `syncModuleRouter`'s retirement.
@@ -35,17 +31,18 @@ Read `strata/brief.md` first, then `strata/decisions.md` from `D-304` onward.
 
 ## What a fresh session does next, in order
 
-1. **Rule the three reds' conflict** (activate-then-persist, or persist-and-roll-back), re-grain L3 §5, and land it at L4 — `M-3`…`M-5` then close.
-2. **Write the door's row** (`MS-9`/`I-9`) and the **boot census activation route**.
-3. **L1's `16 → 24` re-grain**, then the cap-rule ruling.
-4. **The two outstanding halves**, then **U2–U7**, with **U7's acceptance conversion last**.
+1. **Write the door's row** (`MS-9`/`I-9`) and the **boot census activation route**.
+2. **L1's `16 → 24` re-grain**, then the cap-rule ruling.
+3. **The two outstanding halves**, then **U2–U7**, with **U7's acceptance conversion last**.
+4. **Move the ledger** to L4 and its artifacts when the workflow checkout is restored.
 
 ## Operating notes that cost real time
 
 - **A first `npm test` after `npm install` can red on a still-materialising Electron binary**; the real reading is the second run (this pass saw 14 reds become 11 for exactly that reason).
+- **An e2e battery boots `dist/`, not `src/`**: rebuild after a source change or the old bundle answers (`npm run build`; the battery only builds when an artifact is absent).
 - **Each window's declaration block declares exactly that window's paths** (D-146); a committed path must not stay in a live block (P-5).
 - **Commit per gate and never push** (D-6); a reading is taken on a clean tree; the four legs plus the boundary instrument are the floor (brief §6, D-301).
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/handover.md", "d": "D-306", "why": "the session handover replaced whole: the corrected floor, the eight instrument re-grains, the three reds' one design conflict, the other open items and the next acts"}]}
+{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/handover.md", "d": "D-306", "why": "the session handover replaced whole: the green floor, the eleven closed reds, D-315's ruling, the other open items and the next acts"}]}
 ```

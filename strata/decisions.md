@@ -6558,3 +6558,19 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 
 
 
+
+---
+
+## D-315 — A REFUSED INSTALL PERSISTS NOTHING: the census check is READ-ONLY, the activation follows it, and the row is written only after the source is admitted
+
+**Status:** ACTIVE · **Date:** 2026-11-24 · **Source (user, verbatim):** the adjudication this session put to the user — *"Activate first, persist on success"*.
+
+**THE CAUSE, MEASURED.** `module.install`/`module.update` persisted the `ModuleStore` census row through `handleModuleTool` BEFORE the port's `install`, exactly as `docs/L3/mcp-surface/design.md` §5 declared — so a source admission refused (the host-API token, the overstated declaration, the foundation tool name) was stored anyway. `M-3` found the refused names in `module.list`; `M-4`'s retry at the same name+version answered `no-op` before the resolver ran; `M-5`'s published set was two where the row expects four. L1 §3 `S-3`/`S-4` and L3 §5 contradicted each other.
+
+**THE RULING.** The census check is READ-ONLY (`handleModuleTool(…, false)`), a `rejected`/`no-op` census verdict ends the arm, the same source then goes to the port's `install`, and **only a non-refused verdict persists the row** before `rePublish()`. A refused activation writes NOTHING to the census, so a refused module is never listed and a retry reaches the resolver. The L3 page's *"FIRST makes the landed handleModuleTool call"* is re-grained to the read-only order; the L4 arm and `handleModuleTool`'s optional write flag are its implementation.
+
+**ITS REGISTER IS `D-304` TO `D-314`** as prose, unchanged and extended by this row only. **This row records the user's ruling, the measured cause, and the order the census and the activation now take.**
+
+```boundary-declared
+{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/decisions.md", "d": "D-315", "why": "the user's ruling on the refused-install order, its measured cause and the order the census and activation now take"}]}
+```
