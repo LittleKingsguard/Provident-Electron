@@ -80,10 +80,10 @@
 
 ## 10. What this page does NOT do
 
-- **No `src/**` byte**: the three file groups and the boot's one-facade pass are L4's, and the facade's consumers are other seats' call sites (D-3). **No `strata/modules.json` byte**: the row already carries the three paths and `endpoints: 5` (L1 §7 `OWED-5`, D-43). **No test file**: `CH-1`…`CH-6` are the L2 battery's and are owed (L2 §8); `M-2b`/`M-11`/`M-13` are L1's and file at `S-20`.
+- **No `src/**` byte beyond the message data file**: `src/shared/module-channels.ts` is the data-only first landing; the three file groups' BEHAVIOUR and the boot's one-facade pass are L4's, and the facade's consumers are other seats' call sites (D-3). **No `strata/modules.json` byte**: the row already carries the three paths and `endpoints: 5` (L1 §7 `OWED-5`, D-43). **No test file**: `CH-1`…`CH-6` are the L2 battery's and are owed (L2 §8); `M-2b`/`M-11`/`M-13` are L1's and file at `S-20`.
 - **No store construction**: the store is the app's ONE per host and the facade wraps what it is handed (L1 §4 `C-13`, `D-310`).
 - **No graph, pane or template**: the client half drives named actions through `module-system`'s ctx, and the channel installs no node (L1 §4 `C-10`, `C-6`).
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L3", "module": "module-channel", "writes": [{"path": "docs/L3/module-channel/design.md", "d": "D-307", "why": "this page, rev 1 NEW: the store facade (binding and writer's entrance), the turn at the settled receipt, the two-kind message, the registration frame, the realm fan-out, the client proxy's data verbs and the one transport seam `S-12` supplies — no `src/**` byte"}]}
+{"unit": "modularity", "layer": "L3", "module": "module-channel", "writes": [{"path": "docs/L3/module-channel/design.md", "d": "D-307", "why": "this page, rev 1 NEW: the store facade (binding and writer's entrance), the turn at the settled receipt, the two-kind message, the registration frame, the realm fan-out, the client proxy's data verbs and the one transport seam `S-12` supplies \u2014 the message data file lands, no other `src/**` behaviour"}, {"path": "src/shared/module-channels.ts", "why": "the channel's message data: the two kinds, the five-arm entry, the client act's request/answer and the transport interfaces \u2014 data only, no behaviour", "d": "D-307"}]}
 ```
