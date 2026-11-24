@@ -16,7 +16,7 @@ export type ChannelRefusal = 'main-half-threw' | 'not-transport-safe'
 export interface ChannelEntry {
   readonly turn: number
   readonly module: string
-  readonly listener: string
+  readonly listener: string // the declaration's CLIENT key, not the store's address-keyed handle (`ASM-MC-7`)
   readonly outcome: ChannelOutcome
   readonly address?: readonly string[]
   readonly data?: unknown
@@ -62,6 +62,8 @@ export interface BindingRecord {
   readonly module: string
   readonly handle: string
   readonly address: readonly string[]
+  /** The declaration's `client` key; absent where the declaration names no client half (`ASM-MC-7`). */
+  readonly client?: string
   readonly hasMain: boolean
   /** The body the store holds: the channel's wrapper, never the module's function alone. */
   readonly body: (address: readonly string[]) => unknown

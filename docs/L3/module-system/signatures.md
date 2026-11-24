@@ -64,7 +64,7 @@ export interface ModuleSource { readonly manifest: ModuleManifest; readonly orig
 export interface ModuleVerdict { readonly status: 'installed' | 'updated' | 'no-op' | 'rejected'; readonly name: string; readonly version: string; readonly reason?: string }
 export interface DeactivationVerdict { readonly status: 'deactivated' | 'no-op' | 'rejected'; readonly name: string; readonly reason?: string }
 export interface RegistrationFrame { readonly module: string; readonly client: string }
-export interface ListenerBinding { readonly address: readonly string[]; readonly handle: string; readonly main?: (address: readonly string[]) => unknown }
+export interface ListenerBinding { readonly address: readonly string[]; readonly handle: string; readonly client?: string; readonly main?: (address: readonly string[]) => unknown }   // `client` is the manifest's client KEY; `handle` is the store's address-keyed handle (§4)
 export interface Activation { readonly name: string; readonly version: string; readonly tools: readonly string[]; readonly listeners: readonly ListenerBinding[] }
 export interface ModuleHost {                        // FOUR members and NO FIFTH (`L2` §11, `ASM-MS-4`): the door is the executor's
   readonly store: StoreSurface
@@ -132,7 +132,7 @@ export declare class CapabilityRouter {
   listeners(): readonly ClientListenerRecord[]
   actions(): readonly ActionRecord[]
   contributions(): readonly ContributionRecord[]
-  fire(handle: DeliveryHandle, data: unknown, address: readonly string[]): DeliveryOutcome   // contained per handle
+  fire(handle: DeliveryHandle, entry: ChannelEntry): DeliveryOutcome   // contained per handle; `ChannelEntry` is `src/shared/module-channels.ts`'s (`ASM-MC-6`)
   withdraw(module: string): boolean                  // the realm's inverse of one registration frame
 }
 ```
