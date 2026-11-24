@@ -122,7 +122,7 @@ export interface ClientHalfDeps {                    // absent `store` → the n
   readonly store?: ClientStoreSurface; readonly log?: (line: string, detail?: unknown) => void
 }
 export interface ClientListenerRecord { readonly module: string; readonly listener: string; readonly handle: DeliveryHandle }
-export interface ActionRecord { readonly module: string; readonly name: string }
+export interface ActionRecord { readonly module: string; readonly name: string; readonly fn: (ctx: never, ...args: unknown[]) => unknown }   // the host-side table's readable answer (C-10)
 export interface ContributionRecord { readonly module: string; readonly contribution: GraphContribution }
 export type DeliveryOutcome = { readonly status: 'delivered' | 'refused'; readonly handle: DeliveryHandle; readonly reason?: string }
 export declare class CapabilityRouter {

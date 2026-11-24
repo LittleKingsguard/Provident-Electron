@@ -44,7 +44,7 @@
 |---|---|---|
 | `store` | `ClientStoreSurface` | **the ASYNC data half** (`ClientStoreSurface`, `src/shared/module-contract.ts`): here a verb is an E2E REQUEST the channel executes, so its answer is a Promise and the channel owns the write turn and the receipt (§10); the six registration verbs are absent by declaration and refused by the proxy (`ASM-MC-1`, `D-311`) |
 | `onDelivery` | `(listener: string, fn: (entry: ChannelEntry) => void) => DeliveryHandle` | **THE REGISTRATION a listener's `client` half stands on**, fired on delivery with the ENTRY — the arm, the address, the data and the refusal (`ASM-MC-6`) — under the store's prefix relation (§4) (`D-307`, L1 §3 `S-2b`) |
-| `action` | `(name: string, fn: (ctx: never, ...args: unknown[]) => unknown) => void` | a NAMED ACTION in the foundation's host-side name → function table, matched by the engine at dispatch; no source text enters graph data (L1 §4 `C-10`, `D-313`) |
+| `action` | `(name: string, fn: (ctx: never, ...args: unknown[]) => unknown) => void` | a NAMED ACTION in the foundation's host-side name → function table, matched by the engine at dispatch; **the table's readable answer is `actions()`, each `ActionRecord` carrying the closure (`fn`), so `renderer-wiring`'s install reads no private map**; no source text enters graph data (L1 §4 `C-10`, `D-313`) |
 | `graph` | `(contribution: GraphContribution) => ContributionHandle` | graph DATA contributed at the ordered pre-build point, parent named by id, never a string transform (L1 §4 `C-6`, §3 `S-15`) |
 | `log` | `(line: string, detail?: unknown) => void` | the same contained evidence, realm-side (L1 §4 `C-6`, `D-124`) |
 

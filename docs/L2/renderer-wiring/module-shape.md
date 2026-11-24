@@ -1,0 +1,50 @@
+# L2 — `renderer-wiring`: the module shape — the composed pane census, the runtime module's graph contribution and action table, and the stage paint
+
+- **Layer:** L2 · **Module:** `renderer-wiring` · **Unit:** `modularity` · **Branch:** `main` · **Rev:** 1 — **NEW, AND IT IS THE SPLIT `D-1` ASKS FOR AT THE CEILING**: `docs/L2/renderer-wiring/interface.md` rev 13 is the **app-layout** unit's four turns and stands at its 150-line ceiling, so the modularity unit's two `renderer-wiring` cells — `S-18`'s composed pane census and `S-20`'s stage paint with the realm-side driver — are stated HERE, by owner, and neither page is appended to (`D-1`, `D-2`, brief §3)
+- **Inputs:** `docs/L1/modularity.md` rev 15 §2's `renderer-wiring` row, §3 `S-18`/`S-20`, §4 `C-9`/`C-10`, §6 `M-2b`/`M-11`/`M-13`/`M-18`/`M-20`; `docs/L2/module-system/interface.md` §3/§9; `docs/L3/module-system/design.md` §6; `docs/L2/producing-runtime/interface.md` rev 2 §2–§3 and `docs/L3/producing-runtime/design.md` §2–§3 (the pre-build composition and the sanctioned `applyCommand` paths); `src/renderer/renderer.ts`/`extensions.ts`/`runtime.ts` by site; `D-129`, `D-303`, `D-307`, `D-310`, `D-313`, `D-146`, `D-30`, `D-40`
+- **Write scope:** `docs/L2/renderer-wiring/` and `tests/integration/renderer-wiring/` (brief §3); `src/**` is read-only at this layer and neither package is ever modified (D-3, D-5)
+- **Status:** DESIGN — no structure or signature (that is `docs/L3/renderer-wiring/module-shape.md`); the two cells are OWED to the renderer's L4 (`startModuleShape` and the total pane map), and the e2e `M-2b`/`M-11`/`M-13` remain L1's at `S-20`
+
+## 1. What the two cells are, and the split that carries them
+
+- **`S-18` — THE CENSUS MAPS GO TOTAL OVER THE COMPOSED PANE DOMAIN** (`L1` §3): a pane id a module declares has a node, a head, a body, a collapse control and a grip, because the map is derived over `declaredPaneIds()` rather than over the authored literal; `PM-1` reds BY NAME on a declared pane with no entry.
+- **`S-20` — THE STAGE PAINT AND THE REALM-SIDE DRIVER** (`L1` §3): the active tab's template resolves to its authored page through ONE body, so a module's stage content is graph DATA and never a mint; and this file's realm driver is where `M-2b`/`M-11`/`M-13` file — the client half delivered, the batch fired with the entry, the fan-out's address relation.
+- **The split is BY OWNER** (`D-1`): the app-layout turns stay in `interface.md`; the two cells here consume `producing-runtime`'s pre-build/`applyCommand` and `module-system`'s ctx, and add no turn to the app-layout page.
+
+## 2. The composed pane census (`S-18`)
+
+- **THE MAP IS A TOTAL FUNCTION OVER `declaredPaneIds()`** (`S-18`, `C-9`): the five sites the app's pane map already derives — node, head, body, collapse control, grip — are computed over the COMPOSED set (the foundation's `DECLARED_PANE_IDS` plus every module's declared pane), so a module pane is a full pane by construction and no second map stands beside it (`D-129`'s class).
+- **A DECLARED PANE WITH NO ENTRY IS A RED BY NAME, NOT A MISSING ELEMENT**: `PM-1` reads the composed set against the map and names the pane; an undeclared id the map invents is the same class in the other direction. **No authored literal is the set** — the literal is the foundation's contribution and the composition is the set (`C-9`, `D-306` (a)).
+
+## 3. The stage paint (`S-20`)
+
+- **THE ACTIVE TAB'S TEMPLATE RESOLVES TO ITS AUTHORED PAGE THROUGH ONE BODY** (`S-20`, `S-19`'s template point): the tab record's template declares the page, and the stage paints the module's content because that content is GRAPH DATA composed into the authored page — never a `provident-ssr` mint, never hand-written DOM, never a post-compile transform (`C-6`, `C-10`, `D-129`).
+- **THE STAGE'S PAINT IS THE APP-LAYOUT PAINT'S**: it reads the shape's arm and writes `display`/`css` over the authored nodes; this page adds no second paint, no second subscriber and no new route (`interface.md` rev 13 §2's turn 3; `D-129`, `D-126`).
+- **A MODULE PANE'S CONTENT IS THE SAME KIND OF DATA**: the panes the module declares are composed into the authored envelope's zones by the template point, and the stage resolves the active tab's page as it does for the foundation's.
+
+## 4. The realm-side driver (`S-20`, and why `M-2b`/`M-11`/`M-13` file here)
+
+- **THE CLIENT SOURCE IS EVALUATED IN THE ROUTER AND EACH DELIVERY FIRES ITS HALF** — landed at `src/renderer/renderer.ts`'s channel start (`start` before `bridge.ready()`), with `evaluate` → `CapabilityRouter.registerModule` and `fire` → `router.fire(handle, entry)`. **The batch, the per-listener entry and the store's prefix relation are `module-channel`'s** (`docs/L2/module-channel/interface.md` §3–§4); this page owns only the realm's two call sites.
+- **A MODULE'S `graph` CONTRIBUTION ARRIVES AFTER THE FIRST COMPILE, SO IT COMPOSES ON THE LIVE GRAPH — NOT THROUGH THE PRE-BUILD**: `producing-runtime`'s constructor-time reader is the BOOT composition (`docs/L2/producing-runtime/interface.md` §2); a module installed at runtime contributes through the SANCTIONED `applyCommand` paths — `attach` for one subtree, `layer-apply` for a layer — under the parent it names, with the engine's own containment and the `re-grain` the command's mode answers (`C-7`, `S-16`).
+- **THE ACTION TABLE IS HOST-SIDE, AND THE CLOSURE IS INSTALLED INTO THE NODE'S HANDLER ENTRY BY NAME** (`C-10`, `D-313`): the module's `ctx.action(name, fn)` lands in `CapabilityRouter`'s host-side table; the module's graph nodes carry handlers whose `name`/`event` IS the key; this seat installs the closure — ONE `state-slice` with `targetProp:'handlers'` per node, or ONE `layer-apply` with `data.handlers` per subtree — and the engine matches the key at dispatch. **NO source text enters graph data, NO dispatch-time resolver exists and NO `handlers[].ref` seam is claimed** (`D-313`).
+- **THE TABLE'S READ IS A MEMBER, NOT THE PRIVATE MAP**: `CapabilityRouter.actions()` answers each record WITH its closure, so this seat installs what the module registered and reads nothing private (`docs/L3/module-system/signatures.md`'s `ActionRecord`).
+- **THE THREE e2e ROWS FILE WITH THE DRIVER** (`L1` §6): `M-2b` — the client half delivered and evaluated; `M-11` — one batch per turn with its arms; `M-13` — the fan-out's address relation. **They are L1's rows at `S-20` and are not written here** (`D-30`, `D-40`).
+
+## 5. What this page does not own
+
+- **The pane declaration's grammar** is `module-system`'s `S-17` (`C-9`); the **tab-template point** is `store-tabs-record`'s `S-19`; the **secure-panel placeholder** is `secure-panels`' `S-21`. **The store's prefix relation and the batch** are `module-channel`'s. **The client source's evaluation** is `module-system`'s `extensions.ts`; this page calls it.
+- **No new route, channel, client or MCP member**: the app's bridge is `S-12`'s (`channel`), and this page adds no second member (`C-15`, `D-307`).
+
+## 6. The battery
+
+- **`tests/integration/renderer-wiring/` carries the two cells' integration rows** (the map row owes the path; L1's to file): the composed pane map is total over a module pane; the module's runtime `graph` contribution lands under its parent; an `action` closure is installed and dispatched by name; a contribution with an absent parent is named and skipped. **The e2e `M-2b`/`M-11`/`M-13` and `M-18` stand at the seats the L1 page names** (`S-18`/`S-20`), unmarked and gating when authored (`D-30`, `D-40`).
+
+## 7. Assumptions, each with its rejected alternative
+
+- **`ASM-RW-M1` — a runtime module composes through `applyCommand`'s sanctioned `attach`/`layer-apply`, not the constructor pre-build.** Alternative rejected: widening the pre-build reader to run after the first compile, which would put a second composition authority beside the envelope's and re-open the `D-129` case (`C-6`, `C-7`).
+- **`ASM-RW-M2` — the action closure is read from `actions()` and installed into the node's handler entry.** Alternative rejected: a dispatch-time resolver keyed by the action name, which `C-10`/`D-313` WITHDREW; and a private map read, which would make this seat a second authority over the router's table.
+- **`ASM-RW-M3` — the stage paint is the app-layout turn's, over authored graph data.** Alternative rejected: a module-stage paint of its own, which would be a second author of `display` and a second subscriber (`D-129`).
+
+```boundary-declared
+{"unit": "modularity", "layer": "L2", "module": "renderer-wiring", "writes": [{"path": "docs/L2/renderer-wiring/module-shape.md", "d": "D-306", "why": "this page, rev 1 NEW: the split-by-owner page for S-18's composed pane census and S-20's stage paint/realm driver — the runtime module's graph contribution, the action-table install and the stage paint; no `src/**` byte"}]}
+```
