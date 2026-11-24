@@ -40,6 +40,9 @@ export interface ClientListenerRecord {
 export interface ActionRecord {
   readonly module: string
   readonly name: string
+  /** THE CLOSURE THE MODULE REGISTERED (`C-10`, `D-313`): the host-side table's readable answer, so `renderer-wiring`'s
+   *  install reads no private map and wraps nothing. */
+  readonly fn: (ctx: never, ...args: unknown[]) => unknown
 }
 
 export interface ContributionRecord {
@@ -87,7 +90,7 @@ export class CapabilityRouter {
         return handle
       },
       action: (name, fn) => {
-        this.actionRecords = [...this.actionRecords, { module, name }]
+        this.actionRecords = [...this.actionRecords, { module, name, fn }]
         this.handlers.set(actionKey(module, name), fn)
       },
       graph: (contribution) => {

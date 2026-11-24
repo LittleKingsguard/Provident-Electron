@@ -2,6 +2,7 @@
 // Bootstraps the provident-ssr producing process into #app and serves the
 // MCP-facing operations over the preload bridge (main process = MCP server).
 import { Runtime } from './runtime.js'
+import type { ContributionResult } from './runtime.js'
 import { CapabilityRouter } from './extensions.js'
 import { createModuleChannelClient } from './module-channel-client.js'
 import { demoEnvelope, gutterSeamExample, GUTTER_AFFORDANCE_ID, GUTTER_STATUS_ID, GUTTER_TARGET_ID, TABS_LANDING_PAGE_ID, TABS_ERROR_PAGE_ID, TABS_ROWS_ID, TABS_ROW_PROTOTYPE_ID, TABS_ADD_ID, APP_ROOT_ID, OVERLAY_STATE_ID, OVERLAY_OPEN_ID, OVERLAY_CLOSE_ID, OVERLAY_DIALOG_ID, MENUS_AFFORDANCE_ID, MENUS_RECEIPT_ID, LAYOUT_MEASURED_ID } from '../shared/demo-envelope.js'
@@ -2091,7 +2092,16 @@ async function main(): Promise<void> {
     let moduleRouter: CapabilityRouter | null = null
     const moduleChannel = createModuleChannelClient({
       transport: bridge.channel,
-      evaluate: (frame) => { moduleRouter?.registerModule(frame.module, frame.client) },
+      evaluate: (frame) => {
+        if (moduleRouter === null) return
+        const before = moduleRouter.modules().length
+        moduleRouter.registerModule(frame.module, frame.client)
+        // A REPEATED FRAME ADDS NO MEMBER (`registerModule`'s own rule), so the shape runs once per NEW module
+        // (`S-20`, `D-317`): compose the graph, install the closure table, and re-drive the paints the re-render retired.
+        if (moduleRouter.modules().length === before) return
+        const install = startModuleShape(runtime, moduleRouter)
+        console.info(`[provident-module] shape: modules ${JSON.stringify(install.modules)}, added ${JSON.stringify(install.added)}, skipped ${JSON.stringify(install.skipped)}, actions ${install.actions}`)
+      },
       fire: (handle, entry) => { moduleRouter?.fire(handle, entry) },
     })
     moduleRouter = new CapabilityRouter({
@@ -2147,6 +2157,112 @@ async function main(): Promise<void> {
   //    request-time read `panels.refresh()` made at the boot, after every authored click and at the `dispatch()` seam is
   //    deleted. Started beside the three above and never awaited, for their reason.
   startSecurityShape(panels, overlayApplication)
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+ * THE MODULE SHAPE — **A RUNTIME MODULE'S GRAPH COMPOSITION AND ITS ACTION INSTALL** (`S-18`/`S-20`, `C-9`/`C-10`,
+ * `D-317`; `docs/L2/renderer-wiring/module-shape.md` rev 2, `docs/L3/renderer-wiring/module-shape.md` rev 2).
+ *
+ * THE THREE CELLS, AND WHERE EACH ONE STANDS. (1) **THE GRAPH**: a module's `graph` contribution is past the first
+ * compile, so it composes through `Runtime.contribute` — the runtime's stored AUTHORED document merged by the same routine
+ * the constructor's pre-build runs, then re-loaded, so the app's 30 authored `handlers` survive (`D-317` measures why the
+ * serializer round-trip cannot). (2) **THE ACTION TABLE**: `ctx.action(name, fn)` lands in `CapabilityRouter`'s host-side
+ * table, and this seat installs each closure into the live node whose authored handler carries that NAME — ONE
+ * `state-slice` with `targetProp:'handlers'` per node, the engine's own handler target; the engine matches the key at
+ * dispatch, and no source text enters graph data and no dispatch-time resolver exists (`C-10`, `D-313`). (3) **THE
+ * RE-DRIVE**: a composition re-loads and re-renders the authored page, so the delivery paints the realm holds are applied
+ * again from the LAST reading they took — no new read, no new subscriber, no second paint (`D-129`).
+ *
+ * **THE ORDER IS THE ROUTER'S ACTIVATION ORDER** (`S-15`): the contributions arrive in the resolver's order, so a later
+ * module's parent may be an earlier one's node, and `contribute` merges the list as given. **A CONTRIBUTION ALREADY IN THE
+ * TREE IS NOT COMPOSED TWICE**: the pending set is derived from the live graph (no seat-local ledger), which is what makes
+ * a second frame at the same module — or a later module's frame that carries the earlier ones again — add nothing.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/** The install's answer, for the log and the rows (`S-18`/`S-20`). `added` and `skipped` are `contribute`'s own. */
+export interface ModuleShapeInstall {
+  readonly modules: readonly string[]
+  readonly added: readonly string[]
+  readonly skipped: readonly string[]
+  readonly actions: number
+}
+
+/** THE ONE ENTRY: compose, install, and re-drive the paints when anything was added. Called from the channel client's
+ *  `evaluate` AFTER `registerModule`, once per NEW module. */
+export function startModuleShape(runtime: Runtime, router: CapabilityRouter): ModuleShapeInstall {
+  const composed = composeModuleGraph(runtime, router)
+  const actions = installModuleActions(runtime, router)
+  if (composed.added.length > 0) reDriveModuleShapePaints(runtime)
+  return { modules: [...router.modules()], added: composed.added, skipped: composed.skipped, actions }
+}
+
+/** THE GRAPH HALF: the contributions whose authored nodes are not yet in the live graph, in the router's order, merged by
+ *  `Runtime.contribute`. A parentless contribution is the runtime's named skip, never invented here (`C-6`, `D-317`). */
+export function composeModuleGraph(runtime: Runtime, router: CapabilityRouter): ContributionResult {
+  const records = router.contributions()
+  if (records.length === 0) return { added: [], skipped: [] }
+  const live = new Set<string>()
+  for (const node of runtime.listTargets().nodes) {
+    if (node.cssId !== undefined) live.add(node.cssId)
+    if (node.propsId !== undefined) live.add(node.propsId)
+  }
+  const pending = records
+    .map((record) => record.contribution)
+    .filter((contribution) => {
+      const ids = authoredIdsIn(contribution.nodes as readonly AuthoredShape[])
+      return ids.length === 0 || !ids.every((id) => live.has(id))
+    })
+  return pending.length === 0 ? { added: [], skipped: [] } : runtime.contribute(pending)
+}
+
+/** THE ACTION HALF: each `ActionRecord.fn` into the live node's handler entry whose NAME is the record's, by one
+ *  `state-slice` on `targetProp:'handlers'` per node. A name no node declares is installed nowhere (`C-10`). */
+export function installModuleActions(runtime: Runtime, router: CapabilityRouter): number {
+  const actions = router.actions()
+  if (actions.length === 0) return 0
+  const byName = new Map<string, (ctx: never, ...args: unknown[]) => unknown>()
+  for (const record of actions) byName.set(record.name, record.fn)
+  let installed = 0
+  for (const node of runtime.listTargets().nodes) {
+    const matched = node.handlers.filter((handler) => handler.name !== undefined && byName.has(handler.name))
+    if (matched.length === 0) continue
+    const value = node.handlers.map((handler) => {
+      const fn = handler.name === undefined ? undefined : byName.get(handler.name)
+      return fn === undefined ? { ...handler } : { ...handler, body: fn }
+    })
+    const answer = runtime.applyCommand({
+      kind: 'state-slice',
+      node: node.nodeId,
+      mutation: [{ targetProp: 'handlers', mode: 'replace', value }],
+    })
+    if (answer.status !== 'rejected') installed += matched.length
+  }
+  return installed
+}
+
+/** THE RE-DRIVE (`S-20`, `D-317`): the same two drivers the boot's read and the deliveries call, over the readings the
+ *  realm already holds. A realm that has read nothing yet drives nothing (`D-127`'s standard). */
+function reDriveModuleShapePaints(runtime: Runtime): void {
+  if (tabsClientReading !== null) holdTabsReading(tabsClientReading, runtime)
+  driveLayoutRegions(getViewClient().reading(), runtime)
+}
+
+/** The authored shape this seat reads off a contribution's nodes: `css.id`/`props.id`, and `children` recursively. */
+interface AuthoredShape {
+  readonly css?: { readonly id?: string }
+  readonly props?: Readonly<Record<string, unknown>>
+  readonly children?: readonly AuthoredShape[]
+}
+
+/** Every authored id in a contributed forest, in document order. */
+function authoredIdsIn(nodes: readonly AuthoredShape[]): string[] {
+  const ids: string[] = []
+  for (const node of nodes) {
+    if (node.css?.id !== undefined) ids.push(node.css.id)
+    else if (typeof node.props?.['id'] === 'string') ids.push(node.props['id'] as string)
+    if (node.children !== undefined) ids.push(...authoredIdsIn(node.children))
+  }
+  return ids
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════════════════

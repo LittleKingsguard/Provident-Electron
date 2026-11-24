@@ -72,6 +72,12 @@ export interface RuntimeOptions {
   contributions?: () => readonly GraphContribution[]
 }
 
+/** What `contribute` answers (`S-20`): the authored ids it composed and the contributions it refused BY NAME. */
+export interface ContributionResult {
+  readonly added: readonly string[]
+  readonly skipped: readonly string[]
+}
+
 export class Runtime {
   private supervisor: Supervisor
   private readonly adapter: DomAdapter
@@ -113,6 +119,13 @@ export class Runtime {
     this.maxJournalLength = opts.maxJournalLength
     const composed = this.composeContributions(opts.envelope, opts.contributions)
     this.prebuildWarnings = composed.warnings
+    // THE AUTHORED DOCUMENT (`D-317`, `ASM-PR-3`): the composed envelope the graph was derived from is also the
+    // `code.*` CRUD's document from boot, and `contribute`'s merge base — one document, never two (`D-129`).
+    try {
+      this.envelope = structuredClone(composed.envelope)
+    } catch {
+      this.envelope = null
+    }
     const translated = translateLegacy(composed.envelope)
     this.warnings = [...(translated.warnings ?? []), ...composed.warnings]
     this.rootNode = translated.root
@@ -124,32 +137,54 @@ export class Runtime {
     this.rebuildIdIndex()
   }
 
-  /** THE PRE-BUILD COMPOSITION (`S-14`, `S-15`; `C-6`): each contribution's nodes join the authored template under its
-   *  `parent`'s children, in the reader's order, BEFORE `translateLegacy`. A reader throw, an uncloneable envelope/node
-   *  and a missing parent are NAMED in the warnings and skipped — never a throw and never a silent drop. */
+  /** THE RUNTIME COMPOSITION (`S-20`, `D-317`): merge `contributions` into the stored AUTHORED document through the SAME
+   *  routine the constructor's pre-build uses, then re-load it through the construction path — so the authored
+   *  `handlers` survive (the serializer round-trip would drop all thirty, measured). A fully-skipped call leaves the
+   *  graph and the document untouched and names its skips; nothing here throws. **The caller re-drives its paints**: the
+   *  re-load renders the merged page, and a delivery's paint is that seat's turn. */
+  contribute(contributions: readonly GraphContribution[]): ContributionResult {
+    const base = this.envelope
+    if (base === null) return { added: [], skipped: contributions.map((entry) => entry.parent) }
+    const merged = this.composeContributions(base, () => contributions)
+    if (merged.warnings.length > 0) {
+      this.prebuildWarnings = [...this.prebuildWarnings, ...merged.warnings]
+      this.warnings = [...this.warnings, ...merged.warnings]
+    }
+    if (!merged.changed) return { added: [], skipped: merged.skipped }
+    this.loadEnvelope(merged.envelope)
+    return { added: merged.added, skipped: merged.skipped }
+  }
+
+  /** THE ONE MERGE IMPLEMENTATION (`S-14`, `S-15`, `S-20`; `C-6`): each contribution's nodes join the authored template
+   *  under its `parent`'s children, in the caller's order, BEFORE `translateLegacy`. A reader throw, an uncloneable
+   *  envelope/node and a missing parent are NAMED in the warnings and skipped — never a throw and never a silent drop.
+   *  PURE: it never mutates `envelope`, never loads, and answers whether anything was added. */
   private composeContributions(
     envelope: LegacyInitialData,
     reader?: () => readonly GraphContribution[],
-  ): { envelope: LegacyInitialData; warnings: TranslatedWarning[] } {
-    if (reader === undefined) return { envelope, warnings: [] }
+  ): { envelope: LegacyInitialData; warnings: TranslatedWarning[]; added: string[]; skipped: string[]; changed: boolean } {
+    if (reader === undefined) return { envelope, warnings: [], added: [], skipped: [], changed: false }
     let contributions: readonly GraphContribution[]
     try {
       contributions = reader()
     } catch {
-      return { envelope, warnings: [{ code: 'contribution-reader-threw', path: 'contributions' }] }
+      return { envelope, warnings: [{ code: 'contribution-reader-threw', path: 'contributions' }], added: [], skipped: ['contributions'], changed: false }
     }
     let composed: LegacyInitialData
     try {
       composed = structuredClone(envelope)
     } catch {
-      return { envelope, warnings: [{ code: 'contribution-envelope-uncloneable', path: 'envelope' }] }
+      return { envelope, warnings: [{ code: 'contribution-envelope-uncloneable', path: 'envelope' }], added: [], skipped: contributions.map((entry) => entry.parent), changed: false }
     }
     const warnings: TranslatedWarning[] = []
+    const added: string[] = []
+    const skipped: string[] = []
     for (let index = 0; index < contributions.length; index += 1) {
       const contribution = contributions[index]
       const parent = this.findAuthoredNode(composed.template?.root, contribution.parent)
       if (parent === null) {
         warnings.push({ code: 'contribution-parent-missing', path: `contributions[${index}].parent` })
+        skipped.push(contribution.parent)
         continue
       }
       let nodes: LegacyNodeData[]
@@ -157,11 +192,26 @@ export class Runtime {
         nodes = structuredClone(contribution.nodes) as unknown as LegacyNodeData[]
       } catch {
         warnings.push({ code: 'contribution-nodes-uncloneable', path: `contributions[${index}].nodes` })
+        skipped.push(contribution.parent)
         continue
       }
       parent.children = [...(parent.children ?? []), ...nodes]
+      added.push(...this.authoredIdsOf(nodes))
     }
-    return { envelope: composed, warnings }
+    return { envelope: composed, warnings, added, skipped, changed: added.length > 0 }
+  }
+
+  /** Every authored id in a contributed forest, in document order — `css.id` first, then `props.id`, recursing. */
+  private authoredIdsOf(nodes: readonly LegacyNodeData[]): string[] {
+    const ids: string[] = []
+    for (const node of nodes) {
+      const cssId = node.css?.id
+      const propsId = node.props?.['id']
+      if (typeof cssId === 'string') ids.push(cssId)
+      else if (typeof propsId === 'string') ids.push(propsId)
+      if (node.children !== undefined) ids.push(...this.authoredIdsOf(node.children))
+    }
+    return ids
   }
 
   /** The authored node carrying `id` on `css.id` or `props.id` — the same two spellings the live id index resolves. */

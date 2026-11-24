@@ -75,22 +75,29 @@ describe('CapabilityRouter — ONE frame in, ONE five-member ctx out (L2 §3, D-
         return 'shot'
       })
     })
-    expect(router.actions()).toEqual([{ module: 'capture', name: 'screenshot' }])
+    const [record] = router.actions()
+    expect(record).toMatchObject({ module: 'capture', name: 'screenshot' })
+    // AND THE RECORD CARRIES THE LIVE CLOSURE (`ActionRecord.fn`, `D-313`): the host-side table's readable answer, so a
+    // seat installs what the module registered and reads no private map. It is still not run at registration.
+    expect(typeof record!.fn).toBe('function')
     // dispatch is the ENGINE's act at call time, not this file's: registration runs nothing.
     expect(calls).toBe(0)
   })
 
-  it('4. the recorded action is DATA — `{module, name}` and no source text, which is the `transform` class the rebuild forbids (old row 6: ctx.transform(fn) → applyTransforms — D-231, C-10)', () => {
+  it('4. the recorded action is `{module, name, fn}` — the SAME closure the module registered, and never source text, which is the `transform` class the rebuild forbids (old row 6: ctx.transform(fn) → applyTransforms — D-231, C-10, D-313)', () => {
     const router = new CapabilityRouter()
+    const registered = (fragment: unknown): string => String(fragment).toUpperCase()
     router.registerModule('format', (ctx) => {
-      ctx.action('format', (fragment: unknown) => String(fragment).toUpperCase())
+      ctx.action('format', registered)
     })
     const [record] = router.actions()
     expect(record).toBeDefined()
-    // a name→function table entry, never source text and never a fragment string (L2 §3's `action`).
-    expect(Object.keys(record!).sort()).toEqual(['module', 'name'])
+    // THE TABLE'S READABLE ANSWER (`D-313`): the key pair plus the closure the module handed over — the same function
+    // object, never a copy and never the evaluated source a `{module, name, source}` record would carry.
+    expect(Object.keys(record!).sort()).toEqual(['fn', 'module', 'name'])
+    expect(record!.fn, 'the same closure, by identity').toBe(registered)
     expect(typeof record!.name).toBe('string')
-    for (const value of Object.values(record!)) expect(typeof value).not.toBe('function')
+    expect(typeof record!.fn).not.toBe('string')
   })
 
   it('5. onDelivery(key, fn) mints ONE handle per (module, key) — `module:<name>#<key>` — so the namespace holds across modules (old row 3: the ctx prepends the module name)', () => {

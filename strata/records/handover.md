@@ -26,7 +26,7 @@ Read `strata/brief.md` first, then `strata/decisions.md` from `D-304` onward.
 ## What is open, named not hidden
 
 - **An upstream finding (`D-5`, recorded in the unit record)**: the real store's `returnedValues` carries a SETTLED thenable's value, not a synchronous listener's return — so the channel's `return` arm is async-only and a synchronous returner reads `empty`. The fix shape is the store's.
-- **The `renderer-wiring` L4 (`startModuleShape`)** — the U5 design pass is written and now routes through `runtime.contribute` (`D-317`); neither `contribute` nor the action install is in `src/` yet, so nothing dispatches the module's actions; **`S-18`'s composed pane set waits on `U2`'s declaration registry**; and the **out-of-band activation sink** (`design.md` §5's third caller) is undeclared.
+- **The e2e `M-2b`/`M-11`/`M-13`** — the runtime composition and the module shape are LANDED (`D-317`: `contribute` + the stored authored document; `startModuleShape` + `installModuleActions` + the re-driven paints) with `D-317(a)`…`(c)` and `RW-M1`…`RW-M4` written; the e2e rows are L1's at `S-20`, and **`S-18`'s composed pane set waits on `U2`'s registry** (the five tables are total over `DECLARED_PANE_IDS`, read by `PM-1`/`PM-2`); the **out-of-band activation sink** (`design.md` §5's third caller) is undeclared.
 - **The boot route's design filing**: L1 §6's reserved set ends at `M-29` and `docs/L2/app-shell/interface.md` has no rev naming the route — both owed even though the route and its row are landed.
 - **L1 currency**: `docs/L1/modularity.md` still reads `module-system` `endpoints` **16**; the map reads **24** and L2 rev 3 derives 24 member-by-member. The move is L1's to file (the page is at 150/150, so a re-grain must compress).
 - **The harness-cap rule is stated two ways**: `bundle-boot-seam`'s pages say a product battery is EVIDENCE and does not count; `module-system`'s L2/L3 count the 246-line battery against the cap. One ruling is owed.
@@ -38,7 +38,7 @@ Read `strata/brief.md` first, then `strata/decisions.md` from `D-304` onward.
 
 ## What a fresh session does next, in order
 
-1. **`producing-runtime`'s `contribute` and the stored authored envelope (`D-317`)** — `docs/L2/producing-runtime/interface.md` rev 3, `design.md` rev 2 and `signatures.md` rev 2 state them; the constructor's `envelope` field and the merge are L4's, with three integration rows. Then the `renderer-wiring` L4 (`startModuleShape`: `contribute`, the action install by `state-slice`, the re-driven paints), then the e2e `M-2b`/`M-11`/`M-13`; the `app-shell` L2/L3 re-grain; the **out-of-band activation sink**.
+1. **The e2e `M-2b`/`M-11`/`M-13` at `S-20`** — the composition and the install are landed and green in their integration rows; these three are L1's unmarked, gating boundary rows (`D-30`, `D-40`). Then `U2`'s declaration registry (which unblocks `S-18`/`M-18`), the `app-shell` L2/L3 eleventh-member re-grain, the **out-of-band activation sink**, and the earlier debts (`M-30` L1 filing, `16 → 24`, the cap ruling, the ledger when `strata-state` returns).
 2. **L1's `16 → 24` re-grain** and the `M-30` filing, then the cap-rule ruling.
 3. **`U2`–`U7`**, with **`U7`'s acceptance conversion last**.
 4. **Move the ledger** to L4 and its artifacts when the workflow checkout is restored.
@@ -51,5 +51,5 @@ Read `strata/brief.md` first, then `strata/decisions.md` from `D-304` onward.
 - **Commit per gate and never push** (D-6); a reading is taken on a clean tree; the four legs plus the boundary instrument are the floor (brief §6, D-301).
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/handover.md", "d": "D-306", "why": "the session handover replaced whole: the green floor, the eleven closed reds, D-315's ruling, the other open items and the next acts"}]}
+{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/handover.md", "d": "D-317", "why": "the handover's open items and next acts updated to the landed L4 and the remaining e2e/app-shell debts"}]}
 ```

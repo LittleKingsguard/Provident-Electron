@@ -1,7 +1,7 @@
 # L3 — `producing-runtime`: the signature stubs L4 implements against
 
 - **Layer:** L3 · **Module:** `producing-runtime` · **Unit:** `modularity` · **Branch:** `main` · **Rev:** 2 — **THE COMPOSITION STUBS JOIN THE PRE-BUILD AND THE MODE BRANCH** (`docs/L2/producing-runtime/interface.md` rev 3 §4, `design.md` rev 2 §4): one merge routine, two instants, and the stored authored document `D-313`'s refusal forces (`D-1`, brief §3)
-- **Ceiling:** 150 lines, replaced and never appended (D-1, D-2) · **Inputs:** `design.md` §1–§6; `docs/L2/producing-runtime/interface.md` rev 3 §1–§6; `docs/L3/module-system/design.md` §4/§6; `src/renderer/runtime.ts` (the constructor, `composeContributions`, `findAuthoredNode`, `loadEnvelope`, `applyCommand`, `focusedSlice`, `envelope`); `src/shared/module-contract.ts` (`GraphContribution`); `node_modules/provident-ssr/dist/core/supervisor.d.ts` (`CompileMode`, `getCompileMode`); `D-124`, `D-252`, `D-310`, `D-313`, `D-314` · **A stub is a DECLARATION and never a body**: every `declare` is L4's to fill (D-3)
+- **Ceiling:** 150 lines, replaced and never appended (D-1, D-2) · **Inputs:** `design.md` §1–§6; `docs/L2/producing-runtime/interface.md` rev 3 §1–§6; `docs/L3/module-system/design.md` §4/§6; `src/renderer/runtime.ts` (the constructor, `composeContributions`, `findAuthoredNode`, `loadEnvelope`, `applyCommand`, `focusedSlice`, `envelope`); `src/shared/module-contract.ts` (`GraphContribution`); `node_modules/provident-ssr/dist/core/supervisor.d.ts` (`CompileMode`, `getCompileMode`); `D-124`, `D-252`, `D-310`, `D-313`, `D-314` · **Landed as declared** — `contribute`, the stored `envelope` and `compileDirtyInMode` stand in `src/renderer/runtime.ts` (D-3, `D-317`)
 - **Read order:** §1 the option and the composition → §2 the mode branch → §3 the invariants
 
 ## 1. `src/renderer/runtime.ts` — the option, the stored document and `contribute`
@@ -76,5 +76,5 @@ private compileDirtyInMode(node: Node): CompiledState[]
 - **No `src/**` byte is declared here**: the runtime edits are L4's (D-3).
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L3", "module": "producing-runtime", "writes": [{"path": "docs/L3/producing-runtime/signatures.md", "d": "D-313", "why": "this page, rev 2 — the option, the stored document, `contribute` and the mode branch stubs, with their invariants; no src byte"}]}
+{"unit": "modularity", "layer": "L3", "module": "producing-runtime", "writes": [{"path": "docs/L3/producing-runtime/signatures.md", "d": "D-313", "why": "this page, rev 2 \u2014 the option, the stored document, `contribute` and the mode branch stubs, with their invariants"}]}
 ```

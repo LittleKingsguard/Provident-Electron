@@ -11,8 +11,8 @@ import type { CapabilityRouter } from './extensions.js'
 import type { ContributionResult, Runtime } from './runtime.js'
 
 /** The install's answer, for the log and the rows: the modules it composed, the node ids it added, the contributions
- *  the runtime skipped BY NAME, and the handlers it installed (`S-18`/`S-20`). Idempotent per module: a second frame
- *  at the same name adds nothing. */
+ *  the runtime skipped BY NAME, and the handler entries it filled (`S-18`/`S-20`). Idempotent: a contribution whose
+ *  authored ids already stand in the live graph is not composed twice, so a repeated frame adds nothing. */
 export interface ModuleShapeInstall {
   readonly modules: readonly string[]
   readonly added: readonly string[]
@@ -40,18 +40,13 @@ export function installModuleActions(runtime: Runtime, router: CapabilityRouter)
 ## 2. `src/renderer/extensions.ts` and `src/renderer/renderer.ts` — the map and the record
 
 ```ts
-/** THE COMPOSED PANE MAP (`S-18`): the five sites for every DECLARED pane id — the foundation's literal plus every
- *  module's declaration — so a module pane has a node, a head, a body, a collapse control and a grip by construction
- *  (`C-9`, `M-18`). No authored literal is the set. **THE COMPOSED SET IS `U2`'S**: the declaration registry is not
- *  built, so until it is this function is total over the foundation's set and `M-18` is red BY NAME (never skipped). */
-export function paneNodeIds(declaredPaneIds: readonly string[]): Readonly<Record<string, PaneNodeMap>>
-export interface PaneNodeMap {
-  readonly node: string
-  readonly head: string
-  readonly body: string
-  readonly collapse: string
-  readonly grip: string
-}
+/** **NO SIXTH MAP IS WRITTEN HERE, AND THAT IS `S-18`'S OWN SHAPE IN THIS TREE** (`S-18`, `C-9`): the five sites already
+ *  stand in `src/renderer/renderer.ts` as declared literal tables — `PANE_NODE_IDS`, `PANE_HEAD_IDS`, `PANE_BODY_IDS`,
+ *  `PANE_COLLAPSE_IDS` and `PANE_MOVE_GRIP_IDS` — each TOTAL over `DECLARED_PANE_IDS`, and `PM-1`/`PM-2` read them by
+ *  name (`tests/unit/renderer-wiring/pane-node-map.test.ts`). **THE COMPOSED SET IS `U2`'S** (`S-17`): the declaration
+ *  registry is not built, so the five tables are total over the foundation's set today and a module pane becomes a full
+ *  pane the moment `U2` widens the declared set. A function composing a set that does not exist would be the second
+ *  authority this page refuses (`D-129`). */
 
 /** `CapabilityRouter.actions()`'s record gains the CLOSURE it registered (`docs/L3/module-system/signatures.md`'s
  *  `ActionRecord`): the host-side table's readable answer, so this seat installs what the module registered and reads
@@ -67,10 +62,10 @@ export interface ActionRecord {
 
 - **A runtime contribution composes through `runtime.contribute`** — the same merge routine as the boot composition at the second sanctioned instant — never a serializer round-trip, never a raw `LayerApplyOp`, never this seat's own merge (`ASM-RW-M1`, `L2` rev 3 §4).
 - **The action closure is installed by NAME into the node's handler entry**; no dispatch-time resolver, no `handlers[].ref`, no source text in graph data (`C-10`, `D-313`).
-- **The pane map is total over the composed set once `U2`'s registry exists**; a declared pane with no entry is a red BY NAME, and an undeclared id the map invents is the same class (`S-18`, `M-18`). Until `U2` lands the set is the foundation's and the row stands red on the missing module declaration, never green by omission.
+- **The five pane tables are total over the declared set, and this page writes no sixth**; a declared pane with no entry is a red BY NAME (`PM-1`), and an undeclared id a table invents is the same class (`S-18`). The COMPOSED set is `U2`'s, so `M-18` waits on that registry rather than being green over the foundation alone.
 - **The stage paint is the app-layout turn's**; this page supplies graph data and adds no second paint, subscriber or route (`D-129`).
 - **No `src/**` byte is declared here**; the install is L4's (D-3).
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L3", "module": "renderer-wiring", "writes": [{"path": "docs/L3/renderer-wiring/module-shape-signatures.md", "d": "D-306", "why": "this page, rev 1 NEW: the install, the composed pane map and the action record's closure — no `src/**` byte"}]}
+{"unit": "modularity", "layer": "L3", "module": "renderer-wiring", "writes": [{"path": "docs/L3/renderer-wiring/module-shape-signatures.md", "d": "D-306", "why": "this page, rev 2 \u2014 the install, the action record's closure and the five pane tables; no sixth map"}]}
 ```

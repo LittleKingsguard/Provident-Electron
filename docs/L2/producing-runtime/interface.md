@@ -4,7 +4,7 @@
 - **Inputs:** `docs/L1/modularity.md` rev 15 §2's `producing-runtime` row, §3 `S-14`/`S-15`/`S-16`/`S-20`, §4 `C-6`/`C-7`/`C-10`, §6 `M-14`/`M-15`/`M-16`/`M-18`; `docs/L1/app-layout.md` §2/§3 (`S-1`); `docs/L3/module-system/design.md` §4/§6 (the resolver's order and the contributions' shape); `docs/L2/renderer-wiring/module-shape.md` rev 1 (the caller of `contribute`); `src/renderer/runtime.ts` by site (`RuntimeOptions`, the constructor, `composeContributions`, `loadEnvelope`, `applyCommand`, `load`, `op`); `src/shared/demo-envelope.ts` (the 30 authored handlers, the refusal's measurement); `D-124`, `D-177`, `D-179`, `D-182`, `D-252`, `D-310`, `D-313`, `D-314`
 - **Write scope:** `docs/L2/producing-runtime/` and `tests/integration/producing-runtime/` (brief §3); `src/**` is read-only at this layer and neither package is ever modified (D-3, D-5)
 - **Ceiling:** 150 lines; at the ceiling it splits by owner and is never appended (D-1, D-2) · **Citations:** a source cite names its **site** and never an offset (`D-41`)
-- **Status:** DESIGN — no structure or signature (that is `docs/L3/producing-runtime/`); **REV 2'S TWO CELLS LANDED** (`RuntimeOptions.contributions` merged before `translateLegacy`, `applyCommand`'s `getCompileMode()` branch, `M-14`/`M-15`); **REV 3'S `contribute` IS OWED to L4**
+- **Status:** LANDED — rev 2's two cells (`RuntimeOptions.contributions` merged before `translateLegacy`; `applyCommand`'s `getCompileMode()` branch) with `M-14`/`M-15`, and rev 3's stored authored document + `contribute` with `D-317(a)`/`(b)`/`(c)` in `tests/integration/producing-runtime/prebuild.test.ts`
 
 ## 1. The command surface as it stands
 
@@ -49,5 +49,5 @@
 - **`ASM-PR-3` — the runtime stores its authored envelope, so `code.*` works before any load.** Alternative rejected: a separate `codeDocument` field, which would put two documents beside one document's edits (`D-129`).
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L2", "module": "producing-runtime", "writes": [{"path": "docs/L2/producing-runtime/interface.md", "d": "D-313", "why": "this page, rev 3 — §4 joins the carried pre-build (§2) and compile (§3) cells: the stored authored envelope and `contribute`, with the serializer route's measured refusal; no `src/**` byte"}]}
+{"unit": "modularity", "layer": "L2", "module": "producing-runtime", "writes": [{"path": "docs/L2/producing-runtime/interface.md", "d": "D-313", "why": "this page, rev 3 \u2014 \u00a74 joins the carried pre-build (\u00a72) and compile (\u00a73) cells: the stored authored envelope and `contribute`, with the serializer route's measured refusal"}]}
 ```

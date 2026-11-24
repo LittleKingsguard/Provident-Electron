@@ -3,7 +3,7 @@
 - **Layer:** L2 · **Module:** `renderer-wiring` · **Unit:** `modularity` · **Branch:** `main` · **Rev:** 1 — **NEW, AND IT IS THE SPLIT `D-1` ASKS FOR AT THE CEILING**: `docs/L2/renderer-wiring/interface.md` rev 13 is the **app-layout** unit's four turns and stands at its 150-line ceiling, so the modularity unit's two `renderer-wiring` cells — `S-18`'s composed pane census and `S-20`'s stage paint with the realm-side driver — are stated HERE, by owner, and neither page is appended to (`D-1`, `D-2`, brief §3)
 - **Inputs:** `docs/L1/modularity.md` rev 15 §2's `renderer-wiring` row, §3 `S-18`/`S-20`, §4 `C-9`/`C-10`, §6 `M-2b`/`M-11`/`M-13`/`M-18`/`M-20`; `docs/L2/module-system/interface.md` §3/§9; `docs/L3/module-system/design.md` §6; `docs/L2/producing-runtime/interface.md` rev 2 §2–§3 and `docs/L3/producing-runtime/design.md` §2–§3 (the pre-build composition and the sanctioned `applyCommand` paths); `src/renderer/renderer.ts`/`extensions.ts`/`runtime.ts` by site; `D-129`, `D-303`, `D-307`, `D-310`, `D-313`, `D-146`, `D-30`, `D-40`
 - **Write scope:** `docs/L2/renderer-wiring/` and `tests/integration/renderer-wiring/` (brief §3); `src/**` is read-only at this layer and neither package is ever modified (D-3, D-5)
-- **Status:** DESIGN — no structure or signature (that is `docs/L3/renderer-wiring/module-shape.md`); the two cells are OWED to the renderer's L4 (`startModuleShape` and the total pane map), and the e2e `M-2b`/`M-11`/`M-13` remain L1's at `S-20`
+- **Status:** LANDED, EXCEPT THE PANE CELL — `startModuleShape` (the graph composition through `Runtime.contribute`, the action install by `state-slice` on `handlers`, the re-driven paints) stands in `src/renderer/renderer.ts` with `RW-M1`…`RW-M4`; the composed pane set waits on `U2`, and the e2e `M-2b`/`M-11`/`M-13` remain L1's at `S-20`
 
 ## 1. What the two cells are, and the split that carries them
 
@@ -37,7 +37,7 @@
 
 ## 6. The battery
 
-- **`tests/integration/renderer-wiring/` carries the two cells' integration rows** (the map row owes the path; L1's to file): the composed pane map is total over a module pane; the module's runtime `graph` contribution lands under its parent; an `action` closure is installed and dispatched by name; a contribution with an absent parent is named and skipped. **The e2e `M-2b`/`M-11`/`M-13` and `M-18` stand at the seats the L1 page names** (`S-18`/`S-20`), unmarked and gating when authored (`D-30`, `D-40`).
+- **`tests/integration/renderer-wiring/module-shape.test.ts` is WRITTEN (`RW-M1`…`RW-M4`)** — the module's runtime `graph` contribution lands under its parent; an `action` closure is installed and dispatched by name from both a contributed and an authored node; a repeated frame adds nothing; a contribution with an absent parent is named and skipped; an undeclared action installs nowhere. **The map row is `PM-1`/`PM-2` over the five existing tables** (`tests/unit/renderer-wiring/pane-node-map.test.ts`), and the composed set is `U2`'s. **The e2e `M-2b`/`M-11`/`M-13` and `M-18` stand at the seats the L1 page names** (`S-18`/`S-20`), unmarked and gating when authored (`D-30`, `D-40`).
 
 ## 7. Assumptions, each with its rejected alternative
 
@@ -46,5 +46,5 @@
 - **`ASM-RW-M3` — the stage paint is the app-layout turn's, over authored graph data.** Alternative rejected: a module-stage paint of its own, which would be a second author of `display` and a second subscriber (`D-129`).
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L2", "module": "renderer-wiring", "writes": [{"path": "docs/L2/renderer-wiring/module-shape.md", "d": "D-306", "why": "this page, rev 2 — the runtime contribution routes through runtime.contribute (§4), the action install names the engine's state-slice handlers target, and S-18 waits on U2's declaration registry; no src byte"}]}
+{"unit": "modularity", "layer": "L2", "module": "renderer-wiring", "writes": [{"path": "docs/L2/renderer-wiring/module-shape.md", "d": "D-306", "why": "this page, rev 2 \u2014 the runtime contribution routes through runtime.contribute (\u00a74), the action install names the engine's state-slice handlers target, and S-18 waits on U2's declaration registry"}]}
 ```

@@ -42,7 +42,9 @@ describe('U9-FIX — the crossing: one frame in, a live realm registration out (
     router.registerModule('capture', CLIENT_SOURCE)
     expect(router.modules()).toEqual(['capture'])
     expect(router.listeners()).toEqual([{ module: 'capture', listener: 'render', handle: 'module:capture#render' }])
-    expect(router.actions()).toEqual([{ module: 'capture', name: 'screenshot' }])
+    const [action] = router.actions()
+    expect(action).toMatchObject({ module: 'capture', name: 'screenshot' })
+    expect(typeof action!.fn, 'the delivered action lands WITH its live closure (`ActionRecord.fn`, D-313)').toBe('function')
     // nothing was refused on the way in: a delivered source is DATA that evaluates, not an error path.
     expect(lines).toEqual([])
   })
@@ -78,7 +80,11 @@ describe('U9-FIX — the crossing: one frame in, a live realm registration out (
     fromFunction.registerModule('capture', asFunction)
     expect(fromFunction.modules()).toEqual(fromString.modules())
     expect(fromFunction.listeners()).toEqual(fromString.listeners())
-    expect(fromFunction.actions()).toEqual(fromString.actions())
+    // THE SET, NOT THE CLOSURE IDENTITIES: each arm carries its own function object, so the projection is `{module,
+    // name}` and the LIVE closure is asserted on both sides (`ActionRecord.fn`, `D-313`).
+    expect(fromFunction.actions().map(({ module, name }) => ({ module, name }))).toEqual(fromString.actions().map(({ module, name }) => ({ module, name })))
+    expect(fromFunction.actions().every((record) => typeof record.fn === 'function')).toBe(true)
+    expect(fromString.actions().every((record) => typeof record.fn === 'function')).toBe(true)
     // and the payload really was a string, so no compiled source crossed (D-308).
     expect(typeof CLIENT_SOURCE).toBe('string')
   })
