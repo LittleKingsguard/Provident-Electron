@@ -1,10 +1,10 @@
 # L3 — `producing-runtime`: the signature stubs L4 implements against
 
-- **Layer:** L3 · **Module:** `producing-runtime` · **Unit:** `modularity` · **Branch:** `main` · **Rev:** 1 — **NEW**: `docs/L3/producing-runtime/design.md` rev 1 and `docs/L2/producing-runtime/interface.md` rev 2 fix the structure and the cells; this page fixes the declarations under them (`D-1`, brief §3)
-- **Ceiling:** 150 lines, replaced and never appended (D-1, D-2) · **Inputs:** `design.md` §1–§5; `L2` §1–§5; `docs/L3/module-system/design.md` §4/§6; `src/renderer/runtime.ts` (`RuntimeOptions`, `Runtime`, `bootstrap`, `applyCommand`, `focusedSlice`); `src/shared/module-contract.ts` (`GraphContribution`); `node_modules/provident-ssr/dist/core/supervisor.d.ts` (`CompileMode`, `getCompileMode`); `D-124`, `D-252`, `D-310`, `D-314` · **A stub is a DECLARATION and never a body**: every `declare` is L4's to fill (D-3)
-- **Read order:** §1 the option → §2 the mode branch → §3 the invariants
+- **Layer:** L3 · **Module:** `producing-runtime` · **Unit:** `modularity` · **Branch:** `main` · **Rev:** 2 — **THE COMPOSITION STUBS JOIN THE PRE-BUILD AND THE MODE BRANCH** (`docs/L2/producing-runtime/interface.md` rev 3 §4, `design.md` rev 2 §4): one merge routine, two instants, and the stored authored document `D-313`'s refusal forces (`D-1`, brief §3)
+- **Ceiling:** 150 lines, replaced and never appended (D-1, D-2) · **Inputs:** `design.md` §1–§6; `docs/L2/producing-runtime/interface.md` rev 3 §1–§6; `docs/L3/module-system/design.md` §4/§6; `src/renderer/runtime.ts` (the constructor, `composeContributions`, `findAuthoredNode`, `loadEnvelope`, `applyCommand`, `focusedSlice`, `envelope`); `src/shared/module-contract.ts` (`GraphContribution`); `node_modules/provident-ssr/dist/core/supervisor.d.ts` (`CompileMode`, `getCompileMode`); `D-124`, `D-252`, `D-310`, `D-313`, `D-314` · **A stub is a DECLARATION and never a body**: every `declare` is L4's to fill (D-3)
+- **Read order:** §1 the option and the composition → §2 the mode branch → §3 the invariants
 
-## 1. `src/renderer/runtime.ts` — the option and the pre-build
+## 1. `src/renderer/runtime.ts` — the option, the stored document and `contribute`
 
 ```ts
 import type { GraphContribution } from '../shared/module-contract.js'
@@ -13,17 +13,38 @@ export interface RuntimeOptions {
   mount: HTMLElement
   envelope: LegacyInitialData
   maxJournalLength?: number
-  /** THE ORDERED PRE-BUILD READER (`S-14`, `S-15`): the module-system resolver's answer, consumed ONCE at `bootstrap()`
-   *  after the envelope's nodes register and before the first compile. The runtime sorts nothing (`ASM-PR-1`). */
+  /** THE ORDERED BOOT READER (`S-14`, `S-15`): the module-system resolver's answer, consumed ONCE in the constructor,
+   *  before `translateLegacy`. The runtime sorts nothing (`ASM-PR-1`). */
   contributions?: () => readonly GraphContribution[]
+}
+
+/** What `contribute` answers (`S-20`): the authored ids it composed and the contributions it refused BY NAME. */
+export interface ContributionResult {
+  readonly added: readonly string[]
+  readonly skipped: readonly string[]
 }
 
 export class Runtime {
   // … existing members unchanged …
-  /** MERGE each contribution's nodes into the authored template under its `parent`'s `children`, found by the authored
-   *  id, BEFORE `translateLegacy`; name a throwing or parentless contribution in the warnings and continue (`C-6`).
-   *  Called by the CONSTRUCTOR once; `bootstrap()` is unchanged. */
-  private composeContributions(envelope: LegacyInitialData): LegacyInitialData
+  /** THE AUTHORED DOCUMENT (`L2` §4, `ASM-PR-3`): a clone of the COMPOSED envelope the constructor built. It is the
+   *  `code.*` CRUD's document from boot, and `contribute`'s merge base. Replaced by the merged clone only when a
+   *  contribution actually added a node. */
+  private envelope: LegacyInitialData | null = null
+
+  /** ONE MERGE IMPLEMENTATION (`S-14`, `S-15`, `S-20`): each contribution's nodes join the authored template under its
+   *  `parent`'s `children` (found by authored `css.id`/`props.id`), in the caller's order. A reader throw, an
+   *  uncloneable envelope/node and a missing parent are NAMED in the returned warnings and skipped. PURE: it never
+   *  mutates `envelope` and never loads. Called by the constructor and by `contribute`. */
+  private composeContributions(
+    envelope: LegacyInitialData,
+    reader?: () => readonly GraphContribution[],
+  ): { envelope: LegacyInitialData; warnings: TranslatedWarning[] }
+
+  /** THE RUNTIME COMPOSITION (`S-20`, `L2` §4): merge through `composeContributions`, then `loadEnvelope` the result —
+   *  the construction path, so the authored `handlers` stay. A fully-skipped call leaves the document and the graph
+   *  untouched. Never throws (`ASM-PR-2`). The caller re-drives its paints. */
+  contribute(contributions: readonly GraphContribution[]): ContributionResult
+
   bootstrap(): void   // unchanged
 }
 ```
@@ -41,18 +62,19 @@ private compileDirtyInMode(node: Node): CompiledState[]
 ```
 
 - **`applyCommand(cmd)` keeps its signature and its refusal arms** (rev 1's `node`/`target`/`source`/`move` guards, the mutation-shape predicate); **only the dirty loop's compile call moves** from `node.compile(...)` alone to `compileDirtyInMode(node)`.
-- **`bootstrap()` keeps its signature**; the addition is the one `prebuild()` call before `render()`.
+- **`bootstrap()` keeps its signature**; the pre-build is the constructor's, not the boot's.
 
 ## 3. The invariants a stub reader must not lose
 
-- **The reader is invoked ONCE, at CONSTRUCTION, before `translateLegacy`, in list order; the runtime sorts nothing** (`S-15`, `ASM-PR-1`). A second call, a sort, or a post-compile composition is the defect.
-- **A contribution is GRAPH DATA merged into the authored template under `parent` before `translateLegacy`; no synthetic document, no wrapper** (`C-6`). No hand-written DOM, no post-compile string transform (the `transform` class is retired, `D-231`).
-- **A throwing or parentless contribution is NAMED in the warnings and skipped; the boot continues** (`ASM-PR-2`, `D-124`). Never a throw out of `bootstrap()` and never the store's fatal arm.
+- **The boot reader is invoked ONCE, at CONSTRUCTION, before `translateLegacy`, in list order; the runtime sorts nothing** (`S-15`, `ASM-PR-1`). A second call, a sort, or a post-compile composition through that reader is the defect.
+- **`contribute` is the ONE sanctioned later instant, and it uses the SAME merge routine**, then the construction path (`L2` §4, `ASM-PR-1`). A second merge implementation, or a serializer round-trip (`exportLegacy` → `loadEnvelope`), is the defect — the latter drops the 30 authored handlers measured at `src/shared/demo-envelope.ts` (`D-313`).
+- **The stored `envelope` is the `code.*` document from boot**; `contribute` advances it only on a real addition (`ASM-PR-3`). Two documents beside one document's edits is the defect.
+- **A throwing or parentless contribution is NAMED in the warnings and skipped; nothing throws** (`ASM-PR-2`, `D-124`). Never the store's fatal arm.
 - **The compile mode is read per command from `getCompileMode()`**, and the pass-2 is never the route: `compilePath` per member in `'path'`, `node.compile` byte-for-byte in `'family'` (`S-16`, `C-7`, `D-314`).
 - **A freshly translated node still needs `detach` before `attach`** (its owner-token `child` anchor); at `0.6.0` `attach` registers-if-new (`C-7`, `H-1`'s surviving (i)).
 - **The action/named-handler table is `renderer-wiring`'s** (`C-10`, `D-313`); this module installs no handler closure and reads no source text.
 - **No `src/**` byte is declared here**: the runtime edits are L4's (D-3).
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L3", "module": "producing-runtime", "writes": [{"path": "docs/L3/producing-runtime/signatures.md", "d": "D-314", "why": "this page, rev 1 NEW: the contribution option, the mode-branch stub and the invariants — no `src/**` byte"}]}
+{"unit": "modularity", "layer": "L3", "module": "producing-runtime", "writes": [{"path": "docs/L3/producing-runtime/signatures.md", "d": "D-313", "why": "this page, rev 2 — the option, the stored document, `contribute` and the mode branch stubs, with their invariants; no src byte"}]}
 ```
