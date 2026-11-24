@@ -4,7 +4,7 @@ Read `strata/brief.md` first, then `strata/decisions.md` from `D-304` onward.
 
 ## Where the branch stands
 
-`main` carries the work at `a58a7ab` plus this pass. **The remote now carries that commit** — `git ls-remote origin main` answers `a58a7ab…` — so the older "nothing is pushed" line is STALE as a status claim; what stands is the RULE: this pass pushes nothing (D-6's pointer clause, D-119). The unit `modularity` (D-306) went L1 rev 15 → L2 → L3 → L4; `.strata/units/modularity.json` still reads `layer: L3`, `stage: design`, `artifacts: []` because `strata-state` is not in this checkout — **the ledger is behind the work** (D-26, `platform.md` §4). The unit's record is `strata/records/modularity-unit.md`; its design `docs/L1/modularity.md` rev 15.
+`main` carries the work: `a58a7ab` is the last commit the remote has (`git ls-remote origin main` answers it), and the three commits after it — `4f2385e`, `b243020`, `4e075b7` — are LOCAL and unpushed (D-6's pointer clause, D-119). The older "nothing is pushed" line is therefore wrong as a status claim and right as the RULE: this pass pushes nothing, and the remote is now three commits behind the work rather than level with it. The unit `modularity` (D-306) went L1 rev 15 → L2 → L3 → L4; `.strata/units/modularity.json` still reads `layer: L3`, `stage: design`, `artifacts: []` because `strata-state` is not in this checkout — **the ledger is behind the work** (D-26, `platform.md` §4). The unit's record is `strata/records/modularity-unit.md`; its design `docs/L1/modularity.md` rev 15.
 
 ## What landed this pass
 
