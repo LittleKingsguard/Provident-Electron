@@ -6,11 +6,11 @@ and the sweep order. It carries no claim about behaviour and nothing cites it as
 
 ## Where the branch stands
 
-`main` is at **`fd92687`**; the remote is at **`a58a7ab`** — **47 commits ahead, nothing pushed** (`D-6`'s pointer clause; the
+`main` is at **`ed60a4c`** (the commit that carries this page); the remote is at **`a58a7ab`** — **48 commits ahead, nothing pushed** (`D-6`'s pointer clause; the
 freeze is lifted). The worktree is clean, the pins stand (`provident-storeroom ^2.0.0`, lock 2.0.1; `provident-ssr ^0.6.0`),
 and the demo bundle is regenerated against the renderer and runtime it bundles (`D-118`).
 
-## The readings (clean tree at `fd92687`)
+## The readings (clean tree at `fd92687`, the commit before this page)
 
 `typecheck` **0** · `typecheck:tests` **0** · `build` **0** · **`npm test` GREEN — 0 failed / 3,077 passed / 2 skipped of 3,079
 over 165 files**. All 11 `tests/e2e/` batteries ran inside it (they boot the built bundle). The unit's own batteries: the
@@ -88,5 +88,5 @@ by moving the residue where it belongs.
 4. Beside them: the **cap ruling**, the **out-of-band sink**, **`app-shell`'s boot-route rev**, and the **two splits**.
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/handover.md", "d": "D-321", "why": "the handover replaced whole: the tree as it stands at fd92687 — four legs green at 3,077/165, the U1/U3/U4/U5 and S-23 landings, the e2e battery and its three rows, U2's written rung, the open set (U2's sized L4, U6's cells, U7, the reserved rows, the three decisions owed) and the next acts in order"}]}
+{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/handover.md", "d": "D-321", "why": "the handover replaced whole: the tree as it stands at ed60a4c \u2014 four legs green at 3,077/165, the U1/U3/U4/U5 and S-23 landings, the e2e battery and its three rows, U2's written rung, the open set, the three habits and the next acts in order"}]}
 ```
