@@ -2099,7 +2099,7 @@ async function main(): Promise<void> {
         // A REPEATED FRAME ADDS NO MEMBER (`registerModule`'s own rule), so the shape runs once per NEW module
         // (`S-20`, `D-317`): compose the graph, install the closure table, and re-drive the paints the re-render retired.
         if (moduleRouter.modules().length === before) return
-        const install = startModuleShape(runtime, moduleRouter)
+        const install = startModuleShape(runtime, moduleRouter, frame.module)
         console.info(`[provident-module] shape: standing ${JSON.stringify(install.standing)}, added ${JSON.stringify(install.added)}, skipped ${JSON.stringify(install.skipped)}, actions ${install.actions}`)
       },
       fire: (handle, entry) => { moduleRouter?.fire(handle, entry) },
@@ -2191,9 +2191,9 @@ export interface ModuleShapeInstall {
 
 /** THE ONE ENTRY: compose, install, and re-drive the paints when anything was added. Called from the channel client's
  *  `evaluate` AFTER `registerModule`, once per NEW module. */
-export function startModuleShape(runtime: Runtime, router: CapabilityRouter): ModuleShapeInstall {
+export function startModuleShape(runtime: Runtime, router: CapabilityRouter, installed?: string): ModuleShapeInstall {
   const composed = composeModuleGraph(runtime, router)
-  const actions = installModuleActions(runtime, router)
+  const actions = installModuleActions(runtime, router, installed)
   if (composed.changed) reDriveModuleShapePaints(runtime)
   return { standing: [...router.modules()], added: composed.added, skipped: composed.skipped, actions }
 }
@@ -2240,8 +2240,12 @@ function contributionKey(module: string, contribution: { readonly parent: string
 
 /** THE ACTION HALF: each `ActionRecord.fn` into the live node's handler entry whose NAME is the record's, by one
  *  `state-slice` on `targetProp:'handlers'` per node. A name no node declares is installed nowhere (`C-10`). */
-export function installModuleActions(runtime: Runtime, router: CapabilityRouter): number {
-  const actions = router.actions()
+export function installModuleActions(runtime: Runtime, router: CapabilityRouter, installedModule?: string): number {
+  // ONE MODULE'S FRAME INSTALLS THAT MODULE'S CLOSURES (`AN-7`): the table is cumulative, so without the filter every new
+  // module re-applied every earlier module's closures — idempotent in effect, N−1 redundant writes in cost and a re-dirty
+  // per node. A caller that names no module (the tests' own two-argument form) still reads the whole table.
+  const records = router.actions()
+  const actions = installedModule === undefined ? records : records.filter((record) => record.module === installedModule)
   if (actions.length === 0) return 0
   const byName = new Map<string, (ctx: never, ...args: unknown[]) => unknown>()
   for (const record of actions) byName.set(record.name, record.fn)

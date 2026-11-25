@@ -26,7 +26,7 @@ export interface ModuleShapeInstall {
  *  the pane map's totality over the composed set, and the action closures into the node handler entries keyed by name.
  *  Called from the channel client's `evaluate`, AFTER `router.registerModule`; RE-DRIVES the delivery paints once
  *  `contribute` answers, because the re-load re-rendered the authored page (`S-20`). */
-export function startModuleShape(runtime: Runtime, router: CapabilityRouter): ModuleShapeInstall
+export function startModuleShape(runtime: Runtime, router: CapabilityRouter, installed?: string): ModuleShapeInstall
 
 /** The graph half alone: `runtime.contribute(router.contributions())` in the router's activation order, answering the
  *  runtime's `{added, skipped, changed}`; a parentless or throwing contribution is the runtime's named skip, never invented
@@ -34,8 +34,10 @@ export function startModuleShape(runtime: Runtime, router: CapabilityRouter): Mo
 export function composeModuleGraph(runtime: Runtime, router: CapabilityRouter): ContributionResult
 
 /** The action half alone: the closure from `ActionRecord.fn` into the node's handler entry whose key is its
- *  `name`/`event`, by `state-slice` `targetProp:'handlers'` (`C-10`, `D-313`). */
-export function installModuleActions(runtime: Runtime, router: CapabilityRouter): number
+ *  `name`/`event`, by `state-slice` `targetProp:'handlers'` (`C-10`, `D-313`). **`installedModule` NARROWS THE TABLE TO ONE
+ *  MODULE'S RECORDS** (`AN-7`): the table is cumulative, so a frame that names its own module installs only that module's
+ *  closures instead of re-applying every earlier one; a caller naming none still reads the whole table. */
+export function installModuleActions(runtime: Runtime, router: CapabilityRouter, installedModule?: string): number
 ```
 
 ## 2. `src/renderer/extensions.ts` and `src/renderer/renderer.ts` — the map and the record

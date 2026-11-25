@@ -27,6 +27,7 @@
 
 ## 4. The action install
 
+- **ONE MODULE'S FRAME INSTALLS THAT MODULE'S CLOSURES** (`AN-7`): `startModuleShape` is handed the module the frame delivered and `installModuleActions` narrows the cumulative action table to it, so a new module adds its own handlers and re-applies no earlier module's — the redundant write and its re-dirty are gone; a caller that names no module still reads the whole table. **THE ROWS STILL STAND**: every module's closures are installed on the frame that delivered them.
 - **THE CLOSURE RIDES THE NODE'S HANDLER ENTRY, KEYED BY ITS `name`/`event`** (`C-10`, `D-313`): for each `ActionRecord`, the nodes whose authored handler carries that key receive the closure — ONE `state-slice` with `targetProp:'handlers'` per node, the engine's declared handler target (`provident-ssr/dist/core/types.d.ts`'s `StateSliceOp`). **NO source text enters graph data, NO dispatch-time resolver exists and NO `handlers[].ref` seam is claimed** (the withdrawal `D-313` records).
 - **A NODE WITH NO MATCHING HANDLER ENTRY IS NOT INVENTED**: an action no contributed node declares is installed nowhere and named in the client's log; the engine's own `handler-body-missing` warn is the upstream half and this side's refusal is the host's (`C-10`).
 - **THE TABLE IS HOST-SIDE AND THE CLOSURE IS THE MODULE'S OWN**: the router's `actions()` answers the function the module registered; this seat neither wraps it nor captures a copy beside it (`D-129`'s class).
@@ -51,5 +52,5 @@
 - **The e2e `M-2b`/`M-11`/`M-13` are the seats' own and file at `S-20`** (`L1` §6), unmarked and gating when authored (`D-30`, `D-40`); **`M-18` waits on `U2`'s registry** (`S-18`).
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L3", "module": "renderer-wiring", "writes": [{"path": "docs/L3/renderer-wiring/module-shape.md", "d": "D-320", "why": "this page, rev 4 \u2014 the re-drive's dependency on the realm's own boot reads (`AN-10`), stated where the re-drive is"}]}
+{"unit": "modularity", "layer": "L3", "module": "renderer-wiring", "writes": [{"path": "docs/L3/renderer-wiring/module-shape.md", "d": "D-320", "why": "this page, rev 5 \u2014 \u00a74's action install is per module (`AN-7`), with the cumulative-table note"}, {"path": "src/renderer/renderer.ts", "d": "D-320", "why": "`startModuleShape`/`installModuleActions` take the delivered module and narrow the table, so a new module re-applies no earlier closure", "by": "L4"}, {"path": "tests/integration/renderer-wiring/module-shape.test.ts", "d": "D-320", "why": "`RW-M6`: the second module's frame installs no handler while the first module's closure still stands", "by": "L4"}, {"path": "demo/pane-drag-demo/demo.mjs", "d": "D-118", "why": "the demo bundle regenerated against the renderer its @source digests name", "by": "L4"}]}
 ```

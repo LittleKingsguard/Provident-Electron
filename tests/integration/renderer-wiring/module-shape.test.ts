@@ -102,6 +102,22 @@ describe('renderer-wiring — the module shape: the graph composition and the ac
     expect(runtime.renderedHtmlResult().renderedHtml, 'and the page did not re-render for a refusal').toBe(before)
   })
 
+  it('RW-M6 — a new module installs ITS OWN handlers and does not re-apply the earlier module\'s (`AN-7`)', () => {
+    const runtime = runtimeOf()
+    const router = routerOf()
+    router.registerModule('alpha', (ctx) => {
+      ctx.graph({ parent: 'host', nodes: [{ type: 'button', css: { id: 'alpha-bump' }, handlers: [{ name: 'bump', event: 'click' }] }] })
+      ctx.action('bump', () => undefined)
+    })
+    expect(startModuleShape(runtime, router, 'alpha').actions, 'the first module installs its own action').toBe(1)
+    router.registerModule('beta', (ctx) => {
+      ctx.graph({ parent: 'host', nodes: [{ type: 'div', css: { id: 'beta-panel' } }] })
+    })
+    const second = startModuleShape(runtime, router, 'beta')
+    expect(second.added, 'the second module composes its own node').toEqual(['beta-panel'])
+    expect(second.actions, 'and installs NO handler — alpha\'s closure is not re-applied on beta\'s frame').toBe(0)
+  })
+
   it('RW-M5 — an ID-LESS contribution is composed ONCE, not once per later module\'s frame (`AN-6`: the live-graph id check cannot see it, so the seat\'s per-router key set does)', () => {
     const runtime = runtimeOf()
     const router = routerOf()
