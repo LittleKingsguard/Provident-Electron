@@ -341,3 +341,98 @@ describe('module-channel — U3: the fan-out is PREFIX and not identity, and con
     //     where identity would have reached the leaf alone. `AN-24` carries the fact and the sweep it owes `C-3`.
   }, ROW_MS)
 })
+
+// ---- M-2b: the client half and the update -----------------------------------------------------------
+/** **U1'S CLIENT HALF, WITNESSED WHERE A REALM IS DRIVEN** (`S-2b`, `S-20`, `S-23`; `D-318` filed the row here because its
+ *  third arm is the INVERSE's). The module carries ONE client-only listener at its own address, ONE named action, and ONE
+ *  node of its own; the action writes `marker:count` into that node, and the listener increments `count`. So the node
+ *  separates "the source crossed and was evaluated" (the action resolves) from "the registration is ONE" (the count is 1
+ *  after one write) from "the source was NOT remembered" (an update's marker, with the old one GONE). */
+const SHAPE = 'matrix-shape'
+const SHAPE_ADDRESS = ['matrix-shape']
+const SHAPE_NODE = 'matrix-shape-out'
+const shapeEntry = (): string => [
+  'function (ctx) {',
+  '  ctx.declare({ kind: "listener", address: ["matrix-shape"], client: "note" })',
+  '  ctx.tool("ping", function () { return { ok: true } })',
+  '}',
+].join('\n')
+const shapeClient = (marker: string): string => [
+  'function (ctx) {',
+  `  var marker = ${JSON.stringify(marker)}`,
+  '  var count = 0',
+  '  ctx.action("publish", function (context) {',
+  '    var all = context.tree.allNodes()',
+  '    var node = all.find(function (n) { return n && n.props && n.props.id === "matrix-shape-out" })',
+  '    if (!node) return',
+  '    context.clientAPI.apply(node.id, [{ targetProp: "content", mode: "replace", value: marker + ":" + count }])',
+  '  })',
+  '  ctx.onDelivery("note", function () { count = count + 1 })',
+  '  ctx.graph({ parent: "app-surface", nodes: [{ type: "pre", css: { id: "matrix-shape-out" }, props: { id: "matrix-shape-out" }, content: "new", handlers: [{ name: "publish", event: "click" }] }] })',
+  '}',
+].join('\n')
+const shapeSource = (version: string, marker: string): string => JSON.stringify({
+  name: SHAPE,
+  version,
+  capabilities: { tools: ['ping'], listeners: [{ address: SHAPE_ADDRESS, client: 'note' }] },
+  entry: shapeEntry(),
+  client: shapeClient(marker),
+})
+
+/** **THE NODE'S OWN STATE, READ THROUGH THE APP'S SURFACE** (`get_node_state`, the row's one read — a rendered read may
+ *  answer truncated, and `M-2b` reads a node). The serialized answer is searched for the marker because the state's own
+ *  shape is the engine's: the CLAIM is that the marker the client half wrote stands on that node. */
+async function readShape(): Promise<string> {
+  const answer = await call(client(), 'provident.get_node_state', { target: { kind: 'cssId', cssId: SHAPE_NODE } })
+  expect(answer.ok, `get_node_state did not answer for ${SHAPE_NODE}: ${answer.text}`).toBe(true)
+  return answer.text
+}
+const dispatchPublish = async (): Promise<void> => {
+  const answer = await call(client(), 'provident.dispatch', { target: { kind: 'cssId', cssId: SHAPE_NODE }, event: 'click' })
+  if (!answer.ok) {
+    const targets = await call(client(), 'provident.list_targets', {})
+    const ids = (Array.isArray(targets.value) ? targets.value : [])
+      .map((entry) => asObject(entry))
+      .map((entry) => [str(entry?.['cssId']), str(entry?.['propsId'])])
+      .filter(([css, props]) => String(css ?? '').includes('matrix') || String(props ?? '').includes('matrix'))
+    const listed = await call(client(), 'module.list', {})
+    throw new Error(`the module's own action did not resolve at provident.dispatch: ${answer.text}; matrix nodes ${JSON.stringify(ids)}; module.list ${listed.text.slice(0, 400)}`)
+  }
+}
+
+describe('module-channel — U1: the client half crosses, is evaluated, and is REPLACED on update (M-2b)', () => {
+  it('M-2b — the source crosses and evaluates; ONE registration counts one; an update leaves the NEW marker and the old GONE; the census carries no source', async () => {
+    const installed = await call(client(), 'module.install', { name: SHAPE, version: '1.0.0', source: shapeSource('1.0.0', 'v1') })
+    expect(statusOf(installed), `module.install answered ${installed.text}`).toBe('installed')
+
+    // (i) THE CROSSING: the module's NAMED ACTION resolves at `provident.dispatch`, and the node it drives carries the
+    //     module's marker — the realm holds and evaluated a source it never asked for.
+    await dispatchPublish()
+    expect(await readShape(), 'the node carries the FIRST marker after the source crossed').toContain('v1:0')
+
+    // (ii) `onDelivery` IS THE REGISTRATION, AND ONE IS ONE: a COUNT separates one registration from two, where a rewritten
+    //      address never would.
+    const written = await call(client(), 'provident.data.write', { path: [...SHAPE_ADDRESS], value: { go: 1 }, tier: 'file' })
+    expect(written.ok, `the stimulus write did not answer: ${written.text}`).toBe(true)
+    await dispatchPublish()
+    expect(await readShape(), 'ONE write incremented the counter ONCE, so the listener is registered once').toContain('v1:1')
+
+    // (iii) THE SOURCE WAS NOT REMEMBERED: an update to a DISTINCT version whose client half writes a DIFFERENT marker
+    //       leaves the NEW marker standing and the OLD one GONE — neither a cached value nor a retained source could do it.
+    const updated = await call(client(), 'module.update', { name: SHAPE, version: '2.0.0', source: shapeSource('2.0.0', 'v2') })
+    expect(statusOf(updated), `module.update answered ${updated.text}`).toBe('updated')
+    await dispatchPublish()
+    const after = await readShape()
+    expect(after, 'the NEW source evaluated and its marker stands').toContain('v2:0')
+    expect(after, 'and the OLD marker is GONE from the node — the update replaced, it did not stack').not.toContain('v1:')
+
+    // (iv) THE CENSUS CARRIES NOTHING: the module's entry has no source member at all, which is the arm that separates
+    //      this crossing from the app-state read (`C-15`'s payload is the frame's, never the listing's).
+    const listed = await call(client(), 'module.list', {})
+    expect(listed.ok, `module.list did not answer: ${listed.text}`).toBe(true)
+    const entries = Array.isArray(listed.value) ? listed.value : (asObject(listed.value)?.['modules'] ?? [])
+    const mine = (entries as readonly unknown[]).map((entry) => asObject(entry)).find((entry) => str(entry?.['name']) === SHAPE)
+    expect(mine, `module.list carries no entry for ${SHAPE}: ${listed.text}`).toBeDefined()
+    expect(Object.keys(mine ?? {}).sort(), 'the census entry names no source member (`C-15`)').not.toContain('source')
+  }, ROW_MS)
+})

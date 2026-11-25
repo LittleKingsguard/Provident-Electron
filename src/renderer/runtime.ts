@@ -199,6 +199,7 @@ export class Runtime {
       node.children = kept
     }
     if (composed.template?.root !== undefined) prune(composed.template.root)
+    for (const payload of composed.content ?? []) for (const root of (payload as { readonly content?: readonly LegacyNodeData[] }).content ?? []) prune(root)
     if (removed.length === 0) return { removed: [], changed: false }
     this.loadEnvelope(composed)
     return { removed, changed: true }
@@ -231,7 +232,7 @@ export class Runtime {
     let merged = false
     for (let index = 0; index < contributions.length; index += 1) {
       const contribution = contributions[index]
-      const parent = this.findAuthoredNode(composed.template?.root, contribution.parent)
+      const parent = this.findAuthoredParent(composed, contribution.parent)
       if (parent === null) {
         warnings.push({ code: 'contribution-parent-missing', path: `contributions[${index}].parent` })
         skipped.push(contribution.parent)
@@ -263,6 +264,22 @@ export class Runtime {
       if (node.children !== undefined) ids.push(...this.authoredIdsOf(node.children))
     }
     return ids
+  }
+
+  /** THE PARENT LOOKUP SPANS THE WHOLE AUTHORED DOCUMENT, not only `template.root` (`AN-26`): the app's envelope carries
+   *  most of its nodes in `content` payloads, so a parent named there was invisible to the merge — the contribution was
+   *  named `contribution-parent-missing` and skipped, and `M-2b`'s own node never reached the tree. The template is tried
+   *  first, then each content payload's forest in the document's order. */
+  private findAuthoredParent(envelope: LegacyInitialData, id: string): LegacyNodeData | null {
+    const inTemplate = this.findAuthoredNode(envelope.template?.root, id)
+    if (inTemplate !== null) return inTemplate
+    for (const payload of envelope.content ?? []) {
+      for (const root of (payload as { readonly content?: readonly LegacyNodeData[] }).content ?? []) {
+        const found = this.findAuthoredNode(root, id)
+        if (found !== null) return found
+      }
+    }
+    return null
   }
 
   /** The authored node carrying `id` on `css.id` or `props.id` — the same two spellings the live id index resolves. */

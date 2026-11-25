@@ -2211,16 +2211,16 @@ export function composeModuleGraph(runtime: Runtime, router: CapabilityRouter): 
   }
   const done = composedByRouter.get(router) ?? new Set<string>()
   const pending = records
-    // THE TWO GUARDS, AND WHY ONE IS NOT ENOUGH (`AN-6`): the ID CHECK reads the live graph, so it catches a
-    // contribution whose nodes carry authored ids; a forest with NO ids cannot be seen that way and would be composed
-    // twice on a later module's frame. The SET is the exact identity for that case, keyed by what the record actually
-    // carries — no seat-local record of the GRAPH, only of what this seat has already handed to `contribute`.
-    .filter((record) => !done.has(contributionKey(record.module, record.contribution)))
-    .map((record) => record.contribution)
-    .filter((contribution) => {
-      const ids = authoredIdsIn(contribution.nodes as readonly AuthoredShape[])
-      return ids.length === 0 || !ids.every((id) => live.has(id))
+    // THE TWO GUARDS, AND WHICH ONE ANSWERS FOR WHICH SET (`AN-6`, `AN-26`): an ID-BEARING contribution is judged by the
+    // LIVE GRAPH alone — if every id it carries stands, it was composed; if any is missing, it is pending, which is what
+    // lets a REPLACEMENT's identical contribution compose again after the runtime withdrew the old nodes. An ID-LESS
+    // forest cannot be seen that way, and the SET is its exact identity — no seat-local record of the GRAPH, only of what
+    // this seat has already handed to `contribute`.
+    .filter((record) => {
+      const ids = authoredIdsIn(record.contribution.nodes as readonly AuthoredShape[])
+      return ids.length > 0 ? !ids.every((id) => live.has(id)) : !done.has(contributionKey(record.module, record.contribution))
     })
+    .map((record) => record.contribution)
   if (pending.length === 0) return { added: [], skipped: [], changed: false }
   const answer = runtime.contribute(pending)
   if (answer.changed) {
