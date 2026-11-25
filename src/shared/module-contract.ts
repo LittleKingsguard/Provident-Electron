@@ -10,7 +10,7 @@
 // (`ipc-contract` owns that file); the store's fifteen members are `provident-storeroom`'s and are
 // reached by `import type`, so nothing of the package is bundled and no second store is constructed
 // (`C-16`, `D-312`).
-import type { ModuleCapabilities, ModuleDependency } from './types.js'
+import type { ModuleCapabilities, ModuleDependency, ModuleListenerDeclaration } from './types.js'
 import type { ChannelEntry } from './module-channels.js'
 import type {
   Address,
@@ -127,11 +127,9 @@ export type RefusalName =
  *  for a body that threw, its `message` the throw's own sentence. Never a throw, never an `undefined`. */
 export type InvocationRefusal = Refusal & { readonly reason: 'tool-unknown' | 'handler-threw' }
 
-export interface ListenerDeclaration {
-  readonly address: readonly string[]
-  readonly main?: string
-  readonly client?: string
-}
+/** THE MANIFEST'S SHAPE, NAMED ONCE (`types.ts`'s `ModuleListenerDeclaration`) and re-exported here under the name the
+ *  activation, the admission and the binding read — one member, never two spellings (`AN-21`). */
+export type ListenerDeclaration = ModuleListenerDeclaration
 
 /** What `declare` takes at RUNTIME — the listener arm of a `capabilities` element. */
 export type CapabilityDeclaration = {

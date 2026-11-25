@@ -48,7 +48,7 @@
 // @source 5b7830e578400652386405ccc2a56da623f5ad428f999eefdd4f0a4abde29754 src/shared/gesture-session.ts
 // @source a334e345cc61c48ba095269a0e04cf81825e452b8f913afaf66a92b3c0c8a356 src/shared/gutter-affordance.ts
 // @source 260559b259261d0a6826037788a74ed5b1180bac213c9ac459f8acbd0c7a6ab3 src/shared/gutter.ts
-// @source 53a9faf737eee919dff26ce55063a89a57d07ecc1a0edc2a4eae84a403b4bd16 src/shared/module-contract.ts
+// @source 9279f38ee2954ee9f5f87cf60a32ba5ae48546ba40375b06656281ce57bccee5 src/shared/module-contract.ts
 // @source 40138fcc97cf13306712cc8ebf36a081302915b240ec87ff76cbafb83f898194 src/shared/overlay.ts
 // @source d77188de0139c7fecfc9150c50bc5725b6ec1942593e56d5cf8e830f9f81d8c7 src/shared/view-shape.ts
 // @end-sources

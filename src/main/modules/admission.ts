@@ -54,8 +54,7 @@ export function isFoundationTool(name: string, foundationTools: ReadonlySet<stri
 /** `capabilities.listeners[]` is `ipc-contract`'s member on `ModuleCapabilities` (`L2` §4, `OWED-6`);
  *  the DECLARATION SET is this contract's either way, so the member is read structurally here. */
 export function declaredListeners(capabilities: ModuleCapabilities): readonly ListenerDeclaration[] {
-  const holder = capabilities as ModuleCapabilities & { readonly listeners?: readonly ListenerDeclaration[] }
-  return holder.listeners ?? []
+  return capabilities.listeners ?? []
 }
 
 /** The declared tool names, BARE. */

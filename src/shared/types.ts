@@ -204,10 +204,22 @@ export interface CodeLoadBatchResult extends LoadResult {
 // ---- module.* extension system (docs/specs/module-import-proposal.md §2/§3) --
 
 /** A module's declared capability surface. */
+/** ONE listener declaration as the MANIFEST spells it (`module-system`'s `S-11`, `C-3`): the address it watches and
+ *  its two optional halves — `main` a function-STRING the entry's own `ctx.declare` repeats as a live function, `client`
+ *  the realm listener's OWN name (`onDelivery`'s key). **THIS MEMBER IS THE ONE A MODULE MUST FILL TO BE BOUND AT ALL**,
+ *  so it stands in the contract and not only in the executor's cast (`AN-21`). */
+export interface ModuleListenerDeclaration {
+  readonly address: readonly string[]
+  readonly main?: string
+  readonly client?: string
+}
+
 export interface ModuleCapabilities {
   tools?: string[]
   hooks?: string[]
   transforms?: string[]
+  /** The listener declarations the entry's `ctx.declare` repeats (`declaredListeners`, `compare`). */
+  listeners?: ModuleListenerDeclaration[]
 }
 
 /** A module dependency (M-r9 — declared, no resolver this pass). */
