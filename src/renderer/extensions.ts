@@ -31,6 +31,13 @@ export interface ClientHalfDeps {
   readonly log?: (line: string, detail?: unknown) => void
 }
 
+/** What ONE registration frame did (`S-23`'s realm inverse): whether it EVALUATED a source (a repeated delivery of the same
+ *  text did not), and which authored ids it withdrew on the way — the runtime's to remove from the document. */
+export interface RegistrationAnswer {
+  readonly registered: boolean
+  readonly withdrawn: readonly string[]
+}
+
 export interface ClientListenerRecord {
   readonly module: string
   readonly listener: string
@@ -65,6 +72,10 @@ export class CapabilityRouter {
   private contributionRecords: ContributionRecord[] = []
   private readonly bodies = new Map<DeliveryHandle, (entry: ChannelEntry) => void>()
   private readonly handlers = new Map<string, (ctx: never, ...args: unknown[]) => unknown>()
+  /** THE SOURCE EACH MODULE WAS REGISTERED WITH (`S-23`'s realm inverse): the census's re-send repeats the SAME source and
+   *  adds nothing, while an UPDATE delivers a DIFFERENT one and REPLACES the module's registrations. A function entry keeps
+   *  a marker, because the in-tree arm has no text to compare. */
+  private readonly sources = new Map<string, string>()
   private noHost: ClientStoreSurface | null = null
 
   /** Zero-arg stays lawful (`L2` §12's `I-2` constructs it so). */
@@ -73,13 +84,22 @@ export class CapabilityRouter {
   }
 
   /** A STRING is `L2` §9's `{module, client}` payload EVALUATED here; a function is the in-tree arm. */
-  registerModule(module: string, entry: string | ((ctx: ClientHalfCtx) => void)): void {
+  registerModule(module: string, entry: string | ((ctx: ClientHalfCtx) => void)): RegistrationAnswer {
     if (typeof module !== 'string' || module === '' || module.includes('.') || module.includes(':')) {
       this.log(`module register: invalid name ${JSON.stringify(String(module))} (no '.' and no ':')`)
-      return
+      return { registered: false, withdrawn: [] }
     }
-    // ONE frame per module: a second delivery of the same name adds no member (`L2` §9).
-    if (this.registered.includes(module)) return
+    // ONE frame per module — UNLESS THE SOURCE CHANGED (`S-23`'s realm inverse, `D-318`): the boot census RE-SENDS the same
+    // frames and must add nothing, while `module.update` delivers a DIFFERENT source and must leave the OLD half GONE. So a
+    // re-delivery of the same text is the no-op it always was, and a changed one WITHDRAWS this module's records first.
+    const source = typeof entry === 'string' ? entry : `\u0000function:${String(entry)}`
+    const standing = this.sources.get(module)
+    let withdrawn: readonly string[] = []
+    if (this.registered.includes(module)) {
+      if (standing === source) return { registered: false, withdrawn: [] }
+      withdrawn = this.withdrawModule(module)
+    }
+    this.sources.set(module, source)
     this.registered = [...this.registered, module]
     const ctx: ClientHalfCtx = {
       store: this.storeSurface(),
@@ -105,20 +125,41 @@ export class CapabilityRouter {
         run = evaluate(entry)
       } catch (error) {
         this.log('entry-malformed', message(error))
-        return
+        return { registered: true, withdrawn }
       }
       try {
         run(ctx)
       } catch (error) {
         this.log('entry-threw', message(error))
       }
-      return
+      return { registered: true, withdrawn }
     }
     try {
       entry(ctx)
     } catch (error) {
       this.log('entry-threw', message(error))
     }
+    return { registered: true, withdrawn }
+  }
+
+  /** THE INVERSE, AT THE REALM GRAIN (`S-23`): every record this module stood on is dropped — its listeners and their
+   *  bodies, its actions and their closures, its graph contributions — so the replacement starts from nothing. **The
+   *  AUTHORED nodes it contributed are the RUNTIME's to remove** (`Runtime.withdraw`), because only the document knows
+   *  which nodes a contribution added; this method answers the ids it was holding, so the caller can ask. */
+  withdrawModule(module: string): readonly string[] {
+    const ids: string[] = []
+    for (const record of this.contributionRecords) {
+      if (record.module !== module) continue
+      collectAuthoredIds(record.contribution.nodes, ids)
+    }
+    this.registered = this.registered.filter((name) => name !== module)
+    this.listenerRecords = this.listenerRecords.filter((record) => record.module !== module)
+    this.actionRecords = this.actionRecords.filter((record) => record.module !== module)
+    this.contributionRecords = this.contributionRecords.filter((record) => record.module !== module)
+    for (const handle of [...this.bodies.keys()]) if (handle.startsWith(`module:${module}#`)) this.bodies.delete(handle)
+    for (const key of [...this.handlers.keys()]) if (key.startsWith(`${module}\u0000`)) this.handlers.delete(key)
+    this.sources.delete(module)
+    return ids
   }
 
   modules(): readonly string[] {
@@ -176,6 +217,16 @@ export class CapabilityRouter {
 }
 
 const actionKey = (module: string, name: string): string => `${module}\u0000${name}`
+
+/** Every authored id a contributed forest carries, in document order (`css.id` first, then `props.id`, recursing). */
+function collectAuthoredIds(nodes: readonly unknown[], into: string[]): void {
+  for (const node of nodes) {
+    const held = node as { readonly css?: { readonly id?: unknown }; readonly props?: Readonly<Record<string, unknown>>; readonly children?: readonly unknown[] }
+    if (typeof held.css?.id === 'string') into.push(held.css.id)
+    else if (typeof held.props?.['id'] === 'string') into.push(held.props['id'] as string)
+    if (Array.isArray(held.children)) collectAuthoredIds(held.children, into)
+  }
+}
 
 /** A client source is a function-STRING delivered as DATA and evaluated HERE (`C-15`, `D-308`). */
 function evaluate(source: string): (ctx: ClientHalfCtx) => void {

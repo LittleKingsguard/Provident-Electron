@@ -49,10 +49,10 @@ describe('U9-FIX — the crossing: one frame in, a live realm registration out (
     expect(lines).toEqual([])
   })
 
-  it('2. a second frame under a standing name adds NO member — the re-delivery after an install is a no-op, never a second registration (old row 2: the post-install re-sync)', () => {
+  it('2. a second delivery of the SAME frame adds NO member — the census re-send after an install is a no-op, never a second registration (old row 2: the post-install re-sync; re-grained by `S-23`: a DIFFERENT source REPLACES, and row 2b is that arm)', () => {
     const { router } = realm()
     router.registerModule('capture', CLIENT_SOURCE)
-    router.registerModule('capture', `(ctx) => { ctx.action('later', () => 'x') }`)
+    router.registerModule('capture', CLIENT_SOURCE)
     expect(router.modules()).toEqual(['capture'])
     expect(router.actions().map((record) => record.name)).toEqual(['screenshot'])
     expect(router.listeners()).toHaveLength(1)

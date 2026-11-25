@@ -2094,13 +2094,14 @@ async function main(): Promise<void> {
       transport: bridge.channel,
       evaluate: (frame) => {
         if (moduleRouter === null) return
-        const before = moduleRouter.modules().length
-        moduleRouter.registerModule(frame.module, frame.client)
-        // A REPEATED FRAME ADDS NO MEMBER (`registerModule`'s own rule), so the shape runs once per NEW module
-        // (`S-20`, `D-317`): compose the graph, install the closure table, and re-drive the paints the re-render retired.
-        if (moduleRouter.modules().length === before) return
+        // ONE ANSWER, NOT A COUNT (`S-23`'s realm inverse, `D-318`): a repeated frame of the SAME text evaluates nothing and
+        // the shape does not run; an UPDATE evaluates the new source and the ids the router withdrew go to the runtime,
+        // whose `withdraw` takes the AUTHORED nodes back before the new contribution composes (`S-20`, `D-317`).
+        const answer = moduleRouter.registerModule(frame.module, frame.client)
+        if (!answer.registered) return
+        if (answer.withdrawn.length > 0) runtime.withdraw(answer.withdrawn)
         const install = startModuleShape(runtime, moduleRouter, frame.module)
-        console.info(`[provident-module] shape: standing ${JSON.stringify(install.standing)}, added ${JSON.stringify(install.added)}, skipped ${JSON.stringify(install.skipped)}, actions ${install.actions}`)
+        console.info(`[provident-module] shape: standing ${JSON.stringify(install.standing)}, added ${JSON.stringify(install.added)}, skipped ${JSON.stringify(install.skipped)}, actions ${install.actions}, withdrawn ${JSON.stringify(answer.withdrawn)}`)
       },
       fire: (handle, entry) => { moduleRouter?.fire(handle, entry) },
     })

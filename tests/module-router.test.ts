@@ -227,19 +227,29 @@ describe('CapabilityRouter — ONE frame in, ONE five-member ctx out (L2 §3, D-
   it('13. a SECOND frame under a standing name adds no member and overwrites nothing (old row 15: a duplicate name was never a silent overwrite)', () => {
     const router = new CapabilityRouter()
     let first: string | undefined
-    router.registerModule('dup', (ctx) => {
+    const entry = (ctx: ClientHalfCtx): void => {
       first = ctx.onDelivery('one', () => {})
       ctx.action('one', () => '1')
-    })
-    router.registerModule('dup', (ctx) => {
-      ctx.onDelivery('two', () => {})
-      ctx.action('two', () => '2')
-    })
+    }
+    router.registerModule('dup', entry)
+    // THE SAME SOURCE AGAIN (`S-23`): a re-delivery of one frame is the no-op; a DIFFERENT source is the update path and
+    // is row 13b's.
+    router.registerModule('dup', entry)
     // ONE frame per module (L2 §9): the standing registration is intact and the second added nothing.
     expect(router.modules()).toEqual(['dup'])
     expect(router.listeners().map((record) => record.listener)).toEqual(['one'])
     expect(router.actions().map((record) => record.name)).toEqual(['one'])
     expect(router.fire(first!, deliveredAt(first!, {}, [])).status).toBe('delivered')
+  })
+
+  it('13b — a DIFFERENT source under a standing name REPLACES: the old listeners and actions are GONE and the new ones stand (`S-23`)', () => {
+    const router = new CapabilityRouter()
+    router.registerModule('swap', (ctx) => { ctx.onDelivery('one', () => {}); ctx.action('one', () => '1') })
+    const answer = router.registerModule('swap', (ctx) => { ctx.onDelivery('two', () => {}); ctx.action('two', () => '2') })
+    expect(answer.registered, 'the second source EVALUATED — an update is not a no-op').toBe(true)
+    expect(router.modules(), 'one name, one member').toEqual(['swap'])
+    expect(router.listeners().map((record) => record.listener), 'the old listener is GONE').toEqual(['two'])
+    expect(router.actions().map((record) => record.name), 'and the old closure with it').toEqual(['two'])
   })
 
   it('14. the old row 16 subject — a non-function tool handler rejected at registration — has NO replacement on this half: `action` takes a live closure and its dispatch-time check is the engine\'s, so the row pins what the realm DOES own: a malformed entry is contained by NAME (D-105)', () => {

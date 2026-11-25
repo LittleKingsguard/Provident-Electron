@@ -31,6 +31,7 @@
 | `CH-7` | `tests/integration/renderer-wiring/module-shape.test.ts` | NEW, `RW-M1`…`RW-M4`: the contribution under its parent with the closure dispatching by name (contributed and authored nodes), idempotence across frames, a parentless contribution named with the page byte-identical, an undeclared action installing nowhere. |
 | `CH-8` | `strata/decisions.md` | `D-317` (the composition route and its two measured refusals), `D-318` (the update-frame drop), `D-319` (this ledger's rule). |
 | `CH-9` | `strata/modules.json` | `producing-runtime` `endpoints` 17 → 18 + its integration path; `renderer-wiring` + its integration path. |
+| `CH-25` | `src/renderer/{extensions,renderer,runtime}.ts`, `tests/module-{router,e2e}.test.ts`, `tests/integration/renderer-wiring/module-shape.test.ts`, four L3 pages | **`S-23`'s first half LANDED**: a frame whose source CHANGED replaces (the census re-send of the same text stays the no-op), `registerModule` answers `{registered, withdrawn}`, and `Runtime.withdraw(ids)` takes the authored nodes back before the new contribution composes. `13b`/`RW-M7` are the rows; rows 13/2 were re-grained to the SAME source, which is the no-op they are about. |
 | `CH-24` | `src/renderer/renderer.ts`, `tests/integration/renderer-wiring/module-shape.test.ts`, two L3 pages | **`AN-7` swept**: the install is per module. |
 | `CH-23` | `tests/e2e/harness/live-boot.ts` (new), both e2e batteries, `strata/modules.json` | **`AN-20` swept**: the lock, reap, artifact ensure, bounded waits, profile and stdio transport moved out of `module-executor.test.ts` BYTE-FOR-BYTE; both batteries import them and keep only their constants, their `beforeAll`/`afterAll` and their rows (966→419 and 901→343 lines). |
 | `CH-22` | `tests/e2e/module-channel/channel-live.test.ts` | **`AN-19` closed**: four modules with `client` sources, installed and driven over one booted bundle — the module shape's real path in a boot. |
@@ -104,5 +105,5 @@
 7. **`AN-1`/`AN-2`/`AN-17`/`AN-18`/`AN-19`** — re-measure at the next pin, or leave named with their owners.
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/modularity-cleanup.md", "d": "D-320", "why": "this ledger, rev 11 \u2014 `AN-7` swept with `CH-24`"}]}
+{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/modularity-cleanup.md", "d": "D-320", "why": "this ledger, rev 12 \u2014 `S-23`'s realm half and the runtime's `withdraw` landed (`CH-25`); `M-2b`'s third arm is now implementable"}]}
 ```

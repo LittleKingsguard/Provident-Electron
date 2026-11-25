@@ -72,6 +72,12 @@ export interface RuntimeOptions {
   contributions?: () => readonly GraphContribution[]
 }
 
+/** What `withdraw` answers (`S-23`'s runtime half, `D-318`): the authored ids it removed, and whether the document moved. */
+export interface WithdrawalResult {
+  readonly removed: readonly string[]
+  readonly changed: boolean
+}
+
 /** What `contribute` answers (`S-20`): the authored ids it composed, the contributions it refused BY NAME, and whether
  *  the document actually moved. **`changed` IS NOT `added.length > 0`**: a contributed forest that carries no authored
  *  id still reaches the document, and deriving the flag from ids would silently drop it (`AN-6`'s measurement). */
@@ -160,6 +166,42 @@ export class Runtime {
     if (!merged.changed) return { added: [], skipped: merged.skipped, changed: false }
     this.loadEnvelope(merged.envelope)
     return { added: merged.added, skipped: merged.skipped, changed: true }
+  }
+
+  /** THE INVERSE'S DOCUMENT HALF (`S-23`, `D-318`): remove every authored node carrying one of `ids` from the stored
+   *  document and re-load it — the construction path, so the authored `handlers` survive as they do for `contribute`. It is
+   *  the mirror of the merge: what a contribution ADDED, a withdrawal TAKES BACK, and nothing else. A fully-missing id set
+   *  leaves the document and the graph untouched; the answer names what actually left. */
+  withdraw(ids: readonly string[]): WithdrawalResult {
+    const base = this.envelope
+    if (base === null || ids.length === 0) return { removed: [], changed: false }
+    let composed: LegacyInitialData
+    try {
+      composed = structuredClone(base)
+    } catch {
+      this.warnings = [...this.warnings, { code: 'withdrawal-envelope-uncloneable', path: 'envelope' } as TranslatedWarning]
+      return { removed: [], changed: false }
+    }
+    const wanted = new Set(ids)
+    const removed: string[] = []
+    const prune = (node: LegacyNodeData): void => {
+      if (node.children === undefined) return
+      const kept: LegacyNodeData[] = []
+      for (const child of node.children) {
+        const childId = typeof child.css?.id === 'string' ? child.css.id : (typeof child.props?.['id'] === 'string' ? child.props['id'] as string : null)
+        if (childId !== null && wanted.has(childId)) {
+          removed.push(childId)
+          continue
+        }
+        prune(child)
+        kept.push(child)
+      }
+      node.children = kept
+    }
+    if (composed.template?.root !== undefined) prune(composed.template.root)
+    if (removed.length === 0) return { removed: [], changed: false }
+    this.loadEnvelope(composed)
+    return { removed, changed: true }
   }
 
   /** THE ONE MERGE IMPLEMENTATION (`S-14`, `S-15`, `S-20`; `C-6`): each contribution's nodes join the authored template

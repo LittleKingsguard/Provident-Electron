@@ -18,9 +18,12 @@ export interface RuntimeOptions {
   contributions?: () => readonly GraphContribution[]
 }
 
-/** What `contribute` answers (`S-20`): the authored ids it composed, the contributions it refused BY NAME, and whether
- *  the document moved. **`changed` is the MERGE's and never `added.length > 0`** — an id-less forest reaches the document
- *  with nothing to report in `added` (`AN-6`). **`skipped`'s three arms, stated once**: an authored `parent` for a
+/** What `withdraw` answers (`S-23`): the authored ids it removed, and whether the document moved. */
+export interface WithdrawalResult { readonly removed: readonly string[]; readonly changed: boolean }
+
+/** What `contribute` answers (`S-20`): the authored ids it composed, the contributions it refused BY NAME, and whether the
+ *  document moved. **`changed` is the MERGE's, never `added.length > 0`** — an id-less forest reaches the document with
+ *  nothing to report in `added` (`AN-6`). **`skipped`'s three arms, stated once**: an authored `parent` for a
  *  contribution the merge refused (a parent that does not stand, an uncloneable node list), the synthetic
  *  `'contributions'` for a throwing reader, and **every** parent when the stored document is absent (`null`) — the string
  *  is the subject, and the warning that rides beside it carries the reason (`AN-8`). */
@@ -50,6 +53,11 @@ export class Runtime {
    *  the construction path, so the authored `handlers` stay. A fully-skipped call leaves the document and the graph
    *  untouched. Never throws (`ASM-PR-2`). The caller re-drives its paints. */
   contribute(contributions: readonly GraphContribution[]): ContributionResult
+
+  /** THE INVERSE'S DOCUMENT HALF (`S-23`, `D-318`): remove every authored node carrying one of `ids` and re-load through
+   *  the construction path — the mirror of `contribute`, so what a contribution ADDED a withdrawal TAKES BACK and nothing
+   *  else. A missing set leaves the document and the graph untouched; the answer names what actually left. */
+  withdraw(ids: readonly string[]): WithdrawalResult
 
   bootstrap(): void   // unchanged
 }
@@ -82,5 +90,5 @@ private compileDirtyInMode(node: Node): CompiledState[]
 - **No `src/**` byte is declared here**: the runtime edits are L4's (D-3).
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L3", "module": "producing-runtime", "writes": [{"path": "docs/L3/producing-runtime/signatures.md", "d": "D-317", "why": "this page, rev 3 \u2014 `ContributionResult` carries `changed` and `skipped`'s three arms (`AN-8`)"}]}
+{"unit": "modularity", "layer": "L3", "module": "producing-runtime", "writes": [{"path": "docs/L3/producing-runtime/signatures.md", "d": "D-320", "why": "this page, rev 4 \u2014 the `withdraw` member and `WithdrawalResult` (`S-23`'s document half)"}]}
 ```

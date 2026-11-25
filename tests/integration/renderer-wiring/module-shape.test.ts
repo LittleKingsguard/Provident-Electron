@@ -11,6 +11,7 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import { installShim, mountEl } from '../../../src/shared/dom-shim.js'
 import { Runtime } from '../../../src/renderer/runtime.js'
 import { CapabilityRouter } from '../../../src/renderer/extensions.js'
+import type { ClientHalfCtx } from '../../../src/renderer/extensions.js'
 import { startModuleShape } from '../../../src/renderer/renderer.js'
 
 interface Shim {
@@ -100,6 +101,28 @@ describe('renderer-wiring — the module shape: the graph composition and the ac
     expect(install.skipped, 'the refusal is answered BY NAME').toEqual(['absent'])
     expect(runtime.elementForNodeId('orphan'), 'never half-attached').toBe(null)
     expect(runtime.renderedHtmlResult().renderedHtml, 'and the page did not re-render for a refusal').toBe(before)
+  })
+
+  it('RW-M7 — an UPDATE replaces the module: the router answers the ids it withdrew, the runtime removes those authored nodes, and the new contribution composes (`S-23`, `D-318`)', () => {
+    const runtime = runtimeOf()
+    const router = routerOf()
+    const v1 = (ctx: ClientHalfCtx): void => {
+      ctx.graph({ parent: 'host', nodes: [{ type: 'div', css: { id: 'alpha-one' } }] })
+      ctx.action('one', () => 1)
+    }
+    const v2 = (ctx: ClientHalfCtx): void => {
+      ctx.graph({ parent: 'host', nodes: [{ type: 'div', css: { id: 'alpha-two' } }] })
+      ctx.action('two', () => 2)
+    }
+    expect(router.registerModule('alpha', v1), 'a fresh frame evaluates and withdraws nothing').toEqual({ registered: true, withdrawn: [] })
+    expect(startModuleShape(runtime, router, 'alpha').added).toEqual(['alpha-one'])
+    const replaced = router.registerModule('alpha', v2)
+    expect(replaced.registered, 'the DIFFERENT source evaluates').toBe(true)
+    expect(replaced.withdrawn, 'and the router answers the ids it was holding, for the document to take back').toEqual(['alpha-one'])
+    expect(runtime.withdraw(replaced.withdrawn), 'the runtime removes them').toEqual({ removed: ['alpha-one'], changed: true })
+    expect(runtime.elementForNodeId('alpha-one'), 'the OLD node is gone from the authored page').toBe(null)
+    expect(startModuleShape(runtime, router, 'alpha').added, 'and the new contribution composes').toEqual(['alpha-two'])
+    expect(runtime.elementForNodeId('alpha-two'), 'the new node stands').toBeTruthy()
   })
 
   it('RW-M6 — a new module installs ITS OWN handlers and does not re-apply the earlier module\'s (`AN-7`)', () => {
