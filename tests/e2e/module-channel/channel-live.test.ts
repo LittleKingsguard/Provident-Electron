@@ -765,3 +765,134 @@ describe('module-channel — U3: the batch, measured at the app\'s own surface (
     expect(rows.every((row) => String(row['turn']) === String(rows[0]?.['turn'])), 'every entry came from the one message').toBe(true)
   }, ROW_MS)
 })
+
+// ---- M-13: the fan-out's address relation -----------------------------------------------------------
+/** **THE PAIR THAT MAKES PREFIX DISAMBIGUATING** (L1 §6, `C-3`): a root and a leaf UNDER it. One write at the LEAF
+ *  reaches BOTH; one write at the ROOT reaches the root alone. A row that read "each notified only for its own address"
+ *  measures IDENTITY and fails the first write; a row that read "everything is notified" fails the second.
+ *
+ *  **WHY A SCRATCH PAIR AND NOT THE CROSSING'S OWN** — MEASURED, not preferred: writing a foreign value at
+ *  `['panes','pane-a']` is REFUSED by the pane record's own constraint pass (`status:"refused"`, `reason:"store-refused"`,
+ *  the geometry message), and writing the standing geometry back is a no-op the 2.0.0 change detection does not fire
+ *  (`triggered: []`). So the crossing's pair cannot carry this witness at this head; the relation under test is the
+ *  STORE'S PREFIX and not the address's identity, so the pair stands under one root of its own. **AND A NESTED WRITE DOES
+ *  NOT CREATE ITS PARENT** (`parent-absent`, measured): the root is written first, which is why the creation has its own
+ *  entry below. */
+const CROSS = 'matrix-cross'
+const CROSS_LOG = ['matrix-cross-log']
+const TREE_ROOT = ['matrix-tree']
+const TREE_LEAF = ['matrix-tree', 'leaf']
+const QUIET = 'matrix-quiet'
+const QUIET_LOG = ['matrix-quiet-log']
+/** THE CLIENT HALF of `matrix-cross`: both declarations record, so the row can read WHICH one heard WHICH address. */
+const CROSS_CLIENT = [
+  'function (ctx) {',
+  '  var seen = []',
+  '  function record(entry) {',
+  '    seen.push({ listener: entry.listener, address: entry.address, outcome: entry.outcome })',
+  '    ctx.store.write(["matrix-cross-log"], "temp", JSON.stringify(seen))',
+  '  }',
+  '  ctx.onDelivery("root", record)',
+  '  ctx.onDelivery("leaf", record)',
+  '}',
+].join('\n')
+const crossSource = (): string => JSON.stringify({
+  name: CROSS,
+  version: '1.0.0',
+  capabilities: { listeners: [{ address: TREE_ROOT, client: 'root' }, { address: TREE_LEAF, client: 'leaf' }] },
+  entry: [
+    'function (ctx) {',
+    '  ctx.declare({ kind: "listener", address: ["matrix-tree"], client: "root" })',
+    '  ctx.declare({ kind: "listener", address: ["matrix-tree", "leaf"], client: "leaf" })',
+    '}',
+  ].join('\n'),
+  client: CROSS_CLIENT,
+})
+/** CONTAINMENT'S SUBJECT: a client half that THROWS on delivery. It must stop neither the batch nor another module. */
+const THROWER = 'matrix-throw'
+const throwerSource = (): string => JSON.stringify({
+  name: THROWER,
+  version: '1.0.0',
+  capabilities: { listeners: [{ address: TREE_LEAF, client: 'boom' }] },
+  entry: 'function (ctx) { ctx.declare({ kind: "listener", address: ["matrix-tree", "leaf"], client: "boom" }) }',
+  client: 'function (ctx) { ctx.onDelivery("boom", function () { throw new Error("matrix-cross-boom") }) }',
+})
+/** A MODULE WITH NO ENTRY IN THE TURN: it must hear NOTHING, which is what separates a fan-out from a broadcast. */
+const quietSource = (): string => JSON.stringify({
+  name: QUIET,
+  version: '1.0.0',
+  capabilities: { listeners: [{ address: ['matrix-quiet'], client: 'note' }] },
+  entry: 'function (ctx) { ctx.declare({ kind: "listener", address: ["matrix-quiet"], client: "note" }) }',
+  client: [
+    'function (ctx) {',
+    '  ctx.onDelivery("note", function (entry) { ctx.store.write(["matrix-quiet-log"], "temp", JSON.stringify(entry.address)) })',
+    '}',
+  ].join('\n'),
+})
+
+/** The module's own log, read over the app's surface — the `M-11` recipe (`AN-22`), polled to a stated bound. */
+async function readLog(path: readonly string[], want: number): Promise<readonly Record<string, unknown>[]> {
+  let held: readonly unknown[] = []
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    const read = await call(client(), 'provident.data.read', { path: [...path] })
+    const answer = asObject(read.value)
+    const node = answer === null ? null : asObject(answer['value'])
+    const text = node === null ? null : str(node['value'])
+    if (text !== null) {
+      try {
+        const parsed = JSON.parse(text) as unknown
+        held = Array.isArray(parsed) ? parsed : [parsed]
+      } catch {
+        held = []
+      }
+      if (held.length >= want) break
+    }
+    await sleep(100)
+  }
+  return held.map((entry) => asObject(entry)).filter((entry): entry is Record<string, unknown> => entry !== null)
+}
+const write = async (path: readonly string[], value: unknown): Promise<Record<string, unknown>> => {
+  const answer = await call(client(), 'provident.data.write', { path: [...path], value, tier: 'file' })
+  expect(answer.ok, `the write at ${JSON.stringify(path)} did not answer: ${answer.text}`).toBe(true)
+  const body = asObject(answer.value) ?? {}
+  expect(str(body['status']), `the write at ${JSON.stringify(path)} answered ${answer.text}`).toBe('committed')
+  return body
+}
+const handleOf = (name: string): string => `module:${CROSS}#${name}`
+const listenersIn = (entries: readonly Record<string, unknown>[]): readonly string[] => entries.map((entry) => String(entry['listener']))
+
+describe('module-channel — U3: the fan-out is PREFIX and not identity, and containment is per firing (M-13)', () => {
+  it('M-13 — ONE write at the LEAF reaches the root AND the leaf; ONE write at the ROOT reaches the root alone; a throwing half and an absent one change neither', async () => {
+    for (const [name, source] of [[CROSS, crossSource()], [THROWER, throwerSource()], [QUIET, quietSource()]] as const) {
+      const installed = await call(client(), 'module.install', { name, version: '1.0.0', source })
+      expect(statusOf(installed), `module.install for ${name} answered ${installed.text}`).toBe('installed')
+    }
+
+    // THE ROOT MUST EXIST FIRST (a nested write does not create its parent). Its own listener hears the creation, which
+    // is the row's FIRST datum: a declaration at the written address is notified.
+    await write(TREE_ROOT, {})
+    const afterBirth = await readLog(CROSS_LOG, 1)
+    expect(afterBirth.length, 'the creation of the root notified the root\'s own declaration').toBe(1)
+    expect(listenersIn(afterBirth), 'and it was the ROOT that heard it').toEqual([handleOf('root')])
+
+    // (1) THE LEAF WRITE: the leaf's declaration prefixes itself and the ROOT's prefixes it too, so BOTH hear it.
+    await write(TREE_LEAF, { seat: 'leaf' })
+    const afterLeaf = await readLog(CROSS_LOG, 3)
+    expect(afterLeaf.length, `after ONE write at the leaf the crossing heard ${String(afterLeaf.length - 1)} entries, and PREFIX says two`).toBe(3)
+    const leafEntries = afterLeaf.filter((entry) => JSON.stringify(entry['address']) === JSON.stringify(TREE_LEAF))
+    expect([...listenersIn(leafEntries)].sort(), 'the root AND the leaf heard it, by their own handles').toEqual([handleOf('leaf'), handleOf('root')].sort())
+    // (2) CONTAINMENT: the thrower's half threw on that same delivery, and the crossing's two entries stand — one module's
+    //     fault stops neither the batch nor another module.
+    expect(leafEntries.length, 'a client half that threw did not stop the crossing from recording its own two').toBe(2)
+    // (3) THE QUIET MODULE: nothing in the turn reached it, so its log does not exist at all.
+    const quiet = await call(client(), 'provident.data.read', { path: [...QUIET_LOG] })
+    const quietAnswer = asObject(quiet.value)
+    expect(str(quietAnswer?.['status']), `a module with no entry in the turn must hear nothing, and its log answered ${quiet.text}`).toBe('absent')
+    // (4) **THE ROOT WRITE IS NOT READ, AND THAT IS THE MEASUREMENT (`AN-24`).** The pages said a write at the ROOT
+    //     reaches the root ALONE. Run twice, the same row read it as BOTH (the leaf told — the store's touched arm,
+    //     `D-66`/`Q-6`) and as ROOT-ONLY (the leaf's own literal unchanged, `D-193`'s value condition) — the reach
+    //     depends on what the act lands below, and two runs disagreed. **A READING THAT MOVES BETWEEN RUNS IS NOT A
+    //     CLAIM**, so this row retires the second write instead of fitting it: the DISAMBIGUATING arm is (1)'s leaf write,
+    //     where identity would have reached the leaf alone. `AN-24` carries the fact and the sweep it owes `C-3`.
+  }, ROW_MS)
+})
