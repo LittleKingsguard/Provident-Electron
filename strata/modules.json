@@ -96,7 +96,10 @@
         "tests/e2e/central-data/",
         "tests/e2e/tier-readout/"
       ],
-      "endpoints": 16
+      "endpoints": 16,
+      "planned": [
+        "src/shared/store-realm.ts"
+      ]
     },
     {
       "name": "producing-runtime",
@@ -160,7 +163,10 @@
         "tests/module-queue.test.ts",
         "tests/module-image.test.ts"
       ],
-      "endpoints": 24
+      "endpoints": 24,
+      "planned": [
+        "tests/e2e/module-parity/"
+      ]
     },
     {
       "name": "declaration-registry",
@@ -169,7 +175,12 @@
         "tests/unit/declaration-registry/",
         "tests/integration/declaration-registry/"
       ],
-      "endpoints": 10
+      "endpoints": 10,
+      "planned": [
+        "src/shared/registry/",
+        "tests/unit/declaration-registry/",
+        "tests/integration/declaration-registry/"
+      ]
     },
     {
       "name": "module-channel",
@@ -189,7 +200,11 @@
         "src/modules/menus/",
         "tests/integration/menus-module/"
       ],
-      "endpoints": 13
+      "endpoints": 13,
+      "planned": [
+        "src/modules/menus/",
+        "tests/integration/menus-module/"
+      ]
     },
     {
       "name": "demo-contents",
@@ -197,7 +212,11 @@
         "src/modules/demo/",
         "tests/integration/demo-contents/"
       ],
-      "endpoints": 6
+      "endpoints": 6,
+      "planned": [
+        "src/modules/demo/",
+        "tests/integration/demo-contents/"
+      ]
     },
     {
       "name": "secure-panels",

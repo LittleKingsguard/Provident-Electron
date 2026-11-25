@@ -17,7 +17,7 @@
 //
 // IT IS UNMARKED AND GATING (D-30, D-40), it imports nothing from `src/**` or `scripts/**`, and a `DISPLAY` is NOT its
 // prerequisite: it reads two files and boots nothing.
-import { readFileSync } from 'node:fs'
+import { readFileSync, statSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -58,6 +58,31 @@ function disagreements(rows: readonly FigureRow[], expected: ReadonlyMap<string,
   })
 }
 
+/** **THE `planned` ARMS** (`D-321`): a map row's `paths` is an OWNERSHIP claim and its `planned` list names the subset
+ *  that is a reserved row's or an owed step's home and is NOT in the tree yet. So the map answers two questions
+ *  separately, and BOTH are stat-ed: an unplanned path must exist, and a planned one must not. */
+interface MapRowWithPlanned extends MapRow { readonly paths: readonly string[]; readonly planned?: readonly string[] }
+const statOf = (path: string): boolean => {
+  try {
+    statSync(join(REPO, path))
+    return true
+  } catch {
+    return false
+  }
+}
+function pathProblems(rows: readonly MapRowWithPlanned[], exists: (path: string) => boolean): readonly string[] {
+  return rows.flatMap((row) => {
+    const planned = new Set(row.planned ?? [])
+    return row.paths.flatMap((path) => {
+      if (planned.has(path)) {
+        return exists(path) ? [`${row.name}: \`${path}\` is marked planned and IS in the tree — the pass that built it owes its own marker removal`] : []
+      }
+      return exists(path) ? [] : [`${row.name}: \`${path}\` is claimed as built and is ABSENT`]
+    })
+  })
+}
+const MAP_ROWS: readonly MapRowWithPlanned[] = map.modules as readonly MapRowWithPlanned[]
+
 describe('modularity · the map figures (§2 vs `strata/modules.json`, `AN-12`)', () => {
   it('MF-1 — every §2 row that states an `endpoints` figure states THE MAP\'S figure', () => {
     const rows = statedFigures(readFileSync(join(REPO, PAGE), 'utf8'))
@@ -82,5 +107,21 @@ describe('modularity · the map figures (§2 vs `strata/modules.json`, `AN-12`)'
     const foreign = disagreements([{ module: 'module-that-does-not-exist', figure: 3 }], ENDPOINTS_OF)
     expect(foreign, 'a figure about a module the map does not carry is refused, never read as agreement').toHaveLength(1)
     expect(disagreements(statedFigures(real), ENDPOINTS_OF), 'and the real table is admitted whole — the comparator has two arms').toEqual([])
+  })
+
+  it('MF-4 — every UNPLANNED path the map claims exists, and every `planned` one does NOT (the two arms of `D-321`)', () => {
+    expect(MAP_ROWS.flatMap((row) => row.planned ?? []).length, 'the map carries planned homes at all, so the second arm is not vacuous').toBeGreaterThan(0)
+    expect(pathProblems(MAP_ROWS, statOf), 'a claimed path that is absent, or a planned one that has been built and left marked, reds BY NAME').toEqual([])
+  })
+
+  it('MF-5 — THE FALSIFIER: the same comparator refuses an absent unplanned path and a present planned one, and admits the real map whole', () => {
+    const rows: readonly MapRowWithPlanned[] = [{ name: 'probe', endpoints: 1, paths: ['tests', 'src/modules/'], planned: ['src/modules/'] }]
+    const absent = pathProblems([{ name: 'probe', endpoints: 1, paths: ['no/such/path'] }], statOf)
+    expect(absent, 'an unplanned path the tree does not carry MUST red').toHaveLength(1)
+    expect(absent[0], 'and it names the path').toContain('no/such/path')
+    const stale = pathProblems(rows, () => true) // every claimed path stands, so the ONE red is the planned path that has been built
+    expect(stale, 'a PLANNED path that now exists MUST red — the marker is cleared in the pass that builds it').toHaveLength(1)
+    expect(stale[0], 'and it names the marker it owes').toContain('planned')
+    expect(pathProblems(MAP_ROWS, statOf), 'and the real map is admitted whole').toEqual([])
   })
 })

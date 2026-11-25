@@ -6629,6 +6629,18 @@ and **the OBJECT spelling puts it back to `top.height=396px`** with `applied` an
 
 **WHAT IT UNBLOCKS AND WHAT IT FORBIDS.** `M-11` may assert the readings a module can actually take — every entry of one turn carrying one `turn`, each entry reaching its own half, containment per firing — and **may not assert "one call per module"**, which no reading of the app's surface can see. `M-13` is untouched (`C-3`'s prefix relation is the store's and is measured through the addresses). The L1 cell `S-13`, L2 §3/§4, L3 §7, the two `ASM`s and the code's comment move in this pass; no behaviour moves, and no row relied on the old words — `M-11`, the only row that would have, is not yet written.
 
+## D-321 — A MAP ROW'S `paths` IS AN OWNERSHIP CLAIM, AND ITS `planned` LIST NAMES THE SUBSET THAT IS A RESERVED ROW'S HOME AND IS NOT IN THE TREE
+
+**Status:** ACTIVE · **Date:** 2026-11-25 · **Source (measured):** `strata/modules.json` at `e9fb05f` — **nine** claimed paths absent from the worktree, not the two `AN-11` had noticed: `central-data`'s `src/shared/store-realm.ts`; `module-system`'s `tests/e2e/module-parity/` (`M-29`'s home, blocked on `OWED-11`); `declaration-registry`'s three (an OWED L4); `menus-module`'s and `demo-contents`' two each (`U7`).
+
+**THE PROBLEM, STATED AT ITS GRAIN.** A `paths` entry says *this module owns this path* — that is what `modules.md` §5's attribution rule reads and what a boundary declaration is checked against. But five rows were using the same member to say *this is where a reserved row will live* or *where an owed L4 will land*, and nothing in the file distinguished the two. A reader could not tell a built battery from a promised one; `AN-11` named two of the nine and had itself gone half-stale (`tests/e2e/module-channel/` was built at `e5f1311` while the ledger still said it did not exist).
+
+**THE RULE.** `paths` keeps meaning OWNERSHIP and does not shrink: a reserved row with no declared home is a row with no home. **A row may carry `planned: [paths…]`** — a subset of its own `paths` whose files are **not in the tree yet** because they are a reserved row's or an owed step's landing site. So the map answers two questions separately: *who owns this path* (every entry) and *is it built* (an entry not in `planned`).
+
+**THE TWO ARMS A ROW READS, AND THEY BITE BOTH WAYS** (`MF-4`/`MF-5`, `tests/e2e/modularity/map-figures.test.ts`): **every `paths` entry NOT in `planned` must exist**, and **every `planned` entry must NOT exist**. The second arm is what keeps the marker honest: the pass that builds `tests/e2e/module-parity/` or `src/shared/registry/` REDS until it removes its own marker in that same edit — the same discipline `P-5` applies to a boundary declaration and `MF-1` to a figure.
+
+**WHAT IT DOES NOT DO.** It adds no behaviour, no route and no member to any module: it is one member of the corpus's own map, read by one row and by nothing else. The five rows that carry it are unchanged in every count — `endpoints` does not move, because a home is not a member.
+
 ```boundary-declared
-{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/decisions.md", "d": "D-320", "why": "the fan-out's grain: the batch is the message, the firing is per entry in message order, containment per firing; the per-module call the pages demanded is withdrawn and its alternative re-stated; no src behaviour moves"}]}
+{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/decisions.md", "d": "D-321", "why": "the map's `planned` member: ownership and built-ness answered separately, with the two stat arms and the self-clearing rule; no src byte"}]}
 ```

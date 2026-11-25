@@ -242,7 +242,12 @@
 // NOTE: the repo's vitest.config.ts does NOT set `globals: true` — the suite
 // imports the vitest bindings explicitly (runtime), while tsconfig.tests.json
 // still types them globally (types: ["node", "vitest/globals"]).
-import { beforeAll, afterAll, describe, expect, it } from 'vitest'
+import { beforeAll, afterAll, describe, expect, it, vi } from 'vitest'
+
+// THE FILE'S OWN BUDGET (`AN-18`): the register rows execute 117 strategy attempts, and the harness's 5 s DEFAULT is a budget
+// mismatch rather than a claim — under a full parallel suite the work alone crosses it while every assertion still holds. A
+// timeout is not a subject, so the bound moves and NOTHING ELSE does: no assertion, skip, retry or title.
+vi.setConfig({ testTimeout: 30_000 })
 import { mkdtemp, rm, readFile, writeFile, mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
