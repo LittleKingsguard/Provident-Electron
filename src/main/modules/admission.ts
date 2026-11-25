@@ -100,7 +100,12 @@ export function compare(capabilities: ModuleCapabilities, registered: Registrati
   for (const key of declaredMains) {
     if (!registered.mains.get(key)) return refusal('declaration-overstated', key)
   }
-  for (const key of registered.mains.keys()) {
+  for (const [key, main] of registered.mains) {
+    // A NULL IS THE PASSTHROUGH ARM AND NEVER AN UNDECLARED MAIN (`D-320`, `AN-23`): every declaration registers a key,
+    // and the one that declares no `main` half registers `null` — lawful by `activation.ts`'s own docblock. Reading the
+    // MAP's keys alone counted that null as a registration the manifest never made, which only stayed invisible while the
+    // map was keyed by ADDRESS (the passthrough's address was also four declared mains' address).
+    if (main === null) continue
     if (!declaredMains.has(key)) return refusal('declaration-undeclared', key)
   }
   return null
