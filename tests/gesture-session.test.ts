@@ -1891,6 +1891,13 @@ const SIBLING_UNIT_ARTIFACT_CONTROL: ReadonlyArray<{
   { path: 'tests/divergence-attribute-extractor.test.ts', owner: 'the `U-DIVERGENCE-EXT` / `C2` HARNESS unit', authority: 'that unit\'s OWN RED SET (the same registry records the pair; `docs/specs/ci-divergence-leg.md` amendment clause `A-2.8`)' },
   { path: 'src/shared/dom-shim.ts', owner: 'the `U-DIVERGENCE-EXT` / `C2` HARNESS unit — for THIS reading only: the shim is SHARED (a path is attributed, not a unit; a later change by another unit is RE-ATTRIBUTED, never silently inherited)', authority: 'CHANGED by that pass — the attribute-backed `dataset` fix that closed the measured `data-wire` divergence (`docs/specs/engine-pin.md`’s `R-16`/`P-IM-1` re-grain records the same landing); `docs/specs/gutter.md` §3.4 `R-4`’s own cell names `dom-shim.ts`’s sibling status' },
   { path: 'tests/ui-leg-contract.test.ts', owner: 'the `U-REALDOM-BOOT` / `C1` LEG unit', authority: 'that unit\'s own row file for the additive test-layer leg (`AGENTS.md` item 4) — the same path/unit pair `tests/gutter.test.ts`\'s registry records' },
+  // ── **⟶ ATTRIBUTED 2026-11-25 (THE `modularity` UNIT): TWO `src/renderer/` MODULES ANOTHER UNIT OWNS.** `F-9(b)` reads
+  //    the tree against "this unit's own attributable change set", and it already excludes `renderer.ts`/`runtime.ts` as
+  //    allow-list siblings; these two are `modularity`'s (the realm half and the channel's realm end), so a pass touching
+  //    them reds this row on a dirty tree and greens on a clean one — the class `AN-17` records. Named with their OWNER,
+  //    which is what `siblingArtifactOwner` is for, and no assertion, arm or count moves.
+  { path: 'src/renderer/extensions.ts', owner: 'the `modularity` unit', authority: "that unit's realm half (`S-2b`, `D-305`/`D-313`): the client ctx, the delivery table and the named-action table — declared at the boundary row of every pass that touches it" },
+  { path: 'src/renderer/module-channel-client.ts', owner: 'the `modularity` unit', authority: "that unit's channel realm end (`S-13`, `D-307`): the fan-out, the registration frame and the client store proxy — declared at the boundary row of every pass that touches it" },
 ]
 /** **THE DECLARING UNIT, BY PATH** — the census above read as a map, so `R-7` names the OWNER of every
  *  sibling path it excludes (the same `path → declaring unit` discipline the registry in
