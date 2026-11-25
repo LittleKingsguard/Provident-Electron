@@ -376,6 +376,38 @@ describe('module-system — U1: the contract, the two halves, admission, the res
     expect(store.write(['probe'], 'mem', 1), '§10 — the store itself answers the same write: the refusal stands in THIS module\'s ctx (L1 §3 S-11)').toBeTruthy()
   })
 
+  it('I-10 — TWO listeners at ONE address keep their OWN main halves (`AN-23`: the map is keyed by the declaration\'s handle, never by its address)', async () => {
+    const h = await harness()
+    // THE TWO DECLARATIONS SHARE AN ADDRESS AND DIFFER IN `client`, which `C-3`/`ASM-MC-7` make two declarations. Before
+    // the fix the mains map was keyed by the ADDRESS, so the second main overwrote the first and BOTH client halves got it.
+    const entry = 'function (ctx) { ctx.declare({ kind: "listener", address: ["twins"], main: function () { return "a" }, client: "a" }); ctx.declare({ kind: "listener", address: ["twins"], main: function () { return "b" }, client: "b" }) }'
+    const source = JSON.stringify({
+      name: 'matrix-twins',
+      version: '1.0.0',
+      entry,
+      capabilities: {
+        listeners: [
+          { address: ['twins'], main: 'a', client: 'a' },
+          { address: ['twins'], main: 'b', client: 'b' },
+        ],
+      },
+    })
+    const verdicts = verdictsOf('I-10 install', () => callOn(h.executor, 'install', { kind: 'source', source }))
+    expect(statusOf(verdicts[0]), 'the two declarations are lawful and the entry registers both').toBe('installed')
+    const listeners = asArray(memberOf(activationNamed(h.executor, 'matrix-twins'), 'listeners'))
+    expect(listeners.length, 'ONE binding per declaration, both at the SAME address').toBe(2)
+    const mainOf = (handle: string): unknown => {
+      const held = listeners.find((entry) => str(memberOf(entry, 'handle')) === handle)
+      return memberOf(held, 'main')
+    }
+    const a = mainOf('module:matrix-twins#a')
+    const b = mainOf('module:matrix-twins#b')
+    expect(typeof a, 'the first declaration carries a main half').toBe('function')
+    expect(typeof b, 'and so does the second').toBe('function')
+    expect((a as (address: readonly string[]) => unknown)(['twins']), 'the FIRST answers its own value').toBe('a')
+    expect((b as (address: readonly string[]) => unknown)(['twins']), 'the SECOND answers its own — not the first, not the last for both').toBe('b')
+  })
+
   it('I-9 — §11: the DOOR answers the handler\'s own value, and its two refusals are VALUES that name the subject', async () => {
     // THE ROW THE L2 PAGE NAMED AND NO PASS HAD WRITTEN (`interface.md` §12; `L3` §13's `MS-9` is the unit twin). It
     // drives the REAL store and the REAL executor, so the door's answers are read at the integration grain.

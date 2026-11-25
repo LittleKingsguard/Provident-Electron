@@ -18,7 +18,7 @@ import {
 } from '../../shared/module-contract.js'
 import type { Address, Listener } from 'provident-storeroom'
 import { FOUNDATION, compare, declaredListeners, isFoundationTool, type Registrations } from './admission.js'
-import { addressKey, listenerHandle } from './handles.js'
+import { listenerHandle } from './handles.js'
 import type { LoadedModule } from './loader.js'
 
 export interface ActiveRecord {
@@ -53,7 +53,10 @@ export function activate(module: LoadedModule, host: ModuleHost): ActivationOutc
   const ctx: MainHalfCtx = {
     store: refusingStore(),
     declare: (declaration) => {
-      const key = addressKey(declaration.address)
+      // THE DECLARATION'S HANDLE, AND NOT ITS ADDRESS (`AN-23`): two declarations at ONE address with distinct `client`
+      // names are two declarations (`C-3`, `ASM-MC-7`), so keying this map by the address collapsed the second main over
+      // the first and handed BOTH client halves the last one.
+      const key = listenerHandle(manifest.name, declaration)
       // THE DECLARATION'S MAIN HALF ARRIVES IN ONE OF ITS TWO LAWFUL SPELLINGS: the MANIFEST carries it
       // as a function-STRING, and the ENTRY — already compiled code — hands the live function. Both are
       // the same half, so `compileMain` is the identity on the second and never a second member.
@@ -100,17 +103,16 @@ export function activate(module: LoadedModule, host: ModuleHost): ActivationOutc
     }
   }
 
-  const mismatch = compare(manifest.capabilities, registrations)
+  const mismatch = compare(manifest.capabilities, registrations, manifest.name)
   if (mismatch !== null) return { ok: false, reason: mismatch.reason, subject: mismatch.subject }
   if (state.refusal !== null) return { ok: false, reason: state.refusal.reason, subject: state.refusal.subject }
 
   const bindings: ListenerBinding[] = []
   for (const declaration of declaredListeners(manifest.capabilities)) {
-    const key = addressKey(declaration.address)
     const handle = listenerHandle(manifest.name, declaration)
-    const main = state.mains.get(key) ?? null
+    const main = state.mains.get(handle) ?? null
     if (typeof declaration.main === 'string' && declaration.main !== '' && main === null) {
-      return { ok: false, reason: 'declaration-overstated', subject: key }
+      return { ok: false, reason: 'declaration-overstated', subject: handle }
     }
     bindings.push({ address: declaration.address, handle, ...(main === null ? {} : { main }) })
     try {

@@ -10,7 +10,7 @@
 // lawful, and still ONE registered store entry (`D-307`).
 import type { ListenerDeclaration, Refusal, RefusalName } from '../../shared/module-contract.js'
 import type { ModuleCapabilities } from '../../shared/types.js'
-import { addressKey } from './handles.js'
+import { listenerHandle } from './handles.js'
 import type { LoadedModule } from './loader.js'
 
 export type Admission = { readonly ok: true } | { readonly ok: false; readonly reason: RefusalName; readonly subject: string }
@@ -19,7 +19,8 @@ export type Admission = { readonly ok: true } | { readonly ok: false; readonly r
 export interface Registrations {
   /** The FULL `module:<name>.<tool>` names; `compare` strips the prefix to judge BARE names. */
   readonly tools: ReadonlySet<string>
-  /** addressKey -> the entry's compiled main half, or null where it declared none. */
+  /** THE DECLARATION'S HANDLE (`listenerHandle`, client-keyed when it names one) -> its compiled main half, or null
+   *  where it declared none — never the ADDRESS, which two declarations can share (`AN-23`). */
   readonly mains: ReadonlyMap<string, ((address: readonly string[]) => unknown) | null>
   readonly handlers: ReadonlyMap<string, (args: unknown) => unknown>
   /** The one refusal a registration door itself raised, held until the comparison has had its say. */
@@ -79,7 +80,7 @@ export function admitDeclaration(module: LoadedModule, foundationTools: Readonly
 }
 
 /** `C-12` in BOTH directions, on BARE names, with the refused thing as the SUBJECT. */
-export function compare(capabilities: ModuleCapabilities, registered: Registrations): Refusal | null {
+export function compare(capabilities: ModuleCapabilities, registered: Registrations, module: string): Refusal | null {
   const declared = declaredTools(capabilities ?? {})
   const declaredSet = new Set(declared)
   const registeredSet = new Set([...registered.tools].map(bareToolName))
@@ -94,7 +95,7 @@ export function compare(capabilities: ModuleCapabilities, registered: Registrati
   const declaredMains = new Set(
     declaredListeners(capabilities ?? {})
       .filter((declaration) => typeof declaration.main === 'string' && declaration.main !== '')
-      .map((declaration) => addressKey(declaration.address)),
+      .map((declaration) => listenerHandle(module, declaration)),
   )
   for (const key of declaredMains) {
     if (!registered.mains.get(key)) return refusal('declaration-overstated', key)
