@@ -6,7 +6,7 @@ and the sweep order. It carries no claim about behaviour and nothing cites it as
 
 ## Where the branch stands
 
-`main` is at **`ed60a4c`** (the commit that carries this page); the remote is at **`a58a7ab`** — **48 commits ahead, nothing pushed** (`D-6`'s pointer clause; the
+**`main`'s tip carries this page** and the tree is clean; the remote is at **`a58a7ab`** and is **48 commits behind it — nothing pushed** (`D-6`'s pointer clause; the
 freeze is lifted). The worktree is clean, the pins stand (`provident-storeroom ^2.0.0`, lock 2.0.1; `provident-ssr ^0.6.0`),
 and the demo bundle is regenerated against the renderer and runtime it bundles (`D-118`).
 
@@ -88,5 +88,5 @@ by moving the residue where it belongs.
 4. Beside them: the **cap ruling**, the **out-of-band sink**, **`app-shell`'s boot-route rev**, and the **two splits**.
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/handover.md", "d": "D-321", "why": "the handover replaced whole: the tree as it stands at ed60a4c \u2014 four legs green at 3,077/165, the U1/U3/U4/U5 and S-23 landings, the e2e battery and its three rows, U2's written rung, the open set, the three habits and the next acts in order"}]}
+{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/handover.md", "d": "D-321", "why": "the handover replaced whole: the tree as it stands (its tip carries this page) \u2014 four legs green at 3,077/165, the U1/U3/U4/U5 and S-23 landings, the e2e battery and its three rows, U2's written rung, the open set, the three habits and the next acts in order"}]}
 ```
