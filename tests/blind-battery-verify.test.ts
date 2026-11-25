@@ -13,7 +13,7 @@
 // 39 scenarios. 33 and 39 are the e2e stdio runner (`tests/e2e-battery.test.mjs`)
 // and its "0 failures / 93 checks" result — left as a skipped unit marker here,
 // asserted only via the Runtime for 34-38.
-import { describe, it, expect, beforeAll } from 'vitest'
+import { describe, it, expect, beforeAll, vi } from 'vitest'
 import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { demoEnvelope } from '../src/shared/demo-envelope.js'
 import {
@@ -23,6 +23,12 @@ import {
 } from '../src/shared/path-fork-cycle.js'
 import { Runtime } from '../src/renderer/runtime.js'
 import { translateLegacy, serializeSlice } from 'provident-ssr'
+
+// THE FILE'S OWN BUDGET (`AN-18`, `AN-27`): every row here loads a depth-12 cycle envelope, and the harness's 5 s DEFAULT
+// is a budget mismatch rather than a claim — under a full parallel suite the load alone crosses it while the assertions
+// still hold. A timeout is not a subject, so the bound moves and NOTHING ELSE does: no assertion, skip, retry or title.
+vi.setConfig({ testTimeout: 30_000 })
+
 
 beforeAll(() => {
   installShim()

@@ -1,5 +1,5 @@
 // strata:marked-file rework — pins today's module machinery; the storeroom rework replaces it whole (D-30)
-import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import { Runtime } from '../src/renderer/runtime.js';
 import { installShim, mountEl } from '../src/shared/dom-shim.js';
 import { demoEnvelope } from '../src/shared/demo-envelope.js';
@@ -14,6 +14,12 @@ import {
   userAuthEnvelope,
 } from '../tests/fixtures/handlers-scenarios-data.mjs';
 import { SecurePanels } from '../src/renderer/secure-panels.js';
+
+// THE FILE'S OWN BUDGET (`AN-18`, `AN-27`): every row here loads a depth-12 cycle envelope, and the harness's 5 s DEFAULT
+// is a budget mismatch rather than a claim — under a full parallel suite the load alone crosses it while the assertions
+// still hold. A timeout is not a subject, so the bound moves and NOTHING ELSE does: no assertion, skip, retry or title.
+vi.setConfig({ testTimeout: 30_000 })
+
 
 // TYPE-ONLY (leg `npm run typecheck:tests`): `DispatchResult.results` is the
 // engine's `HandlerResult[]`, and `HandlerResult` is `unknown`

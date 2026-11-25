@@ -3,12 +3,18 @@
 // surface (docs/specs/e2e-test-battery.md §3 + docs/specs/mcp-endpoint.md §4).
 // The 5 graph tools + 6 code tools map to Runtime methods that consume the
 // existing host capabilities (Unit A) + the envelope CRUD + warnings (R10).
-import { describe, it, expect, beforeAll } from 'vitest'
+import { describe, it, expect, beforeAll, vi } from 'vitest'
 import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { Runtime } from '../src/renderer/runtime.js'
 import { demoEnvelope } from '../src/shared/demo-envelope.js'
 import { pathForkCycleLegacyData } from '../src/shared/path-fork-cycle.js'
 import { translateLegacy, serializeSlice, type LegacyInitialData } from 'provident-ssr'
+
+// THE FILE'S OWN BUDGET (`AN-18`, `AN-27`): every row here loads a depth-12 cycle envelope, and the harness's 5 s DEFAULT
+// is a budget mismatch rather than a claim — under a full parallel suite the load alone crosses it while the assertions
+// still hold. A timeout is not a subject, so the bound moves and NOTHING ELSE does: no assertion, skip, retry or title.
+vi.setConfig({ testTimeout: 30_000 })
+
 
 beforeAll(() => {
   installShim()
