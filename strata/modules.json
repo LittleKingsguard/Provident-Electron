@@ -311,7 +311,8 @@
         "tests/dom-shim-remove-attribute.test.ts",
         "tests/divergence-attribute-extractor.test.ts",
         "tests/blind-ci-divergence.test.ts",
-        "tests/ui-leg-contract.test.ts"
+        "tests/ui-leg-contract.test.ts",
+        "tests/e2e/harness/"
       ],
       "endpoints": 11
     },
