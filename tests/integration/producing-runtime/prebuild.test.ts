@@ -13,14 +13,15 @@ interface Shim {
 
 beforeAll(() => { installShim() })
 
-const envelope = (): never => ({
+/** THE PRE-BUILD ROWS' page (`M-14`/`M-15`): a root with one host child — the merge's subject, and nothing else. */
+const hostEnvelope = (): never => ({
   template: { root: { type: 'div', css: { id: 'root' }, children: [{ type: 'div', css: { id: 'host' } }] } },
 } as never)
 
 const reader = (...items: GraphContribution[]) => () => items
 
 const runtimeWith = (contributions: () => readonly GraphContribution[]): Runtime => {
-  const runtime = new Runtime({ mount: mountEl() as never, envelope: envelope(), contributions })
+  const runtime = new Runtime({ mount: mountEl() as never, envelope: hostEnvelope(), contributions })
   runtime.bootstrap()
   return runtime
 }
@@ -75,7 +76,9 @@ const BUMP_BODY = `function (event, context) {
   context.clientAPI.apply(node.id, [{ targetProp: 'content', mode: 'replace', value: 'after' }]);
 }`
 
-const authoredEnvelope = (): never => ({
+/** THE `D-317` ROWS' page: a button whose handler is DECLARED BY NAME with no body — the module-declared shape the action
+ *  install fills (`C-10`'s key, never source text in graph data) — and an output node that handler writes. */
+const bumpEnvelope = (): never => ({
   template: {
     root: {
       type: 'div',
@@ -91,7 +94,7 @@ const authoredEnvelope = (): never => ({
 } as never)
 
 const authoredRuntime = (): Runtime => {
-  const runtime = new Runtime({ mount: mountEl() as never, envelope: authoredEnvelope() })
+  const runtime = new Runtime({ mount: mountEl() as never, envelope: bumpEnvelope() })
   runtime.bootstrap()
   return runtime
 }

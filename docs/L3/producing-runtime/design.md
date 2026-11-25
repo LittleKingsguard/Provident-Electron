@@ -50,5 +50,5 @@
 - **`M-16`** — the mode adoption, reserved in `tests/e2e/modularity/`; `M-18` is `renderer-wiring`'s pane row. The module's existing flat runtime tests stand (`tests/runtime*.test.ts` and the engine-pin family).
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L3", "module": "producing-runtime", "writes": [{"path": "docs/L3/producing-runtime/design.md", "d": "D-320", "why": "this page, rev 6 \u2014 \u00a74's parent lookup spans the whole authored document (`AN-26`) and `withdraw` prunes the same places"}, {"path": "src/renderer/runtime.ts", "d": "D-320", "why": "`findAuthoredParent` searches the template and every content payload; `withdraw` prunes both", "by": "L4"}]}
+{"unit": "modularity", "layer": "L3", "module": "producing-runtime", "writes": [{"path": "docs/L3/producing-runtime/design.md", "d": "D-320", "why": "this page, rev 6 \u2014 \u00a74's parent lookup spans the whole authored document (`AN-26`) and `withdraw` prunes the same places"}, {"path": "tests/integration/producing-runtime/prebuild.test.ts", "d": "D-320", "why": "`AN-14` swept: the two fixtures are named for their subjects (`hostEnvelope`, `bumpEnvelope`)", "by": "L4"}]}
 ```
