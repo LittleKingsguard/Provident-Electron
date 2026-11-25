@@ -23,7 +23,7 @@
 - **A CONTRIBUTION WHOSE PARENT DOES NOT RESOLVE IS NAMED AND SKIPPED, AND `contribute`'s graph is unchanged for it**, never half-attached: the merge is all-or-nothing per contribution on a clone, and this seat surfaces the runtime's `skipped` names in the client's log rather than inventing a parent (`C-6`'s class).
 - **THE ORDER IS THE ROUTER'S ACTIVATION ORDER** (`S-15`): the router's `contributions()` is in the resolver's order, so a later module's parent may be an earlier one's node; this seat passes the list in order and sorts nothing.
 - **A CONTRIBUTION ALREADY IN THE TREE IS NOT COMPOSED TWICE, AND THE PENDING SET IS DERIVED FROM THE LIVE GRAPH** — not a seat-local ledger: a contribution whose authored ids all resolve is skipped, so a repeated frame and a later module's frame that carries the earlier contributions again both add nothing (`runtime.listTargets` is the reading). **NO SECOND RECORD OF WHAT WAS COMPOSED** (`D-129`).
-- **THE RE-RENDER IS RE-DRIVEN BY THIS SEAT, AFTER `contribute` ANSWERS**: a re-load re-renders the authored page, so the delivery paints (tabs, view, shape) run again in that order; doing nothing here would leave a delivered record unpainted — the cost stated, not hidden (`S-20`).
+- **THE RE-RENDER IS RE-DRIVEN BY THIS SEAT, AFTER `contribute` ANSWERS**: a re-load re-renders the authored page, so the delivery paints (tabs, view, shape) run again in that order; doing nothing here would leave a delivered record unpainted — the cost stated, not hidden (`S-20`). **AND THE DRIVE IS FROM THE READINGS THE REALM ALREADY HOLDS** (`AN-10`): a module installed before the boot's own tab/view reads have landed drives nothing, and its paints land when those reads do — a dependency stated rather than hidden, and never a second read invented here.
 
 ## 4. The action install
 
@@ -51,5 +51,5 @@
 - **The e2e `M-2b`/`M-11`/`M-13` are the seats' own and file at `S-20`** (`L1` §6), unmarked and gating when authored (`D-30`, `D-40`); **`M-18` waits on `U2`'s registry** (`S-18`).
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L3", "module": "renderer-wiring", "writes": [{"path": "docs/L3/renderer-wiring/module-shape.md", "d": "D-317", "why": "this page, rev 3 \u2014 the install's answer is `{standing, added, skipped, actions}` and `contribute` answers `changed`"}, {"path": "src/renderer/renderer.ts", "d": "D-317", "why": "`standing` (the router's cumulative set) and the per-router contribution key set, so an id-less forest composes once", "by": "L4"}, {"path": "tests/integration/renderer-wiring/module-shape.test.ts", "d": "D-317", "why": "`RW-M1`\u2026`RW-M5`: the answer's rename and the id-less double-compose guard's own row", "by": "L4"}]}
+{"unit": "modularity", "layer": "L3", "module": "renderer-wiring", "writes": [{"path": "docs/L3/renderer-wiring/module-shape.md", "d": "D-320", "why": "this page, rev 4 \u2014 the re-drive's dependency on the realm's own boot reads (`AN-10`), stated where the re-drive is"}]}
 ```
