@@ -31,6 +31,7 @@
 | `CH-7` | `tests/integration/renderer-wiring/module-shape.test.ts` | NEW, `RW-M1`…`RW-M4`: the contribution under its parent with the closure dispatching by name (contributed and authored nodes), idempotence across frames, a parentless contribution named with the page byte-identical, an undeclared action installing nowhere. |
 | `CH-8` | `strata/decisions.md` | `D-317` (the composition route and its two measured refusals), `D-318` (the update-frame drop), `D-319` (this ledger's rule). |
 | `CH-9` | `strata/modules.json` | `producing-runtime` `endpoints` 17 → 18 + its integration path; `renderer-wiring` + its integration path. |
+| `CH-30` | `docs/L2/declaration-registry/interface.md`, `docs/L3/declaration-registry/{design,signatures}.md` | **`U2`'s ladder rung WRITTEN**: the five id domains as data, the entry, the composition rule (foundation ∪ module, duplicates refused by name), the five queries with their consumers, three assumptions, and the stubs. **The L4 is owed with the consuming re-grains** (`OWED-4`). |
 | `CH-29` | `tests/{blind-battery-verify,gemma4-blind-battery,runtime-battery}.test.ts` | **`AN-18`'s remaining rows carry their own budget**: three files of depth-12 cycle loads inside the harness's 5 s default now set `testTimeout: 30_000` at the file head. A timeout is not a subject — no assertion, skip, retry or title moved. |
 | `CH-28` | `tests/integration/producing-runtime/prebuild.test.ts` | **`AN-14` swept**: the fixtures are named for their subjects. |
 | `CH-27` | `docs/L1/modularity.md` §2 | **`AN-13` swept**: the "Proven by" column says it names rows of any battery. |
@@ -110,5 +111,5 @@
 7. **`AN-1`/`AN-2`/`AN-17`/`AN-18`/`AN-19`** — re-measure at the next pin, or leave named with their owners.
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/modularity-cleanup.md", "d": "D-320", "why": "this ledger, rev 15 \u2014 `AN-18`'s three remaining heavy files carry their own budget (`CH-29`)"}, {"path": "tests/blind-battery-verify.test.ts", "d": "D-320", "why": "`AN-18`: the file's own 30 s budget for depth-12 cycle loads; no assertion, skip, retry or title moved", "by": "L0"}, {"path": "tests/gemma4-blind-battery.test.ts", "d": "D-320", "why": "`AN-18`: the file's own 30 s budget for the same class; nothing else moved", "by": "L0"}, {"path": "tests/runtime-battery.test.ts", "d": "D-320", "why": "`AN-18`: the file's own 30 s budget for the same class; nothing else moved", "by": "L0"}]}
+{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/modularity-cleanup.md", "d": "D-320", "why": "this ledger, rev 16 \u2014 `U2`'s ladder rung written (`CH-30`), its L4 owed with the consuming re-grains"}]}
 ```

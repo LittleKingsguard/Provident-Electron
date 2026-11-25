@@ -28,7 +28,7 @@ Read `strata/brief.md` first, then `strata/decisions.md` from `D-304` onward. **
 - **The harness-cap ruling**: `module-system`'s L2 counts its 246-line unit battery against `50 + 10×N` (44 under); `bundle-boot-seam`'s pages say a product battery is EVIDENCE and does not count.
 - **The state ledger is behind** (`L3`/`design`/no artifacts): `../Agent Harness/` is absent, so `strata-state`/`strata-lint` cannot run and no ceiling or citation is machine-checked. Every ceiling count in the corpus is a `wc -l`.
 - **Upstream (`AN-1`, `D-5`)**: the real store's `returnedValues` carries a settled thenable's value, not a synchronous listener's return, so the channel's `return` arm is async-only; the fix shape is the store's. `AN-2`: `serializeNode` emits no `handlers` against the 30 the envelope authors.
-- **Unbuilt rungs**: `U2` (`S-6`…`S-10`, the five-domain declaration registry — no code; blocks `S-18`/`M-18`), `U6` (`S-22`…`S-25` — coeffects carried and judged by nobody, inverses, activate/deactivate), `U7` (`S-26`…`S-28`, the acceptance conversion; no `src/modules/`). `M-29` needs the WASM host build, which is not a dependency here.
+- **Unbuilt rungs**: `U2` (`S-6`…`S-10`, the five-domain declaration registry — **its L2/L3 pages are WRITTEN** and its L4 is owed, `OWED-4` fixing it to land with `S-7`…`S-10`/`S-18`; blocks `S-18`/`M-18`), `U6` (`S-22`…`S-25` — coeffects carried and judged by nobody, inverses, activate/deactivate), `U7` (`S-26`…`S-28`, the acceptance conversion; no `src/modules/`). `M-29` needs the WASM host build, which is not a dependency here.
 
 ## The worklist
 
