@@ -34,9 +34,9 @@ The unit's own: boundary **10/10**, `MF-1`…`MF-5`, `RW-M1`…`RW-M7`, `D-317(a
 
 ## What is open, named not hidden
 
-- **`U2`'s L4 — SIZED, NOT STARTED** (`AN-28`): `OWED-4` puts the registry and `S-7`…`S-10`/`S-18` in ONE sub-unit. Surface
+- **`U2`'s L4 — PLANNED AND STARTED, NOT LANDED** (`AN-28`): the plan landed (`7122af1`) and `S-8`'s group domain is designed (`docs/L3/mcp-surface/group-domain{,-signatures}.md` rev 1, `RG-10`); `OWED-4` still puts the registry and `S-7`…`S-10`/`S-18` in ONE sub-unit. Surface
   measured: `DECLARED_PANE_IDS` 23/9, `DECLARED_ZONE_IDS` 24/5, `ALL_TOOLS` 6/24, `VALID_GROUPS` 7/18, `GROUP_LABELS` 5/0,
-  `PANE_STATUS_WORDS` 6/0 (`src/` sites / test files). **First act is a plan**: which literal each consumer stops reading, which rows re-grain.
+  `PANE_STATUS_WORDS` 6/0 (`src/` sites / test files). **Next**: `S-7`'s tool half, then the five revs the plan's §3 lists — `secure-panels`, `renderer-wiring`, `view-record`, `operator-settings` — before any `src/` byte.
 - **`U6`**: `S-22` (coeffects — carried, judged by nobody), `S-24` (activate/deactivate by classification), `S-25`
   (component-scoped replacement). **`U7`** (`S-26`…`S-28`, acceptance; no `src/modules/`) is **last**, on the user's ordering.
 - **Reserved**: `M-16` (mode adoption's e2e), `M-18` (composed pane census, on `U2`), `M-29` (parity, on an absent WASM host).
@@ -52,9 +52,9 @@ The unit's own: boundary **10/10**, `MF-1`…`MF-5`, `RW-M1`…`RW-M7`, `D-317(a
 tree**: typecheck/typecheck:tests/build/filter → commit → `npm test` → report. 3. **Measure a row's stimulus first**: `M-11`…`M-2b`
 each found a defect (`AN-21`, `AN-23`, `AN-26`) review had not seen.
 
-**Next, in order:** `U2`'s L4 starting with its plan (unblocks `M-18` and `S-18`); then `U6`'s `S-22`/`S-24`/`S-25`; then `U7`;
+**Next, in order:** `U2`'s L4 — plan written, `S-8` designed, the registry and the other five revs next (unblocks `M-18` and `S-18`); then `U6`'s `S-22`/`S-24`/`S-25`; then `U7`;
 beside them the cap ruling, the sink, `app-shell`'s boot-route rev, and the two splits.
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/handover.md", "d": "D-115", "why": "the page brought under its 60-line ceiling with its rev-3 tip-dependent count replaced by a reading — the remote's SHA named, the distance left to `git rev-list --count` (D-99's truth-about-itself rule)"}]}
+{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/handover.md", "d": "D-115", "why": "the page under its 60-line ceiling (rev 4), refreshed for `U2`'s L4's state — the plan landed and `S-8`'s group domain is designed (`RG-10`) — with the tip-dependent distance still left to `git rev-list --count` and the remote's SHA named (D-99, D-115)"}]}
 ```
