@@ -94,6 +94,7 @@
 - **`PR-4` — the four legs are fully green only on a CLEAN tree.** `F-9(b)` and the boundary rows measure the tree, so the order is: typecheck / typecheck:tests / build and a filtered suite on the dirty tree → commit → `npm test` on the clean tree → report.
 - **`PR-5` — filing order is not enforced.** `M-30` was written a pass before it was filed (`L1` §6's reserved set ended at `M-29`, `RG-…`/`CH-10`). A row and its filing should move together.
 - **`PR-6` — measure a row's stimulus path before authoring its harness.** Doing so saved a battery that would have redded on a design-ladder dependency, not a defect (`D-318`, `AN-3`). A gating row that cannot green is evidence of nothing (`D-30`, `D-40`); finding that out *before* writing 650 lines is the cheap direction.
+- **`PR-7` — a step's SUBJECT is read off `L1` §3's table, never off the plan's order or a neighbour's row.** The plan's rev 2 wrote *"`S-7`'s re-grain of `allowedToolNames()`"* by reading `S-7` as mcp-surface's tool step; `S-7` is `store-view-record`'s pane/zone step, and the tool domain has **no** re-grain at all (the plan's rev 3, `AN-28`). One read of the §3 table would have said so — the same class as `PR-6`, one row over; the cost was a live record naming a step that has no such subject.
 - **`PR-7` — a page that invents a member is a page that did not read the tree.** `RG-5`'s `paneNodeIds` was written from the cell's prose and did not exist. Read the site before writing a stub; a stub is a claim about the tree, not about the design.
 
 ## 5. Environment limits (not defects; they bound what a pass can prove)
@@ -114,5 +115,5 @@
 7. **`AN-1`/`AN-2`/`AN-17`/`AN-18`/`AN-19`** — re-measure at the next pin, or leave named with their owners.
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/modularity-cleanup.md", "d": "D-319", "why": "this ledger, rev 21 — `RG-10` records `S-8`'s group-domain design as two new L3 pages (`docs/L3/mcp-surface/group-domain*.md`) split at the ceiling, the shared home in `ipc-contract`'s `src/shared/types.ts`, the `OWED-9` count it falsifies and the L1 re-grain that count is owed, and the `gate.groupRule` seam the server's two free predicates read"}]}
+{"unit": "modularity", "layer": "L0", "module": null, "writes": [{"path": "strata/records/modularity-cleanup.md", "d": "D-319", "why": "this ledger, rev 22 — `PR-7` records the class this pass measured: a step's subject is read off L1 §3's table, not the plan's order (the plan's `S-7`/`ALL_TOOLS` misattribution, withdrawn at the plan's rev 3); `RG-10` stands from rev 21 unchanged"}]}
 ```
