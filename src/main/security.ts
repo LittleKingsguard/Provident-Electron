@@ -114,7 +114,12 @@ export function composedGroupRule(
   for (const carrier of carriers) {
     const capabilities = carrier?.capabilities
     if (capabilities === null || capabilities === undefined || typeof capabilities !== 'object') continue
-    const declared = new Set(Array.isArray(capabilities.tools) ? capabilities.tools : [])
+    const moduleName = typeof carrier.name === 'string' ? carrier.name : ''
+    /** **A MANIFEST NAMES ITS OWN TOOLS BARE** (`admission.declaredTools` maps `bareToolName`), while `groupOf` is asked
+     *  the PUBLISHED name — so both sides are normalised to `module:<name>.<tool>` here and the membership key is the
+     *  name the gate will ask. A tool already spelled in the namespace is left as it stands. */
+    const full = (tool: string): string => (tool.startsWith('module:') ? tool : `module:${moduleName}.${tool}`)
+    const declared = new Set((Array.isArray(capabilities.tools) ? capabilities.tools : []).filter((tool): tool is string => typeof tool === 'string').map(full))
     const groupsDeclared = Array.isArray(capabilities.groups) ? capabilities.groups : []
     for (const group of groupsDeclared) {
       if (group === null || typeof group !== 'object') continue
@@ -122,15 +127,16 @@ export function composedGroupRule(
       const tools = Array.isArray(group.tools) ? group.tools : []
       for (const tool of tools) {
         if (typeof tool !== 'string' || tool === '') continue
-        if (!declared.has(tool)) {
-          refused.push({ status: 'refused', reason: 'declaration-overstated', subject: tool })
+        const name = full(tool)
+        if (!declared.has(name)) {
+          refused.push({ status: 'refused', reason: 'declaration-overstated', subject: name })
           continue
         }
-        if (membership.has(tool)) {
-          refused.push({ status: 'refused', reason: 'declaration-duplicate', subject: tool })
+        if (membership.has(name)) {
+          refused.push({ status: 'refused', reason: 'declaration-duplicate', subject: name })
           continue
         }
-        membership.set(tool, group.id)
+        membership.set(name, group.id)
       }
     }
   }
