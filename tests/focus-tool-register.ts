@@ -588,6 +588,15 @@ export const S1_OWNED_SECURITY_EXPORTS: string[] = [
  *  requires it, exactly as above. */
 export const MODULARITY_OWNED_SECURITY_EXPORTS: string[] = [
   'registrationAllowed',
+  // **⟶ `S-8` (`2026-11-27`) — THE GROUP DOMAIN BECOMES A RULE** (`docs/L1/modularity.md` §3 `S-8`, §4 `C-4`;
+  // `docs/L2/mcp-surface/interface.md` §10): `GroupRule` is the two questions the gate asks, `foundationGroupRule`
+  // its default, `composedGroupRule` the composition over the registry's set, and `GroupRefusal` the value a
+  // duplicate or an overstatement answers. They live in `security.ts` because that is where the gate lives; each is
+  // the modularity unit's, not the focus tool's, and none is a resolution path for the tool's own group.
+  'GroupRule',
+  'foundationGroupRule',
+  'composedGroupRule',
+  'GroupRefusal',
 ]
 /** **THE EXPORT-NAME READ (`§5.5.2` item 4b's fence), RE-SCOPED TO THE CLAIM:** every `export` name in
  *  `security.ts` that is NOT declared — neither in the frozen baseline nor by an owning unit below. Driven
@@ -703,8 +712,12 @@ export function liveRpcMethods(): string[] {
 export function liveMutatingMethods(): string[] {
   return readStringArrayLiteral(RENDERER_REL, /const\s+MUTATING_METHODS\s*=\s*new\s+Set\(\s*\[([^\]]*)\]/)
 }
+/** **⟶ S-8 RE-GRAIN (`U2`, 2026-11-27): THE GATE'S GROUP SET IS DATA.** `VALID_GROUPS` retired with the `ToolGroup` union;
+ *  the six ids live ONCE at `FOUNDATION_GROUPS` in `src/shared/types.ts`, with `TOOL_GROUP_IDS` their projection. The
+ *  register's row asserts the LIVE set, so it reads the new home and never a copy (`D-146`). */
 export function liveValidGroups(): string[] {
-  return readStringArrayLiteral(SECURITY_REL, /const\s+VALID_GROUPS\s*:\s*ReadonlySet<string>\s*=\s*new\s+Set\(\s*\[([^\]]*)\]/)
+  const block = /export const FOUNDATION_GROUPS: readonly FoundationGroup\[\] = \[([\s\S]*?)\n\]/.exec(read(TYPES_REL))?.[1]
+  return [...(block ?? '').matchAll(/\{ id: '([^']+)'/g)].map((match) => match[1] as string)
 }
 
 /** **THE TOOL'S OWN BYTES — WHERE THEY ACTUALLY LIVE (`§5.1` rows 1/2; conflict 2).** The

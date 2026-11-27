@@ -3004,13 +3004,16 @@ describe('S — §2.1 the surface + §2.2/§4.4 the static rows over the module'
       'module',
       'read',
     ])
-    const securitySrc = readFileSync(new URL('../src/main/security.ts', import.meta.url), 'utf8')
-    const groupsDecl = /const\s+VALID_GROUPS\s*:[^=]*=\s*new\s+Set\(\s*\[([^\]]*)\]\s*\)/.exec(securitySrc)
+    // **⟶ S-8 RE-GRAIN (`U2`, 2026-11-27): THE SET IS DATA.** `VALID_GROUPS` retired with the `ToolGroup` union; the six
+    // ids live ONCE at `FOUNDATION_GROUPS` in `src/shared/types.ts`. This row asserts the LIVE source of truth, so it
+    // reads the new home and never a copy (`D-146`).
+    const foundationTypesSrc = readFileSync(new URL('../src/shared/types.ts', import.meta.url), 'utf8')
+    const groupsBlock = /export const FOUNDATION_GROUPS: readonly FoundationGroup\[\] = \[([\s\S]*?)\n\]/.exec(foundationTypesSrc)?.[1]
     expect(
-      groupsDecl !== null,
-      'S-5: `VALID_GROUPS` is declared in src/main/security.ts — the row asserts the LIVE set, never a literal count inside a sibling test file',
+      groupsBlock !== undefined,
+      'S-5: `FOUNDATION_GROUPS` is declared in src/shared/types.ts — the row asserts the LIVE set, never a literal count inside a sibling test file',
     ).toBe(true)
-    const liveGroups = (groupsDecl?.[1].match(/'[^']*'|"[^"]*"/g) ?? []).map((s) => s.slice(1, -1)).sort()
+    const liveGroups = [...(groupsBlock ?? '').matchAll(/\{ id: '([^']+)'/g)].map((match) => match[1] as string).sort()
     expect(
       liveGroups,
       "S-5 / §2.2 prohibition 5 / §1's five-seam negative: the LIVE `VALID_GROUPS` set (src/main/security.ts) is EXACTLY the pinned six — a NEW group member FAILS this row",

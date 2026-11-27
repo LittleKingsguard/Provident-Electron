@@ -1255,6 +1255,16 @@ function walkCensusPaths(): string[] {
 }
 /** Read a live string-array literal from a source file (`§4.4 S-3`: the seam rows
  *  assert SET EQUALITY AGAINST THE NAMES and read the declaration, never a copy). */
+/** **⟶ S-8 RE-GRAIN (`U2`, 2026-11-27): THE GATE'S GROUP SET IS DATA.** `VALID_GROUPS` retired with the `ToolGroup` union;
+ *  the six ids live ONCE at `FOUNDATION_GROUPS` in `src/shared/types.ts`, with `TOOL_GROUP_IDS` their projection. This
+ *  row asserts the LIVE source of truth, so it reads the new home and never a copy (`D-146`, D-152's lesson). */
+function foundationGroupIds(): string[] {
+  const src = readFileSync(`${REPO_ROOT}/src/shared/types.ts`, 'utf8')
+  const block = /export const FOUNDATION_GROUPS: readonly FoundationGroup\[\] = \[([\s\S]*?)\n\]/.exec(src)?.[1]
+  expect(block !== undefined, 'the LIVE source of truth exists in src/shared/types.ts — `FOUNDATION_GROUPS` (`S-8`)').toBe(true)
+  return [...(block ?? '').matchAll(/\{ id: '([^']+)'/g)].map((match) => match[1] as string)
+}
+
 function readArrayLiteral(rel: string, re: RegExp): string[] {
   const src = readFileSync(`${REPO_ROOT}/${rel}`, 'utf8')
   const match = re.exec(src)
@@ -2929,7 +2939,7 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         toolsLive,
       )}`,
     ).toEqual([...siblingPinned].sort())
-    const groupsLive = readArrayLiteral('src/main/security.ts', /const\s+VALID_GROUPS[^=]*=\s*new\s+Set\(\s*\[/)
+    const groupsLive = foundationGroupIds()
     expect(groupsLive.sort(), 'R-7/§2.2 P-5 — the LIVE `VALID_GROUPS` keeps its SIX named members').toEqual([
       'code',
       'data',

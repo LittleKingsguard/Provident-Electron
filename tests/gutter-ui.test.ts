@@ -434,7 +434,9 @@ const REGISTRATION_SITE_TOKENS: readonly string[] = [
 ]
 /** **`§3.4 R-11`’s POSITIVE CONTROL: the pinned-surface files whose own declarations
  *  the green branch reads (`§3.3 I-12` names the same set).** */
-const PINNED_SURFACE_FILES: readonly string[] = ['src/main/mcp-server.ts', RENDERER_RELPATH, DEFAULT_GATE_RELPATH]
+// **⟶ S-8 RE-GRAIN (`U2`, 2026-11-27): THE DEFAULT GATE'S GROUP SET IS DATA.** The third pinned surface is now the shared
+// home of the six ids (`FOUNDATION_GROUPS`/`TOOL_GROUP_IDS`), because `VALID_GROUPS` retired with the union (`D-146`).
+const PINNED_SURFACE_FILES: readonly string[] = ['src/main/mcp-server.ts', RENDERER_RELPATH, 'src/shared/types.ts']
 
 // ===========================================================================
 // ⟶ REPAIRED 2026-09-27 — **THE TRAP-SAFE MESSAGE BUILDERS** (`§3.2 F-6`, `§3.1 M-6`, `§3.3 I-7`).
@@ -2454,11 +2456,11 @@ describe('§3.4 — the static rows (the §2.2 prohibition table’s ids)', () =
     ).not.toEqual([])
     const surfaceDeclarations = PINNED_SURFACE_FILES.map((p) => readRel(p)).join('\n')
     expect(
-      hitsOf(surfaceDeclarations, ['ALL_TOOLS', 'MUTATING_METHODS', 'VALID_GROUPS']).map((h) => h.replace(/ ×\d+$/, '')),
+      hitsOf(surfaceDeclarations, ['ALL_TOOLS', 'MUTATING_METHODS', 'TOOL_GROUP_IDS']).map((h) => h.replace(/ ×\d+$/, '')),
       `R-11 §3.4 (GREEN BRANCH) — the pinned surface SET is UNCHANGED: the engine’s \`ALL_TOOLS\` (\`${PINNED_SURFACE_FILES[0]}\`), the renderer’s \`MUTATING_METHODS\` (\`${RENDERER_RELPATH}\`) and the default gate’s \`VALID_GROUPS\` (\`${DEFAULT_GATE_RELPATH}\`) all still exist BY NAME in their own files, so this row reads a surface that is still there (§3.4 R-11/§3.3 I-12). Read: ${JSON.stringify(
         PINNED_SURFACE_FILES.map((p) => [p, readRel(p).length]),
       )}`,
-    ).toEqual(['ALL_TOOLS', 'MUTATING_METHODS', 'VALID_GROUPS'])
+    ).toEqual(['ALL_TOOLS', 'MUTATING_METHODS', 'TOOL_GROUP_IDS'])
     const groupMembers = [
       ...new Set(
         hitsOf(surfaceDeclarations, PINNED_GROUP_NAMES).map((h) => h.replace(/ ×\d+$/, '')),

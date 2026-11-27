@@ -1383,6 +1383,16 @@ function walkUnitPaths(): string[] {
 }
 /** Read a live string-array literal from a source file (`§4.4 S-2`: the seam rows
  *  assert SET EQUALITY AGAINST THE NAMES and read the declaration, never a copy). */
+/** **⟶ S-8 RE-GRAIN (`U2`, 2026-11-27): THE GATE'S GROUP SET IS DATA.** `VALID_GROUPS` retired with the `ToolGroup` union;
+ *  the six ids live ONCE at `FOUNDATION_GROUPS` in `src/shared/types.ts`, with `TOOL_GROUP_IDS` their projection. This
+ *  row asserts the LIVE source of truth, so it reads the new home and never a copy (`D-146`, D-152's lesson). */
+function foundationGroupIds(): string[] {
+  const src = readFileSync(`${REPO_ROOT}/src/shared/types.ts`, 'utf8')
+  const block = /export const FOUNDATION_GROUPS: readonly FoundationGroup\[\] = \[([\s\S]*?)\n\]/.exec(src)?.[1]
+  expect(block !== undefined, 'the LIVE source of truth exists in src/shared/types.ts — `FOUNDATION_GROUPS` (`S-8`)').toBe(true)
+  return [...(block ?? '').matchAll(/\{ id: '([^']+)'/g)].map((match) => match[1] as string)
+}
+
 function readArrayLiteral(rel: string, re: RegExp): string[] {
   const src = readFileSync(`${REPO_ROOT}/${rel}`, 'utf8')
   const match = re.exec(src)
@@ -3004,7 +3014,7 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         toolsLive,
       )}`,
     ).toEqual([...siblingPinned].sort())
-    const groupsLive = readArrayLiteral('src/main/security.ts', /const\s+VALID_GROUPS[^=]*=\s*new\s+Set\(\s*\[/)
+    const groupsLive = foundationGroupIds()
     expect(
       groupsLive.sort(),
       'R-6(c)/§2.2 P-6 — the LIVE `VALID_GROUPS` keeps its SIX named members',
@@ -5243,7 +5253,7 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
     const toolsLive = readArrayLiteral('src/main/mcp-server.ts', /static\s+readonly\s+ALL_TOOLS\s*:\s*string\[\]\s*=\s*\[/)
     expect(toolsLive.length, 'F-9(b)/§0 ruling 9 / `N-15` — `ALL_TOOLS` reads its 27 names (set equality is asserted against the sibling name-complete row in `R-6(c)`)').toBe(27)
     expect(new Set(toolsLive).size, 'F-9(b) / `N-15` — the tool census is a SET (distinct names), so no name is a duplicate').toBe(27)
-    const groupsLive = readArrayLiteral('src/main/security.ts', /const\s+VALID_GROUPS[^=]*=\s*new\s+Set\(\s*\[/)
+    const groupsLive = foundationGroupIds()
     expect(groupsLive.sort(), 'F-9(b) — `VALID_GROUPS` keeps its SIX named members').toEqual([
       'code',
       'data',

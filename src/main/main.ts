@@ -761,6 +761,9 @@ async function main(): Promise<void> {
   for (const refusal of composed.refused) {
     console.error(`[provident-main] group domain: '${refusal.subject}' refused — ${refusal.reason}`)
   }
+  // **THE EXCLUSION RECORD IS INITIALIZED TO `'mcp-enabled'` AT THIS CONSTRUCTION SITE** (`D-19`, `§2.1` item 4): the
+  // gate's constructor sets the boot terminal, no file is read for the state, and this object's construction is where
+  // that happens — the gate itself moved here (`S-8`) and the initialization moved with it.
   const gate = new SecurityGate({ token: persisted.token, enabled: persisted.enabled, groups: composed.rule })
   // THE ONE-LINE OPTIONS PASS (§2.8 item 3): the server's construction options receive the
   // re-pointed module surface — the module tools' REPLY SHAPES are UNCHANGED.
