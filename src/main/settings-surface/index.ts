@@ -106,6 +106,11 @@ function patchOf(record: OperatorSettingsRecord): { token?: string; groups: stri
 }
 
 export function createSettingsSurface(options: { userDataDir: string; journalLength?: number
+  /** **THE GROUP DOMAIN, PASSED THROUGH TO THE INSTANCE AND ASKED ONLY AT ITS WRITES** (`S-9`; `docs/L3/operator-settings/
+   *  valid-groups.md`): `main.ts` hands the registry's `declaredGroups()`, and the option is absent-able so a surface a node
+   *  test drives answers the foundation's own six. It carries a THUNK and not a set because this surface is constructed
+   *  before the registry stands (`AN-30`'s fix (a)), and the read never consults it. */
+  groups?: () => readonly string[]
   /** **THE APP-STATE ROWS' CHANGE PUSH** (`D-104`): called INSIDE the instance's delivery body and never at a call site,
    *  a poll or a boot-order re-read — the composition hands it a broadcast, the renderer's own listener re-reads, and no
    *  file but this one's own instance knows which address delivered (the address constant is the instance's, `D-53`). It

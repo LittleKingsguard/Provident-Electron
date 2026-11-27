@@ -71,6 +71,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 import { storeCreate } from 'provident-storeroom'
+import { TOOL_GROUP_IDS } from '../../shared/types.js'
 
 /** The instance's own type, named here so the package import stays ONE name (`storeCreate`) —
  *  **and since `D-221` the members called are `read`, `write` and the factory itself, and no fourth**:
@@ -148,7 +149,11 @@ export interface AppStateAnswer {
   storage: 'standing' | 'unreachable'
 }
 
-export interface OperatorSettingsOptions { userDataDir: string; journalLength?: number }
+/** **THE GROUP DOMAIN, ASKED AND NEVER HELD** (`S-9`, `docs/L3/operator-settings/valid-groups.md`): a THUNK, because the
+ *  instance is constructed before the declaration registry exists (`main.ts`'s order, `AN-30`) and the domain is consulted
+ *  only by the two WRITE-side admissions. **ABSENT ANSWERS THE FOUNDATION'S OWN SIX** (`TOOL_GROUP_IDS`, one shared
+ *  literal and never a copy here): the READ carries what the store holds, so a default can never drop a stored grant. */
+export interface OperatorSettingsOptions { userDataDir: string; journalLength?: number; groups?: () => readonly string[] }
 
 export interface OperatorSettings {
   read(): OperatorSettingsRecord
@@ -162,10 +167,11 @@ export interface OperatorSettings {
   writePane(open: boolean): OperatorSettingsReceipt
 }
 
-/** The group set's SECOND LIVE COPY (D-11, D-15; exception §2 E-1): six members, re-homed with the
- *  file and filtered at THREE sites — `fromStored` on every `read()`, the record's repair (`mintRecord`
- *  through `importOnce`), the patch. */
-const VALID_GROUPS: ReadonlySet<string> = new Set(['read', 'dispatch', 'graph', 'code', 'module', 'data'])
+/** **`S-9`: THE SECOND LIVE COPY IS GONE, AND NO LITERAL REPLACES IT.** The domain is `OperatorSettingsOptions.groups`'
+ *  answer — the registry's `declaredGroups()` at the one construction site that has a registry, the foundation's six
+ *  everywhere else — asked by the two WRITE-side admissions (`groupsAdmit`, the patch) and by the `enabled.<name>` leaf
+ *  (`recordAdmitsAt`). **THE READ DOES NOT ASK IT** (`AN-30`'s fix (a)): `fromStored` and `importOnce` shape a stored
+ *  list and carry it, so the construction — which runs before the registry stands — needs no domain at all. */
 const RECORD_ADDRESS: OperatorSettingsAddress = ['operator-settings']
 const EXCLUSION_ADDRESS: OperatorSettingsAddress = ['operator-exclusion']
 /** THE THIRD DURABLE ADDRESS, beside the record and not inside its value: a `file`-tier write
@@ -290,12 +296,20 @@ function detach(value: unknown): unknown {
   return copy(value)
 }
 
-/** First occurrence first, in the CALLER's own order, a non-group string dropped, never re-sorted
- *  into `VALID_GROUPS` order — the order row discriminates against a re-sort (interface §2 `A-5`). */
-function admitGroups(list: readonly unknown[]): string[] {
-  const admitted: string[] = []
-  for (const name of list) if (typeof name === 'string' && VALID_GROUPS.has(name) && !admitted.includes(name)) admitted.push(name)
-  return admitted
+/** **THE STORED LIST'S SHAPE, AND NOTHING ABOUT THE DOMAIN** (`AN-30`'s fix (a)): first occurrence first, in the
+ *  CALLER's own order, a non-string dropped, never re-sorted — the order row discriminates against a re-sort
+ *  (interface §2 `A-5`). A name the domain does not hold is CARRIED here and refused at the writes, so the read reports
+ *  what the store stands in and a boot needs no registry to answer it. */
+function storedGroups(list: readonly unknown[]): string[] {
+  const kept: string[] = []
+  for (const name of list) if (typeof name === 'string' && name !== '' && !kept.includes(name)) kept.push(name)
+  return kept
+}
+
+/** **THE DOMAIN'S ONE FILTER, FOR THE WRITES** (`S-9`): the same order and the same dedupe, narrowed to the set the
+ *  caller hands — the patch's arm and nothing else filters with it. */
+function admitGroups(list: readonly unknown[], groups: ReadonlySet<string>): string[] {
+  return storedGroups(list).filter((name) => groups.has(name))
 }
 
 /** The value that crosses: a CLEARED member is written as its ABSENCE, because the walk refuses
@@ -313,7 +327,7 @@ function toStored(row: Row): Record<string, unknown> {
 function fromStored(value: Record<string, unknown>): Row {
   const row: Row = {
     token: typeof value.token === 'string' && value.token !== '' ? value.token : FIRST_RUN.token,
-    enabled: Array.isArray(value.enabled) ? admitGroups(value.enabled) : [...FIRST_RUN.enabled],
+    enabled: Array.isArray(value.enabled) ? storedGroups(value.enabled) : [...FIRST_RUN.enabled],
   }
   const cap = value.maxJournalLength
   if (typeof cap === 'number' && Number.isFinite(cap) && cap > 0) row.maxJournalLength = Math.floor(cap)
@@ -337,7 +351,10 @@ function importOnce(userDataDir: string): Row | undefined {
   const declared = (name: string): boolean => name === 'token' || name === 'enabled' || name === 'maxJournalLength' || name === 'entries'
   const row: Row = {
     token: typeof source.token === 'string' && source.token !== '' ? source.token : FIRST_RUN.token,
-    enabled: Array.isArray(source.enabled) ? admitGroups(source.enabled) : [...FIRST_RUN.enabled],
+    // **THE RETIRED CARRIER'S IMPORT KEEPS ITS OWN DOMAIN CHECK** (`D-19`'s landed row): this file predates the module
+    // skeleton, so a name it cannot hold is JUNK and not a module's grant — `TOOL_GROUP_IDS` is the shared literal, never
+    // a copy here. The LIVE record's read (`fromStored`) carries its shape and asks no domain at all (`AN-30` fix (a)).
+    enabled: Array.isArray(source.enabled) ? admitGroups(source.enabled, new Set(TOOL_GROUP_IDS)) : [...FIRST_RUN.enabled],
   }
   const cap = source.maxJournalLength
   if (typeof cap === 'number' && Number.isFinite(cap) && cap > 0) row.maxJournalLength = Math.floor(cap)
@@ -805,12 +822,14 @@ const RECORD_MEMBERS: ReadonlySet<string> = new Set(['token', 'enabled', 'maxJou
 const APP_STATE_MEMBERS: ReadonlySet<string> = new Set(['rows', 'legacy', 'unrepresentable'])
 const LEGACY_WORDS: ReadonlySet<string> = new Set(['absent', 'imported', 'corrupt', 'recorded'])
 
-/** `admitGroups`' rule as an ADMISSION rather than a filter: every member is a group name and no name repeats, so the
- *  read states the list the value carries instead of silently dropping what it cannot admit. */
+/** THE RECORD'S `enabled` ARRAY, ADMITTED BY ITS SHAPE: every member is a non-empty string and no name repeats. **THE
+ *  DOMAIN IS NOT ASKED HERE** (`S-9`, `AN-30`'s fix (a)): the registration constraint and the repair run at the creation,
+ *  before the registry stands, so a stored module group must be CARRIED rather than refused — and the patch below is the
+ *  domain's one gate. */
 function groupsAdmit(list: readonly unknown[]): boolean {
   const seen = new Set<string>()
   for (const name of list) {
-    if (typeof name !== 'string' || !VALID_GROUPS.has(name) || seen.has(name)) return false
+    if (typeof name !== 'string' || name === '' || seen.has(name)) return false
     seen.add(name)
   }
   return true
@@ -841,7 +860,7 @@ function recordAdmitsAt(node: readonly string[], value: unknown): boolean {
   const member = node[0]
   if (member === undefined || !RECORD_MEMBERS.has(member)) return false
   if (node.length === 1) return recordMemberAdmits(member, value)
-  if (member === 'enabled') return typeof value === 'string' && VALID_GROUPS.has(value)
+  if (member === 'enabled') return typeof value === 'string' && value !== ''
   return member === 'entries'
 }
 
@@ -1273,6 +1292,11 @@ function declarationsFor(userDataDir: string, standing: () => Store | null): rea
 }
 
 export function createOperatorSettings(options: OperatorSettingsOptions): OperatorSettings {
+  /** **THE DOMAIN'S ONE SOURCE, ASKED WHERE A WRITE NEEDS IT** (`S-9`, `AN-30`'s fix (a)): the caller's thunk — main's is the
+   *  registry's `declaredGroups()` — and the foundation's own six where no caller names one. Never a literal here, never a
+   *  held set, and never consulted by the READ. */
+  const groupDomain = options.groups ?? (() => TOOL_GROUP_IDS)
+  const domain = (): ReadonlySet<string> => new Set(groupDomain())
   let store: Store | null = null
   let refusal: OperatorSettingsReceipt | null = null
   // **THE DELIVERY IS MINTED BEFORE THE CONSTRUCTION, AND THAT ORDER IS THE WHOLE OF IT** (`D-221`): `cfg.listeners` is
@@ -1399,7 +1423,7 @@ export function createOperatorSettings(options: OperatorSettingsOptions): Operat
       let nextEnabled: string[] = [...current.enabled]
       if (hasEnabled) {
         if (!Array.isArray(enabled)) return refuse('enabled is an array of group names')
-        nextEnabled = admitGroups(enabled)
+        nextEnabled = admitGroups(enabled, domain())
       }
       let nextCap: number | undefined = current.maxJournalLength
       if (hasCap) {

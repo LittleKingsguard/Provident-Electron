@@ -39,6 +39,12 @@ import {SecurityGate, type ToolGroup} from './security.js'
 // composition here, and nothing else of this file moves: it constructs no store and touches no file
 // until a `data.*` tool is called (D-11, D-13).
 import {createDataSurface} from './data/index.js'
+// **THE DECLARATION REGISTRY, CONSTRUCTED AT THE BOOT AND READ BY THE TWO SEATS THAT NEED A COMPOSED SET** (`S-6`, `S-9`;
+// `docs/L3/declaration-registry/design.md` §2): the foundation's five literals are handed here, and the module half is the
+// census's own activated records through `declarationsOf` — the ONE projection both realms use (`ASM-DR-4`, `D-18`).
+import {createRegistry, declarationsOf, type DeclarationRegistry} from '../shared/registry/index.js'
+import {DECLARED_PANE_IDS, DECLARED_ZONE_IDS} from '../shared/view-shape.js'
+import {TOOL_GROUP_IDS} from '../shared/types.js'
 // `store-tabs-record` (D-62, D-63) — the tab record's surface enters the composition HERE and nothing else
 // of this file moves: it constructs no store, spells no `provident-*.json` literal for one, and reaches the
 // record only through the surface's own read/commit (the arrangement the operator's store already uses).
@@ -379,8 +385,13 @@ async function main(): Promise<void> {
   // for one (the surface module owns the file names — C-4), and reads the boot record through the
   // surface's own `read()`. The holder's ONE writer is that module (ASM-4, settled at L1 rev 3);
   // `mcp.applyExclusion` now only ENFORCES.
+  // **THE REGISTRY IS LATE-BOUND BECAUSE THE ORDER DEMANDS IT** (`AN-30`'s fix (a)): this surface is constructed before the
+  // gate and before the census, while the registry needs the census's records — so the instance is handed a THUNK whose
+  // answer stands by the time any write can ask it. The read never asks: a stored grant is carried, never filtered at boot.
+  let moduleRegistry: DeclarationRegistry | null = null
   const settingsSurface = createSettingsSurface({
     userDataDir: app.getPath('userData'),
+    groups: () => moduleRegistry?.declaredGroups() ?? [],
     // **THE APP-STATE ROWS' CHANGE PUSH** (`D-104`; `D-82`'s `V3`): the secure crossing's third address delivers inside
     // `writeAppState`, the surface hands the change to this broadcast, and the renderer's own listener answers with a
     // re-read — so a module row's change REACHES the renderer instead of waiting to be asked for. It carries NO value and
@@ -734,6 +745,14 @@ async function main(): Promise<void> {
       }
     }
   }
+  /** **THE REGISTRY IS CONSTRUCTED HERE, ONCE, OVER THE FOUNDATION'S LITERALS AND THE CENSUS'S OWN RECORDS** (`S-6`, `S-9`;
+   *  `docs/L3/declaration-registry/design.md` §2): `ALL_TOOLS` is the tool domain's foundation half, the placeholder domain is
+   *  main's to compose empty (`C-4`), and each census record is a carrier whose `capabilities` the projection reads. **THE
+   *  BOOT NAMES WHAT IT REFUSED** (`D-105`): a duplicate id is a value and is logged here, never thrown. */
+  moduleRegistry = createRegistry(
+    { pane: DECLARED_PANE_IDS, zone: DECLARED_ZONE_IDS, group: TOOL_GROUP_IDS, tool: ProvidentMcpServer.ALL_TOOLS, placeholder: [] },
+    bootCensus.flatMap((record) => declarationsOf({ name: record.name, capabilities: record.capabilities ?? {} })),
+  ).registry
   // THE ONE-LINE OPTIONS PASS (§2.8 item 3): the server's construction options receive the
   // re-pointed module surface — the module tools' REPLY SHAPES are UNCHANGED.
   // **AND THE `data` SURFACE IS HANDED THE BOOT'S OWN STORE** (D-79, D-80): `centralStore` was constructed above
