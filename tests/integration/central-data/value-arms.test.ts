@@ -442,7 +442,10 @@ describe('the value arms — a declaration that cannot be subverted by any calle
     expect(instance.write({ token: 'tok', enabled: ['read'] }), 'a legal record lands through the module\'s route').toMatchObject({ status: 'committed' })
     const store = storeCreate({ journalLength: 256, listeners: [], filePath: at(where, OPERATOR_FILE), constraints: (captured[captured.length - 1]?.['constraints'] ?? []) as never })
     const stood = readFileSync(at(where, OPERATOR_FILE), 'utf8')
-    for (const value of [{ junk: true }, { token: 7 }, { enabled: ['read', 'nope'] }, { maxJournalLength: 2.5 }]) {
+    // **⟶ S-9 RE-GRAIN (`U2`, 2026-11-27): the third fixture is a REPEATED name and not an unknown one.** A name the
+    // domain does not hold is carried by the read and filtered by the patch (`AN-30`'s fix (a)); `groupsAdmit`'s shape
+    // rule still refuses a repeated member, so the row keeps its subject — a junk record is refused by the declaration.
+    for (const value of [{ junk: true }, { token: 7 }, { enabled: ['read', 'read'] }, { maxJournalLength: 2.5 }]) {
       let refused: unknown = null
       try {
         store.write(RECORD, 'file', value)

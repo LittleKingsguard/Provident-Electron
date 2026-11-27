@@ -63,6 +63,8 @@ const MAIN_SRC = readFileSync(MAIN_PATH, 'utf8')
 const MAIN_CODE = MAIN_SRC.split('\n').filter((line) => !line.trimStart().startsWith('//')).join('\n')
 const OPERATOR_SETTINGS_PATH = join(ROOT, 'src', 'main', 'operator-settings', 'index.ts')
 const OPERATOR_SETTINGS_SRC = readFileSync(OPERATOR_SETTINGS_PATH, 'utf8')
+/** `S-9`'s one source of the six group ids — the foundation's contribution, read where it lives (`D-41`). */
+const TYPES_SRC = readFileSync(join(ROOT, 'src', 'shared', 'types.ts'), 'utf8')
 const LEG_SRC: string | null = existsSync(LEG_PATH) ? readFileSync(LEG_PATH, 'utf8') : null
 const LEG_ABSENT =
   'scripts/electron-ui.mjs does not exist — spec §2 item 1 ("NEW — the leg itself … does not exist") / §7 item 1'
@@ -84,10 +86,9 @@ const SETTINGS_CARRIER = "userDataDir: app.getPath('userData')"
  * absent case must keep. `main.ts` no longer spells the legacy name at all (not read, not removed). */
 const DEFAULT_PROFILE_STORE_PATH = "join(app.getPath('userData'), PROFILE_FILE_NAME)"
 
-/** §2 C-1 — the group set's SECOND LIVE COPY: six members, re-homed with the file at
- *  `src/main/operator-settings/index.ts:77` (the other live copy, `src/main/security.ts:159`, does
- *  not move). The seam may not touch that vocabulary, and neither copy may gain or lose a name. */
-const GROUP_VOCABULARY = /const VALID_GROUPS: ReadonlySet<string> = new Set\(\[([^\]]*)\]\)/
+/** §2 C-1 — **`S-9` RETIRED THE SECOND LIVE COPY** (2026-11-27, `U2`): the six ids are one source,
+ *  `FOUNDATION_GROUPS` in `src/shared/types.ts`, and the instance asks `OperatorSettingsOptions.groups`.
+ *  The seam may not touch that vocabulary, and the one source may not gain or lose a name. */
 
 /** §4.2 `ADD-2` — the override is "a `--`-prefixed argument alongside the
  *  existing `--mcp-transport=` / `--mcp-port=` flags". The SPELLING is the
@@ -342,17 +343,17 @@ describe('§3.5 SEAM-1..4 + §4 ADD-1..ADD-6 — the ONE additive seam (src/main
       rmSync(dir, { recursive: true, force: true })
     }
 
-    // S3 — `code` remains a valid, opt-in group (§3.2's eval gate), read at the
-    // group set's second live copy (§2 C-1) rather than driven through the retired
-    // store's `set()`.
-    const vocabulary = GROUP_VOCABULARY.exec(OPERATOR_SETTINGS_SRC)
+    // S3 — `code` remains a valid, opt-in group (§3.2's eval gate). **⟶ S-9 RE-GRAIN (`U2`, 2026-11-27):
+    // THE SECOND LIVE COPY IS GONE** — the instance asks `OperatorSettingsOptions.groups`, so the limb now
+    // reads the ONE source (`FOUNDATION_GROUPS`, `src/shared/types.ts`) and asserts the copy's absence.
     expect(
-      vocabulary,
-      '§2 C-1: the group set\'s second live copy lives in `src/main/operator-settings/index.ts:77`',
-    ).not.toBeNull()
-    const groups = [...(vocabulary as RegExpExecArray)[1].matchAll(/'([a-z0-9]+)'/g)].map((m) => m[1])
+      /VALID_GROUPS/.test(OPERATOR_SETTINGS_SRC),
+      '§2 C-1: `S-9` retired the second copy — a `VALID_GROUPS` here would be the six ids under a new name',
+    ).toBe(false)
+    const foundation = /export const FOUNDATION_GROUPS: readonly FoundationGroup\[\] = \[([\s\S]*?)\n\]/.exec(TYPES_SRC)?.[1] ?? ''
+    const groups = [...foundation.matchAll(/\{ id: '([a-z0-9]+)'/g)].map((match) => match[1] as string)
     expect(groups, '§3.2: `code` stays opt-in, not default').toContain('code')
-    expect(groups.slice().sort(), '§2 C-1: still SIX members — the re-homed copy lost none and gained none').toEqual([
+    expect(groups.slice().sort(), '§2 C-1: still SIX members — the one source lost none and gained none').toEqual([
       'code',
       'data',
       'dispatch',
@@ -362,8 +363,12 @@ describe('§3.5 SEAM-1..4 + §4 ADD-1..ADD-6 — the ONE additive seam (src/main
     ])
 
     expect(
-      /createSettingsSurface\(\{[^}]*?(enabled|groups)\s*:/.test(MAIN_SRC),
-      '§4.3 (rejected alternative)/§0 prohibition 3: the app must NOT construct its settings carrier with a flipped/extended default group set',
+      /createSettingsSurface\(\{[^}]*?enabled\s*:/.test(MAIN_SRC),
+      '§4.3 (rejected alternative)/§0 prohibition 3: the app must NOT pass the GRANT (`enabled`) — the group domain is `S-9`\'s thunk and is not a grant',
+    ).toBe(false)
+    expect(
+      /createSettingsSurface\(\{[^}]*?groups\s*:\s*\[/.test(MAIN_SRC),
+      '§4.3/§3.5 SEAM-4: the domain member, where passed, is the registry THUNK and never a literal array of names',
     ).toBe(false)
     expect(
       /(enabled|groups)\s*:\s*\[[^\]]*['"]code['"]/.test(MAIN_SRC),

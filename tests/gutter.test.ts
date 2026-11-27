@@ -4479,18 +4479,30 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         mutating,
       )}`,
     ).toEqual(['dispatch', 'load', 'op', 'teardown', 'code.load', 'code.loadBatch', 'journal'])
-    // ⟶ C-1 RE-GRAIN (`security-store-storeroom` E-5, exception §4 C-1): the group set's SECOND LIVE
-    // COPY moved with the file it lived in — `VALID_GROUPS` is declared at
-    // `src/main/operator-settings/index.ts` now, still SIX members, and the declaration carries an
-    // explicit `ReadonlySet<string>` annotation, so the reader's own open-delimiter pattern moves with
-    // it. `src/main/security.ts:159` (the FIRST copy) does not move, and this row was never reading it.
-    const groups = readNamesFromDeclaration('src/main/operator-settings/index.ts', /VALID_GROUPS\s*(?::[^=]*)?=\s*new Set\(\[/, 6)
+    // ⟶ S-9 RE-GRAIN (`U2`, 2026-11-27): **THE SECOND LIVE COPY IS GONE**, and the row's subject is
+    // unchanged — the group vocabulary is BOUND, never re-spelled in the file that asks it. Two limbs:
+    // the operator file declares no `VALID_GROUPS` at all, and the ONE source the copy was of
+    // (`FOUNDATION_GROUPS`, `src/shared/types.ts`) names exactly the six, with `TOOL_GROUP_IDS` projected
+    // from it so no second spelling exists. `src/main/security.ts` (the FIRST copy) is `S-8`'s and this
+    // row has never read it.
+    const operatorSrc = readFileSync(`${REPO_ROOT}/src/main/operator-settings/index.ts`, 'utf8')
+    expect(
+      /VALID_GROUPS/.test(operatorSrc),
+      'R-6 §3.4 — `S-9` retired the second copy: the instance asks `OperatorSettingsOptions.groups`, and a literal here would be the copy under a new name',
+    ).toBe(false)
+    const sharedTypes = readFileSync(`${REPO_ROOT}/src/shared/types.ts`, 'utf8')
+    const foundation = /export const FOUNDATION_GROUPS: readonly FoundationGroup\[\] = \[([\s\S]*?)\n\]/.exec(sharedTypes)?.[1] ?? ''
+    const groups = [...foundation.matchAll(/\{ id: '([a-z]+)'/g)].map((match) => match[1] as string)
     expect(
       groups,
-      `R-6 §3.4 — \`VALID_GROUPS\` is still the 6 named members, asserted by SET EQUALITY AGAINST THE NAMES (S-7). Read: ${JSON.stringify(
+      `R-6 §3.4 — \`FOUNDATION_GROUPS\` is the 6 named members, asserted by SET EQUALITY AGAINST THE NAMES (S-7). Read: ${JSON.stringify(
         groups,
       )}`,
     ).toEqual(['read', 'dispatch', 'graph', 'code', 'module', 'data'])
+    expect(
+      /export const TOOL_GROUP_IDS: readonly string\[\] = FOUNDATION_GROUPS\.map/.test(sharedTypes),
+      'R-6 §3.4 — and the id list is the pairs\' PROJECTION, so the six are spelled once (`D-129`)',
+    ).toBe(true)
     // **⟶ TIME-SCOPED 2026-09-27 (THE OWNER-SCOPING REPAIR, RULING B).** The as-filed reading is
     // kept visible above and superseded: `'R-6 §3.4 / R-12 §3.4 — the companion claim: at the time
     // this unit's red set runs, `src/shared/gutter.ts` is imported by NO `src/**` file (an
