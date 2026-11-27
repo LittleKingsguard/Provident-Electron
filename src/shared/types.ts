@@ -214,12 +214,46 @@ export interface ModuleListenerDeclaration {
   readonly client?: string
 }
 
+/** ONE GROUP A MODULE DECLARES (`S-8`, `ASM-GD-3`): the id, the label the renderer's roster paints (`S-10`), and the
+ *  module's OWN tools in it. **The label rides the DECLARATION and never a registry entry** — an entry is per-id and
+ *  carries `{id, source, origin}` (`C-9`; `docs/L2/declaration-registry/interface.md` §2). */
+export interface ModuleGroupDeclaration {
+  readonly id: string
+  readonly label: string
+  readonly tools?: readonly string[]
+}
+
+/** **THE FOUNDATION'S GROUP DOMAIN (`C-4`, `ASM-SP-2`): the six ids WITH the labels their owner authored, in roster
+ *  order.** A label is its declarer's (`C-9`), so it rides the foundation's contribution and is not a table elsewhere;
+ *  `TOOL_GROUP_IDS` is this list's projection — membership, order and use unmoved, and the six ids one spelling
+ *  (`docs/L3/mcp-surface/group-domain.md` §2; `docs/L3/secure-panels/roster-and-placeholders.md` §3). **THE LABELS ARE
+ *  THE FOUNDATION'S OWN TEXT** and are the roster's first paint until a delivery states a grant. */
+export interface FoundationGroup {
+  readonly id: string
+  readonly label: string
+}
+
+export const FOUNDATION_GROUPS: readonly FoundationGroup[] = [
+  { id: 'read', label: 'read (get_rendered_html, get_markdown, list_targets, get_node_state, code.get, code.validate)' },
+  { id: 'dispatch', label: 'dispatch (synthetic event driving)' },
+  { id: 'graph', label: 'graph (load, op, export, validate, teardown)' },
+  { id: 'code', label: 'code (code.set/create/delete/load — evaluates handler bodies)' },
+  { id: 'module', label: 'module (module.install/update/list + module:<name>.<tool> extensions — trusted-equivalent to code)' },
+  { id: 'data', label: 'data (data.read/write/delete/list/journal — the central store)' },
+]
+
+/** The six ids, unmoved in membership, order and use — the foundation's contribution to the registry and the gate's
+ *  default set (`S-8`), projected from the pairs so no second spelling exists. */
+export const TOOL_GROUP_IDS: readonly string[] = FOUNDATION_GROUPS.map((group) => group.id)
+
 export interface ModuleCapabilities {
   tools?: string[]
   hooks?: string[]
   transforms?: string[]
   /** The listener declarations the entry's `ctx.declare` repeats (`declaredListeners`, `compare`). */
   listeners?: ModuleListenerDeclaration[]
+  /** The group domain's module half (`S-8`): one entry per group the module declares, its label its own. */
+  groups?: readonly ModuleGroupDeclaration[]
 }
 
 /** A module dependency (M-r9 — declared, no resolver this pass). */
