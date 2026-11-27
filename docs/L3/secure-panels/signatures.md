@@ -1,6 +1,6 @@
 # L3 — `secure-panels`: the declared signatures and the exact landing text
 
-- **Layer:** L3 · **Unit:** `pane-drag-temp` · **Branch:** `strata` (D-6) · **Rev:** 1 — this module's half of the drag pair's ONE
+- **Layer:** L3 · **Unit:** `pane-drag-temp` · **Branch:** `strata` (D-6) · **Rev:** 2 — **THE MODULARITY RE-GRAIN'S STUBS ARE `docs/L3/secure-panels/roster-and-placeholders-signatures.md` rev 1**: §1's `GROUP_LABELS`/`GROUPS` pair and the constructor's option list are SUPERSEDED there (`S-10` — the group domain is registered data and the roster is its projection), and this page keeps the pane-drag record and moves nothing else · **Rev:** 1 — this module's half of the drag pair's ONE
   edit: the `view?` block gains `commitDrag` and `clearDrag`, and the count above it moves to seven (§2). **It REPLACES
   `focus-retirement`'s rev 2** and reprints none of it (D-2); the structure, the pair rule and the guardrails are `design.md`
   · **Artifact:** `l3-secure-panels-signatures`
@@ -130,3 +130,7 @@ node "../Agent Harness/strata/lint/strata-lint.mjs" strata            # exit 1: 
   (`design.md` §6).
 - **No census figure, cap, script key or map row is stated here**, all being read from the `secure-panels` row and `brief.md` §6
   (D-14, D-26, D-39).
+
+```boundary-declared
+{"unit": "modularity", "layer": "L3", "module": "secure-panels", "writes": [{"path": "docs/L3/secure-panels/signatures.md", "d": "D-306", "why": "this page, rev 2 — a re-stamp only: §1's `GROUP_LABELS`/`GROUPS` pair and the constructor's option list are superseded by the modularity re-grain's own page (`roster-and-placeholders-signatures.md` rev 1, `S-10`), so a reader of §1 is sent to the current declaration; nothing else on this page moves and no src byte"}]}
+```
