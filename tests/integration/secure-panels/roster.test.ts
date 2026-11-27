@@ -75,9 +75,19 @@ const GATE = sourceOf(GATE_FILE)
 /** The gate's own union, read as DATA out of its declaration — the way `P-1`'s row reads the tree,
  *  and the reason no row here carries a hand-written list of the six names. The union's CENSUS is
  *  `P-1`'s claim; this battery reads it only as the name set the pane's table must be bound to. */
+// **⟶ S-8 RE-GRAIN (`U2`, 2026-11-27): THE UNION IS RETIRED.** `ToolGroup` is `string` and the gate's group set is the
+// declaration registry's `declaredGroups()`; the ONE source of the six ids is now `FOUNDATION_GROUPS` in
+// `src/shared/types.ts` (with `TOOL_GROUP_IDS` its projection). This battery reads that source, so it follows the tree
+// instead of restating it (`D-26`, `D-39`); `S-10`'s runtime set-equality row (`M-10`) is the net the retired union left.
 function gateGroupsOf(source: string): string[] {
+  if (/export type ToolGroup = string/.test(source)) {
+    const types = sourceOf('src/shared/types.ts')
+    const block = /export const FOUNDATION_GROUPS: readonly FoundationGroup\[\] = \[([\s\S]*?)\n\]/.exec(types)?.[1]
+    if (block === undefined) throw new Error('src/shared/types.ts: no `FOUNDATION_GROUPS` declaration is readable')
+    return [...block.matchAll(/\{ id: '([^']+)'/g)].map((match) => match[1])
+  }
   const union = /export type ToolGroup =([^\n]*)/.exec(source)
-  if (union === null) throw new Error(`${GATE_FILE}: no \`ToolGroup\` union is declared`)
+  if (union === null) throw new Error(`${GATE_FILE}: no \`ToolGroup\` union is declared and no foundation set is readable`)
   return [...union[1].matchAll(/'([^']+)'/g)].map((match) => match[1])
 }
 
@@ -244,15 +254,16 @@ afterEach(() => {
 })
 
 describe('secure-panels · the arrangement and the route a click reaches', () => {
-  it('the roster has ONE author: a label table bound to the gate’s `ToolGroup` by a type-only import, with the roster computed from its keys (interface.md §1, §2 (b); ASM-L2-2)', () => {
+  it('the roster has ONE author: a label table whose keys are the FOUNDATION’S SIX, with the roster computed from them — the union’s compile-time net is RETIRED at `S-8` and `S-10`’s runtime row is its successor (interface.md §1, §2 (b); ASM-L2-2, ASM-L2-16)', () => {
     const tables = labelTablesOf(PANE)
     expect(tables.length, 'exactly one declaration in the pane maps a group name to a label — a second table would be the copy this unit removes').toBe(1)
     const table = tables[0]!
     expect(table.keys.length, 'and it is the group table, not an incidental object: its keys are gate group names').toBeGreaterThan(1)
-    // THE BINDING, NOT THE NET. The annotation is the shape the compile-time net rests on
-    // (`Record<ToolGroup, string>`, `interface.md` §1); whether the table is EXHAUSTIVE is
-    // `npm run typecheck`'s reading (`S-1`), which this row cannot take and does not fake.
-    expect(table.annotation, 'the table is annotated against the gate’s union, so a member it does not spell is `TS2741` at `npm run typecheck` — the annotation, not this row, is that net (interface.md §3 S-1)').toContain('ToolGroup')
+    // **THE NET IS RETIRED, NOT RE-BOUGHT** (`S-8`): `ToolGroup` is `string`, so `Record<ToolGroup, string>` binds
+    // nothing and this row must not pin the annotation as if it did. What stands is the ONE author and its keys; the
+    // runtime set-equality row that replaces the net is `S-10`'s (`M-10`), and this row points at it rather than faking it.
+    expect(table.annotation, 'the table still carries the one annotation (`interface.md` §1) as the `Record<…>` it was; that it no longer binds is the `S-8` step, and `S-10` replaces the net').toContain('Record<')
+    expect(Object.keys(table).length, 'and the table is a label table, not an incidental object').toBeGreaterThan(0)
     const gateImports = gateImportsOf(PANE)
     const binding = gateImports.find((entry) => entry.typeOnly && entry.names.includes('ToolGroup'))
     expect(binding, '`ToolGroup` reaches the pane by a TYPE-ONLY import of the gate module — the same idiom the pane already uses for `ExclusionState` (ASM-L2-2, S-4)').toBeDefined()

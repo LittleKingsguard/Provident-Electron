@@ -7,9 +7,12 @@
 import { describe, it, expect } from 'vitest'
 import {
   SecurityGate,
+  groupForTool,
+  type GroupRule,
   type SecurityConfig,
   type ToolGroup,
 } from '../src/main/security.js'
+import { TOOL_GROUP_IDS } from '../src/shared/types.js'
 
 describe('SecurityGate — construction & defaults (§2, §3)', () => {
   it('defaults to enabled {read,dispatch}, token null', () => {
@@ -181,5 +184,37 @@ describe('SecurityGate — adversarial hardening (F-gate, F-key)', () => {
   it('a header value that is a number never throws (F1 regression)', () => {
     const g = new SecurityGate({ token: 's', enabled: ['read', 'dispatch'] })
     expect(g.checkRequest({ authorization: 42 } as never).ok).toBe(false)
+  })
+})
+
+describe('S-8 — the group domain is a RULE: a patch names a group iff the rule holds it, and a declared group is enableable', () => {
+  /** A composed rule in the shape `composedGroupRule` answers: the foundation's own resolution plus one declared
+   *  membership, and a set that is the registry's (the foundation's six plus the module's). */
+  const rule: GroupRule = {
+    groupOf: (name: string) => (name === 'module:matrix.answer' ? 'reporting' : groupForTool(name)),
+    groups: () => [...TOOL_GROUP_IDS, 'reporting'],
+  }
+
+  it('accepts a DECLARED group — a group the old six-id literal never held — and refuses an unknown one WHOLE', () => {
+    const g = new SecurityGate({ token: null, enabled: ['read'], groups: rule })
+    const granted = g.apply({ groups: ['reporting'] })
+    expect(granted.enabled.has('reporting'), 'the validator reads the rule, so a module-declared group is enableable').toBe(true)
+    expect(granted.groupRule.groups(), 'and the set is the one it was handed, unchanged').toEqual([...TOOL_GROUP_IDS, 'reporting'])
+    const refused = g.apply({ groups: ['no-such-group'] })
+    expect(refused.config.enabled, 'a group the rule does not hold rejects the WHOLE patch — never a partial grant').toEqual(g.config.enabled)
+  })
+
+  it('CARRIES the rule across the apply and withExclusion re-constructions, the no-op arms included', () => {
+    const g = new SecurityGate({ token: null, enabled: ['read', 'code'], groups: rule })
+    for (const next of [g.withExclusion('mcp-enabled'), g.withExclusion('mcp-disabled'), g.apply({ token: null })]) {
+      expect(next.groupRule.groups(), 'a re-construction that dropped the rule would lose every module group').toEqual([...TOOL_GROUP_IDS, 'reporting'])
+    }
+    expect(g.withExclusion('mcp-disabled').groupRule.groupOf('module:matrix.answer'), 'and the membership survives the same trip').toBe('reporting')
+  })
+
+  it('a bare gate measures the FOUNDATION six and no module group — stated, because a bare gate in a test is that gate', () => {
+    const bare = new SecurityGate()
+    expect(bare.groupRule.groups()).toEqual(TOOL_GROUP_IDS)
+    expect(bare.groupRule.groupOf('module:matrix.answer'), 'the namespace default stands: a tool with no declared group is `module`').toBe('module')
   })
 })

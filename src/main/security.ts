@@ -1,6 +1,12 @@
 import { timingSafeEqual } from 'node:crypto'
+import { TOOL_GROUP_IDS } from '../shared/types.js'
+import type { DeclarationCarrier } from '../shared/registry/index.js'
 
-export type ToolGroup = 'read' | 'dispatch' | 'graph' | 'code' | 'module' | 'data'
+/** **THE GROUP DOMAIN'S ID TYPE (`S-8`): the union retired and the NAME stayed** — an id in the registered set, which
+ *  the declaration registry answers (`docs/L3/mcp-surface/group-domain-signatures.md` §1). The six foundation ids are
+ *  `TOOL_GROUP_IDS` and no type here closes over them; a reader who wants "is this id registered" asks
+ *  `GroupRule.groups()` and never a literal. */
+export type ToolGroup = string
 
 const TOOL_GROUPS: Record<string, ToolGroup> = {
   'provident.get_rendered_html': 'read',
@@ -62,8 +68,89 @@ export function groupForTool(toolName: string): ToolGroup | null {
   return null
 }
 
-export function toolAllowed(toolName: string, enabled: ReadonlySet<ToolGroup> | readonly ToolGroup[]): boolean {
-  const group = groupForTool(toolName)
+/** **THE TWO QUESTIONS THE GATE ASKS OF A GROUP DOMAIN, AND NO THIRD** (`group-domain.md` §2, `ASM-GD-1`): `groupOf` is the
+ *  membership for ONE name, `groups()` is the set a patch may name. One object, because a rule answering one and not the
+ *  other would let `apply` admit a group no tool resolves to, or refuse one a tool already answers. */
+export interface GroupRule {
+  groupOf(name: string): ToolGroup | null
+  groups(): readonly ToolGroup[]
+}
+
+/** **THE DEFAULT RULE, AND IT READS THIS FILE'S OWN FOUNDATION AND NOTHING ELSE** (`ASM-1`'s posture at this axis): the
+ *  exact `TOOL_GROUPS` rows, then the `module:` prefix, and `TOOL_GROUP_IDS` as its set. A gate constructed with no rule
+ *  measures the FOUNDATION's six and no module group — stated, because a bare gate in a test is that gate. */
+export const foundationGroupRule: GroupRule = {
+  groupOf: (name: string) => groupForTool(name),
+  groups: () => TOOL_GROUP_IDS,
+}
+
+/** A MEMBERSHIP REFUSAL IS A VALUE NAMING ITS SUBJECT (`D-105`): `declaration-duplicate` for one name in two groups (the
+ *  registry's own reason for a duplicate id) and `declaration-overstated` for a `tools[]` element the same manifest's
+ *  `capabilities.tools` does not carry (`C-12`). It is structurally a `DeclarationRefusal` where the reason is the
+ *  duplicate, so the boot's list is one union. */
+export interface GroupRefusal {
+  readonly status: 'refused'
+  readonly reason: 'declaration-duplicate' | 'declaration-overstated'
+  readonly subject: string
+}
+
+/** **THE COMPOSED RULE** (`group-domain.md` §2, §3; `ASM-GD-3`): `groupOf` answers the DECLARED MEMBERSHIP first and the
+ *  foundation's rule second, and `groups()` answers the SET IT IS HANDED — the registry's `declaredGroups()` — unchanged,
+ *  so the set has ONE authority and this function never derives it (`D-129`). `carriers` is the registry's own
+ *  `DeclarationCarrier[]`, so the membership and the ids are read from ONE input in ONE shape.
+ *
+ *  A FOUNDATION ID A MODULE CLAIMS IS SKIPPED HERE AND REFUSED BY THE REGISTRY BY NAME: the registry's composition answers
+ *  `declaration-duplicate` with the id, and a second refusal from this function would name it twice. A group's `tools[]`
+ *  element the same manifest's `capabilities.tools` does not carry is `declaration-overstated`; one tool in two groups is
+ *  `declaration-duplicate`, and neither halves the membership. */
+export function composedGroupRule(
+  foundation: GroupRule,
+  groups: readonly ToolGroup[],
+  carriers: readonly DeclarationCarrier[],
+): { readonly rule: GroupRule; readonly refused: readonly GroupRefusal[] } {
+  const membership = new Map<string, string>()
+  const refused: GroupRefusal[] = []
+  const foundationIds = new Set(foundation.groups())
+  for (const carrier of carriers) {
+    const capabilities = carrier?.capabilities
+    if (capabilities === null || capabilities === undefined || typeof capabilities !== 'object') continue
+    const declared = new Set(Array.isArray(capabilities.tools) ? capabilities.tools : [])
+    const groupsDeclared = Array.isArray(capabilities.groups) ? capabilities.groups : []
+    for (const group of groupsDeclared) {
+      if (group === null || typeof group !== 'object') continue
+      if (typeof group.id !== 'string' || group.id === '' || foundationIds.has(group.id)) continue
+      const tools = Array.isArray(group.tools) ? group.tools : []
+      for (const tool of tools) {
+        if (typeof tool !== 'string' || tool === '') continue
+        if (!declared.has(tool)) {
+          refused.push({ status: 'refused', reason: 'declaration-overstated', subject: tool })
+          continue
+        }
+        if (membership.has(tool)) {
+          refused.push({ status: 'refused', reason: 'declaration-duplicate', subject: tool })
+          continue
+        }
+        membership.set(tool, group.id)
+      }
+    }
+  }
+  return {
+    rule: {
+      groupOf: (name: string) => membership.get(name) ?? foundation.groupOf(name),
+      groups: () => groups,
+    },
+    refused,
+  }
+}
+
+/** **A GROUP IS ENABLED IFF ITS RULE RESOLVES IT** (`S-8`): the rule is the only source, and its absence answers the
+ *  foundation's own six — never a second set, never a literal (`ASM-4`'s defaulted-seam pattern). */
+export function toolAllowed(
+  toolName: string,
+  enabled: ReadonlySet<ToolGroup> | readonly ToolGroup[],
+  rule: GroupRule = foundationGroupRule,
+): boolean {
+  const group = rule.groupOf(toolName)
   const set: ReadonlySet<ToolGroup> = enabled instanceof Set ? enabled : new Set(enabled)
   return group !== null && set.has(group)
 }
@@ -78,14 +165,18 @@ export function toolAllowed(toolName: string, enabled: ReadonlySet<ToolGroup> | 
 export function moduleToolAllowed(
   toolName: string,
   enabled: ReadonlySet<ToolGroup> | readonly ToolGroup[] | null | undefined,
-  opts?: { executable?: boolean },
+  opts?: { executable?: boolean; rule?: GroupRule },
 ): boolean {
   if (typeof toolName !== 'string' || !toolName.startsWith('module:') || toolName.length <= 'module:'.length) return false
   // F3 (adversarial) — malformed `enabled` (non-iterable object) FAILS CLOSED
   // (false), never throws. null/undefined → empty set → false.
   if (!(enabled instanceof Set || Array.isArray(enabled))) return false
   const set: ReadonlySet<ToolGroup> = enabled instanceof Set ? enabled : new Set(enabled)
-  if (!set.has('module')) return false
+  const rule = opts?.rule ?? foundationGroupRule
+  // **THE TOOL'S OWN GROUP, NOT `module`** (`S-8`, `group-domain.md` §1): a tool declared into another group could never
+  // satisfy a `module` requirement. The `code` half stands: an executable module tool is still trusted-equivalent to it.
+  const group = rule.groupOf(toolName)
+  if (group === null || !set.has(group)) return false
   const executable = opts?.executable ?? true
   if (executable && !set.has('code')) return false
   return true
@@ -113,11 +204,12 @@ export function moduleToolAllowed(
 export function registrationAllowed(
   name: string,
   enabled: ReadonlySet<ToolGroup> | readonly ToolGroup[] | null | undefined,
+  rule: GroupRule = foundationGroupRule,
 ): boolean {
   // F3 (the landed fail-closed posture, borrowed): a malformed `enabled` FAILS CLOSED, never throws.
   if (!(enabled instanceof Set || Array.isArray(enabled))) return false
   const set: ReadonlySet<ToolGroup> = enabled instanceof Set ? enabled : new Set(enabled)
-  const group = groupForTool(name)
+  const group = rule.groupOf(name)
   // An unknown name, and a bare `module:` with an empty rest, answer `null` and are denied — never resolved to
   // `module`, never admitted by a prefix.
   if (group === null || !set.has(group)) return false
@@ -191,12 +283,11 @@ export function authorized(
   return false
 }
 
-const VALID_GROUPS: ReadonlySet<string> = new Set(['read', 'dispatch', 'graph', 'code', 'module', 'data'])
-
 /** F3/F4 — a token/groups/disable field of the wrong shape ⇒ the whole patch
- *  is REJECTED (config unchanged, never throws). */
-function isToolGroup(v: unknown): v is ToolGroup {
-  return typeof v === 'string' && VALID_GROUPS.has(v)
+ *  is REJECTED (config unchanged, never throws). **THE DOMAIN IS THE RULE'S** (`S-8`): a group the rule's set does not
+ *  hold rejects the WHOLE patch, so a module-declared group is enableable exactly while the registry declares it. */
+function isToolGroup(v: unknown, rule: GroupRule): v is ToolGroup {
+  return typeof v === 'string' && rule.groups().includes(v)
 }
 
 export function applyPatch(
@@ -206,6 +297,7 @@ export function applyPatch(
     groups?: ToolGroup[]
     disable?: ToolGroup[]
   },
+  rule: GroupRule = foundationGroupRule,
 ): { token: string | null; enabled: ToolGroup[] } {
   const { groups, disable } = patch
   // F3 — token must be string|null (non-empty if set).
@@ -214,10 +306,10 @@ export function applyPatch(
   }
   // F4 — groups/disable must be arrays of valid ToolGroup (non-iterable/mixed
   // inputs reject the whole patch, never throw).
-  if (groups !== undefined && (!Array.isArray(groups) || !groups.every(isToolGroup))) {
+  if (groups !== undefined && (!Array.isArray(groups) || !groups.every((name: unknown) => isToolGroup(name, rule)))) {
     return config
   }
-  if (disable !== undefined && (!Array.isArray(disable) || !disable.every(isToolGroup))) {
+  if (disable !== undefined && (!Array.isArray(disable) || !disable.every((name: unknown) => isToolGroup(name, rule)))) {
     return config
   }
   const add = groups ?? []
@@ -251,8 +343,12 @@ export class SecurityGate {
    *  surface TAKES an epoch (`PAR-5`'s OUTSIDE column): it is read here and stamped by the
    *  acceptor, never supplied by a caller. */
   private _exclusionEpoch = 0
+  /** **THE ONE INJECTION SEAM** (`group-domain.md` §2): the composed rule, passed at the boot's one construction site;
+   *  absent, the gate holds `foundationGroupRule`. Every predicate and `applyPatch` read it, so no member asks a literal. */
+  private readonly _rule: GroupRule
 
-  constructor(initial?: SecurityConfig) {
+  constructor(initial?: SecurityConfig & { readonly groups?: GroupRule }) {
+    this._rule = initial?.groups ?? foundationGroupRule
     // A PARTIAL initial (`{ token }` with no `enabled` — the boot-read shape the drives construct
     // the gate with) falls back to the default enabled set rather than throwing. An `enabled` that
     // IS supplied is carried in whatever iterable form it arrives (an array or a `Set` — both are
@@ -276,6 +372,13 @@ export class SecurityGate {
 
   get enabled(): ReadonlySet<ToolGroup> {
     return new Set(this._config.enabled)
+  }
+
+  /** **THE RULE IT HOLDS, READABLE** (`S-8`): `mcp-server.ts`'s two FREE predicate calls are handed the gate's rule rather
+   *  than the default — a call site left on `foundationGroupRule` would refuse a declared group at registration while the
+   *  gate admitted it. */
+  get groupRule(): GroupRule {
+    return this._rule
   }
 
   /** `§2.1` item 2 / `PAR-1` — THE DERIVED PAIR READER. A `readonly` getter with NO setter, so
@@ -310,21 +413,22 @@ export class SecurityGate {
     if (!changed || next === this._exclusion) {
       // `T-3`/`T-4` — the epoch does NOT move: an epoch bump on a no-op would invalidate work for
       // a transition that never happened (and a caller could then deny service with a loop of
-      // no-ops), so the counter is CARRIED FORWARD unchanged.
-      const same = new SecurityGate(this.config)
+      // no-ops), so the counter is CARRIED FORWARD unchanged. **AND THE RULE IS CARRIED WITH IT**
+      // (`S-8`): a no-op arm that dropped it would lose every module group on the first transition.
+      const same = new SecurityGate({ ...this.config, groups: this._rule })
       same._exclusion = this._exclusion
       same._exclusionEpoch = this._exclusionEpoch
       return same
     }
-    // `T-1`/`T-2` — AN ACCEPTED TRANSITION BUMPS THE EPOCH BY EXACTLY `1` (`M-EX-2`).
-    const moved = new SecurityGate(this.config)
+    // `T-1`/`T-2` — AN ACCEPTED TRANSITION BUMPS THE EPOCH BY EXACTLY `1` (`M-EX-2`), and the rule rides along (`S-8`).
+    const moved = new SecurityGate({ ...this.config, groups: this._rule })
     moved._exclusion = next
     moved._exclusionEpoch = this._exclusionEpoch + 1
     return moved
   }
 
   toolAllowed(name: string): boolean {
-    return toolAllowed(name, this.enabled)
+    return toolAllowed(name, this.enabled, this._rule)
   }
 
   checkRequest(headers: Record<string, unknown> | null | undefined): { ok: true } | { ok: false; reason: string } {
@@ -334,7 +438,9 @@ export class SecurityGate {
   }
 
   apply(patch: { token?: string | null; groups?: ToolGroup[]; disable?: ToolGroup[] }): SecurityGate {
-    const next = new SecurityGate(applyPatch(this.config, patch))
+    // **THE RULE IS HANDED TO THE VALIDATOR AND CARRIED INTO THE NEW GATE** (`S-8`): `applyPatch` validates a patch's ids
+    // against the composed set, and the replacement gate must hold the same rule or the next `apply` would lose it.
+    const next = new SecurityGate({ ...applyPatch(this.config, patch, this._rule), groups: this._rule })
     // `T-5` / `M-EX-9` — the SET/re-gate path is NOT a transition site: the exclusion record
     // rides through UNTOUCHED, and the two axes stay separate.
     next._exclusion = this._exclusion

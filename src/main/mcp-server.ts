@@ -12,7 +12,7 @@ import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js'
 import {StreamableHTTPServerTransport} from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import {z} from 'zod'
 import {createServer, type IncomingMessage, type ServerResponse} from 'node:http'
-import type {RpcRequest, RpcReply, DispatchRequest} from '../shared/types.js'
+import type {RpcRequest, RpcReply, DispatchRequest, ModuleCapabilities, ModuleGroupDeclaration} from '../shared/types.js'
 import {SecurityGate, exclusionAllowsWork, registrationAllowed, type ToolGroup, moduleToolAllowed} from './security.js'
 // **THE MODULE REGISTRY'S INTERFACE LIVES HERE NOW (D-81, 2026-11-02).** It stood in `module-store.ts`
 // — the raw-`fs` registry module, deleted with the Q-5 arm that was its only reader (`D-78`'s second
@@ -168,7 +168,7 @@ export function invokeModuleTool(door: ModulePort | null, gate: SecurityGate, to
   }
   // F1 — the invocation two-gate. A dynamic module tool is trusted-equivalent
   // to `code` (executable entry), so it needs module AND code.
-  if (!moduleToolAllowed(toolName, gate.enabled, { executable: true })) {
+  if (!moduleToolAllowed(toolName, gate.enabled, { executable: true, rule: gate.groupRule })) {
     throw new Error(`invokeTool: ${toolName} requires module AND code groups (invocation two-gate)`)
   }
   if (door === null) {
@@ -277,7 +277,10 @@ export interface ModuleRecord {
   source: string
   /** SHA-256 of `source` — ALWAYS derived at put(), never trusted from input. */
   hash: string
-  capabilities?: { tools?: string[]; hooks?: string[]; transforms?: string[] }
+  /** **THE CENSUS ROW CARRIES THE WHOLE DECLARED SURFACE** (`S-8`): `tools`/`hooks`/`transforms` were a narrowing, and the
+   *  group domain's membership rides `groups` — the member the renderer's roster and main's registry both read
+   *  (`docs/L3/mcp-surface/group-domain.md` §3, `src/shared/types.ts`'s `ModuleGroupDeclaration`). */
+  capabilities?: ModuleCapabilities
   installedAt?: string
   /** U2 — the record persists the flag; enable/disable toggles it. */
   disabled?: boolean
@@ -325,24 +328,42 @@ export function handleModuleTool(store: ModuleStore | null, name: string, args: 
   // capabilities as the CENSUS row's own members, which `module.list` answers.
   // **THEY ARE NOT A NAME SOURCE ANY MORE**: the published dynamic half is the PORT's `activations()` and
   // nothing in this file composes from these rows (`docs/L3/mcp-surface/design.md` §3, §5; L2 §10).
-  const parseCapabilities = (src: string, argCaps?: unknown): { tools?: string[]; hooks?: string[]; transforms?: string[] } => {
-    let parsed: { capabilities?: { tools?: unknown; hooks?: unknown; transforms?: unknown } } | null = null
+  const parseCapabilities = (src: string, argCaps?: unknown): ModuleCapabilities => {
+    type Raw = { tools?: unknown; hooks?: unknown; transforms?: unknown; groups?: unknown; listeners?: unknown }
+    let parsed: { capabilities?: Raw } | null = null
     const trimmed = src.trim()
     if (trimmed.startsWith('{')) {
       try {
-        parsed = JSON.parse(trimmed) as { capabilities?: { tools?: unknown; hooks?: unknown; transforms?: unknown } }
+        parsed = JSON.parse(trimmed) as { capabilities?: Raw }
       } catch {
         parsed = null
       }
     }
     const caps = parsed?.capabilities ?? argCaps
     if (caps && typeof caps === 'object' && !Array.isArray(caps)) {
-      const c = caps as { tools?: unknown; hooks?: unknown; transforms?: unknown }
+      const c = caps as Raw
       const strArr = (v: unknown): string[] | undefined => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : undefined)
+      // **A GROUP ENTRY IS KEPT BY ITS OWN SHAPE** (`S-8`'s `ModuleGroupDeclaration`): an id and a label are strings, and
+      // `tools` — where present — a list of strings. A malformed entry is dropped, never coerced: the registry's
+      // membership check reads what stands, and an entry with no id is no declaration.
+      const groupsOf = (v: unknown): ModuleGroupDeclaration[] | undefined => {
+        if (!Array.isArray(v)) return undefined
+        const out: ModuleGroupDeclaration[] = []
+        for (const entry of v) {
+          if (entry === null || typeof entry !== 'object') continue
+          const g = entry as { id?: unknown; label?: unknown; tools?: unknown }
+          if (typeof g.id !== 'string' || g.id === '' || typeof g.label !== 'string') continue
+          const tools = strArr(g.tools)
+          out.push(tools === undefined ? { id: g.id, label: g.label } : { id: g.id, label: g.label, tools })
+        }
+        return out
+      }
+      const groups = groupsOf(c.groups)
       return {
         ...(strArr(c.tools) ? { tools: strArr(c.tools) } : {}),
         ...(strArr(c.hooks) ? { hooks: strArr(c.hooks) } : {}),
         ...(strArr(c.transforms) ? { transforms: strArr(c.transforms) } : {}),
+        ...(groups === undefined ? {} : { groups }),
       }
     }
     return {}
@@ -424,7 +445,7 @@ export function registeredToolNames(gate: SecurityGate, allNames: string[]): str
   const out: string[] = []
   for (const name of allNames) {
     if (seen.has(name)) continue
-    if (!registrationAllowed(name, enabled)) continue
+    if (!registrationAllowed(name, enabled, gate.groupRule)) continue
     seen.add(name)
     out.push(name)
   }

@@ -34,7 +34,7 @@ import {createModuleExecutor} from './modules/index.js'
 import {appVersion, type Activation, type ModuleHost, type RegistrationFrame} from '../shared/module-contract.js'
 import {createModuleChannel, type ModuleChannel} from './module-channel/index.js'
 import {IPC_CHANNEL_MESSAGE, IPC_CHANNEL_REQUEST, type ChannelTransportMain, type StoreRequest} from '../shared/module-channels.js'
-import {SecurityGate, type ToolGroup} from './security.js'
+import {SecurityGate, composedGroupRule, foundationGroupRule} from './security.js'
 // central-data (`docs/L1/central-data-census-exception.md` §2 E-3) — the module's surface enters the
 // composition here, and nothing else of this file moves: it constructs no store and touches no file
 // until a `data.*` tool is called (D-11, D-13).
@@ -530,12 +530,11 @@ async function main(): Promise<void> {
     delivery: viewDelivery,
   })
   const persisted = settingsSurface.read()
-  // `docs/specs/secure-exclusion.md` `§2.1` item 4 — THE ORDERING ENVELOPE, STEP 2: the gate is
-  // CONSTRUCTED here (after the construction and the boot read, before the transports) and the exclusion record is
-  // INITIALIZED to its boot terminal `'mcp-enabled'` AT THIS CONSTRUCTION SITE — never read from
-  // a file, because the flag is NOT persisted (`D-19`). A crash, a torn record, a corrupt file and
-  // a missing file therefore all resolve to the SAFE pair.
-  const gate = new SecurityGate({ token: persisted.token, enabled: persisted.enabled as ToolGroup[] })
+  // **`docs/specs/secure-exclusion.md` `§2.1` item 4 — THE ORDERING ENVELOPE, STEP 2 IS MOVED BY `S-8`**: the gate is
+  // CONSTRUCTED AFTER THE REGISTRY (below, beside the census) and not here, because its group rule is the composed set —
+  // the registry needs the census's records, so the gate follows them. The exclusion record is still INITIALIZED to its
+  // boot terminal `'mcp-enabled'` AT THIS object's construction and never read from a file (`D-19`); what moves is
+  // WHERE, and the reason is the rule's own input. The boot read that feeds it stays here.
   const backend = new RendererBackend()
 
   // ═══════════════════════════ TIER 1 — THE CHANNEL + THE INSTANCE'S RECORD (G2 `U-STORE-PERSIST`,
@@ -749,10 +748,20 @@ async function main(): Promise<void> {
    *  `docs/L3/declaration-registry/design.md` §2): `ALL_TOOLS` is the tool domain's foundation half, the placeholder domain is
    *  main's to compose empty (`C-4`), and each census record is a carrier whose `capabilities` the projection reads. **THE
    *  BOOT NAMES WHAT IT REFUSED** (`D-105`): a duplicate id is a value and is logged here, never thrown. */
-  moduleRegistry = createRegistry(
+  const groupCarriers = bootCensus.map((record) => ({ name: record.name, capabilities: record.capabilities ?? {} }))
+  const registry = createRegistry(
     { pane: DECLARED_PANE_IDS, zone: DECLARED_ZONE_IDS, group: TOOL_GROUP_IDS, tool: ProvidentMcpServer.ALL_TOOLS, placeholder: [] },
-    bootCensus.flatMap((record) => declarationsOf({ name: record.name, capabilities: record.capabilities ?? {} })),
+    groupCarriers.flatMap((carrier) => declarationsOf(carrier)),
   ).registry
+  moduleRegistry = registry
+  /** **THE GATE'S COMPOSED RULE, BUILT FROM THE SAME TWO INPUTS** (`S-8`, `group-domain.md` §3): the registry's set for
+   *  `groups()`, and the carriers' `capabilities.groups` for the membership. **THE BOOT NAMES WHAT IT REFUSED** (`D-105`):
+   *  an overstated membership or a tool in two groups is a value, logged here and never thrown. */
+  const composed = composedGroupRule(foundationGroupRule, registry.declaredGroups(), groupCarriers)
+  for (const refusal of composed.refused) {
+    console.error(`[provident-main] group domain: '${refusal.subject}' refused — ${refusal.reason}`)
+  }
+  const gate = new SecurityGate({ token: persisted.token, enabled: persisted.enabled, groups: composed.rule })
   // THE ONE-LINE OPTIONS PASS (§2.8 item 3): the server's construction options receive the
   // re-pointed module surface — the module tools' REPLY SHAPES are UNCHANGED.
   // **AND THE `data` SURFACE IS HANDED THE BOOT'S OWN STORE** (D-79, D-80): `centralStore` was constructed above
