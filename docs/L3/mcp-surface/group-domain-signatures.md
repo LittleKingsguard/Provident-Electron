@@ -31,9 +31,8 @@ export const foundationGroupRule: GroupRule
 ```ts
 /** A MEMBERSHIP REFUSAL IS A VALUE NAMING ITS SUBJECT (`D-105`), and the two reasons are the vocabulary the corpus
  *  already carries: `declaration-duplicate` for one name in two groups (the registry's own reason for a duplicate id)
- *  and `declaration-overstated` for a `tools[]` element the same manifest's `capabilities.tools` does not carry
- *  (`C-12`). It is structurally a `DeclarationRefusal` wherever the reason is the duplicate, so the boot's one list is
- *  `readonly (DeclarationRefusal | GroupRefusal)[]` and neither type is widened to the other. */
+ *  and `declaration-overstated` for a `tools[]` element the same manifest's `capabilities.tools` does not carry (`C-12`).
+ *  It is structurally a `DeclarationRefusal` where the reason is the duplicate, so the boot's list is one union. */
 export interface GroupRefusal {
   readonly status: 'refused'
   readonly reason: 'declaration-duplicate' | 'declaration-overstated'
@@ -113,10 +112,11 @@ declare class SecurityGate {
 - **This section is a CROSS-SEAT declaration and not this page's write** (`group-domain.md` §8; `OWED-6`'s precedent): the file is `ipc-contract`'s, and `OWED-9`'s *"`types.ts`'s one edit is `OWED-6`'s retirement"* is a count this rev falsifies. **No other member of that file moves.**
 
 ```ts
-/** THE FOUNDATION'S GROUP IDS, IN ROSTER ORDER (`S-8`, `ASM-DR-2`, `ASM-GD-2`): the foundation's CONTRIBUTION to the
- *  registry, read by both realms — main for the gate's default rule, the renderer for the registry's group domain — so
- *  the six ids are ONE literal and never two. The registry mints its foundation entries from it and does not author it. */
-export const TOOL_GROUP_IDS: readonly ['read', 'dispatch', 'graph', 'code', 'module', 'data']
+/** THE FOUNDATION'S GROUP DOMAIN (`S-8`; `S-10`'s re-grain, `ASM-GD-2`): the six ids WITH the labels their owner authored, in
+ *  roster order. A label is its declarer's (`C-9`), so it rides the foundation's contribution and is not a table elsewhere;
+ *  `TOOL_GROUP_IDS` is this list's projection — membership, order and use unmoved, and the six ids one spelling (`D-129`). */
+export const FOUNDATION_GROUPS: readonly { readonly id: string; readonly label: string }[]
+export const TOOL_GROUP_IDS: readonly string[]
 
 /** ONE GROUP A MODULE DECLARES (`S-8`, `ASM-GD-3`): the id, the label the renderer's roster paints (`S-10`), and the
  *  module's OWN tools in it. The label rides the DECLARATION and never the registry's entry — an entry is per-id and

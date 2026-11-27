@@ -1,0 +1,72 @@
+# L3 — `secure-panels`: the roster as the registry's projection, and the placeholders pinned as the fifth domain
+
+- **Layer:** L3 · **Module:** `secure-panels` · **Unit:** `modularity` (`U2`'s `S-10`; `S-21` named and not written) · **Branch:** `main` · **Rev:** 1 — **NEW, AND IT IS THE SPLIT `D-1` ASKS FOR AT THE CEILING**: `design.md` and `docs/L2/secure-panels/interface.md` each stand at 150/150, so `S-10`'s cells are stated HERE by owner and neither page is appended to (`D-1`, `D-2`, `AN-15`; the `mcp-surface` `group-domain.md` split is the precedent)
+- **Inputs:** `docs/L1/modularity.md` §3 `S-10`/`S-21`, §4 `C-4`/`C-8`/`C-9`, §6 `M-10`/`M-21`; `docs/L2/declaration-registry/interface.md` §4–§45's two realms; `docs/L3/declaration-registry/signatures.md` §1–§2; `docs/L3/mcp-surface/group-domain.md` §2–§3; `src/renderer/secure-panels.ts`, `src/renderer/renderer.ts:2048`, `src/shared/types.ts` by site; `D-23`, `D-35`, `D-113`, `D-129`, `D-146`
+- **Write scope:** `docs/L3/secure-panels/` (brief §3); `src/**` read-only at this layer (D-3) · **Status:** DESIGN — `S-10` is OWED to L4 and lands in `U2`'s one sub-unit (`OWED-4`); no `src/**` byte carries it, so `M-10` is reserved and red for the absence it names (`D-40`)
+
+## 1. The subject, and the two nets that move
+
+- **`GROUP_LABELS`' COMPILE-TIME NET DIES WITH THE CLOSED UNION** (`S-8` makes `ToolGroup` a `string`): the table is `Record<ToolGroup, string>`, and the annotation that reddened `npm run typecheck` on a seventh group (`docs/L2/secure-panels/interface.md` §1–§3) cannot fire on a `string`. **Its replacement is a RUNTIME SET-EQUALITY ROW**, not a weaker annotation: the registry's declared groups and the envelope's authored toggle rows are compared as SETS and a difference reds BY NAME in both directions (`M-10`).
+- **THE ROSTER STOPS BEING AUTHORED AND BECOMES THE REGISTRY'S PROJECTION**: today the roster *is* the table's keys (`src/renderer/secure-panels.ts`'s `GROUPS`); from this step the ids are the declared groups, the order is the composition's (foundation then registration), and the label is the DECLARER's — `C-9`'s rule that a group's meaning is its owner's and never the entry's (`docs/L2/declaration-registry/interface.md` §4).
+- **THE PLACEHOLDERS STOP BEING UNPINNED AUTHORED IDS AND BECOME THE FIFTH DOMAIN** (`C-4`, ruling (b) *"Overlay placeholders only"*): `paneEnvelope` already authors the overlay's live regions and no set pins them (L1 §1), so this step PINS the set as the envelope's foundation contribution and hands it to the renderer's registry (`S-10`'s second half).
+- **WHAT DOES NOT MOVE**: one construction per realm (`ASM-DR-4`), the isolated graph and its `window.provident.*` handler bodies (`C-8`), the paint discipline that writes only from a delivery (`D-129`), and the bridge — no member, no route, no second delivery (`D-18`).
+
+## 2. Structure — names, sites, and what each one is
+
+| Name | Site | Kind | What it is |
+|---|---|---|---|
+| `GroupRow` | `secure-panels.ts` | NEW · exported interface | `{readonly id: string; readonly label: string}` — one authored toggle row's datum |
+| `groupRoster` | `secure-panels.ts` | NEW · exported pure function | `(registry, carriers) → readonly GroupRow[]`: `registry.declaredGroups()` in the registry's order, each id labelled by its DECLARER — the foundation's pair for a `source:'foundation'` entry, the declaring carrier's `capabilities.groups[].label` for a module's. **A declared group with no label is a REFUSAL by name, never a row painted `undefined`** (`C-9`, `D-105`) |
+| `PLACEHOLDER_IDS` | `secure-panels.ts` | NEW · exported constant | the fifth domain's foundation contribution: the overlay's four authored live regions — `security-status`, `status`, `module-status`, `module-list` — **PINNED here because the envelope authors them and no set pins them** (`C-4`, `S-10`) |
+| `paneEnvelope` | `secure-panels.ts` | MOVE · private, one parameter | `paneEnvelope(roster: readonly GroupRow[])`: one `label` node per roster row (`id: 'toggle:<id>'`, `data-group`, `data-on:'false'`, `content: row.label`, the `toggle-<id>` handler), and the placeholder containers it authors are exactly `PLACEHOLDER_IDS` (`D-113`'s overlay, `C-8`) |
+| `SecurePanels`' `opts` | `secure-panels.ts` | MOVE · constructor option | gains `{registry: DeclarationRegistry; carriers: readonly DeclarationCarrier[]}`; the roster is `groupRoster(registry, carriers)` at construction, so **the envelope is still built ONCE** and never re-translated per answer (`docs/L2/secure-panels/interface.md` §1's measured reason for refusing a run-time roster) |
+| `GROUP_LABELS`, `GROUPS` | `secure-panels.ts` | RETIRE · read by nothing here | the table and its projection; `syncConfig`'s `toggle:<g>` arm finds `g` in the roster instead, and the label it paints is the row's |
+| `FOUNDATION_GROUPS` | `src/shared/types.ts` | NEW · **cross-seat**, `ipc-contract`'s | the six ids **with their labels**, in roster order — the foundation's contribution to the group domain (`C-4`); `TOOL_GROUP_IDS` becomes its projection, so the six ids are spelled once and the labels ride beside them (`S-8`'s re-grain, §3) |
+
+- **ONE CONSTRUCTION, TWO READERS**: `renderer.ts` (`S-18`) constructs the renderer's registry over the delivered rows and hands the SAME instance to `new SecurePanels(panesMount, {…, registry, carriers})` (`src/renderer/renderer.ts:2048`). A second construction in this file would make two renderer registries over one delivery, which `ASM-DR-4`'s *once per realm that has a consumer* refuses.
+- **THE CARRIERS ARE THE LABELS' ONLY SOURCE AND THE REGISTRY IS THE SET'S**: an entry carries `{id, source, origin}` and no label (`C-9`), so the two inputs are `declaredGroups()` for the set and the carriers for the labels — the same pair `composedGroupRule` reads in main (`docs/L3/mcp-surface/group-domain.md` §2), one input each, no third list.
+
+## 3. The foundation's labels move, and why they follow the ids
+
+- **`secure-panels` MAY NOT SPELL THE SIX IDS A SECOND TIME** (`S-8`'s §5): a foundation label table keyed by the six ids in this file would be the second list `C-4`'s one-time change exists to remove. **So the labels ride the foundation's contribution**: `FOUNDATION_GROUPS: readonly {id, label}[]` in `src/shared/types.ts`, with `TOOL_GROUP_IDS = FOUNDATION_GROUPS.map(g => g.id)`.
+- **THIS RE-GRAINS `S-8`'s SHARED MEMBER, AND BY CONSTRUCTION ONLY**: `TOOL_GROUP_IDS`' membership, order and use are unmoved; what changes is that the literal is the pairs' and the id list is its projection. `group-domain-signatures.md`'s stub is re-grained in place in the same act, and the gate reads the same six ids.
+- **A MODULE'S LABEL IS ITS DECLARATION'S AND NEVER THE FOUNDATION'S**: `capabilities.groups[].label` (`S-8`'s `ModuleGroupDeclaration`) is the row's text; the foundation's six are `FOUNDATION_GROUPS`' — and neither is derivable from the other, which is why the roster reads two sources and the registry only one.
+
+## 4. The placeholders — the set, the rule, and what a fill may not do
+
+- **THE SET IS FOUR AND IT IS CLOSED**: `security-status`, `status`, `module-status`, `module-list` — the overlay's authored live regions. A fifth is a foundation edit, because the fifth domain is AUTHORED here and not widened (`C-4`; ruling (a) *"One foundation change, taken once"*).
+- **A FILL ADDS CHILDREN; IT NEVER REDEFINES THE ID**: a module composes its nodes UNDER a placeholder id at `S-21`'s own composition point — `paneEnvelope`'s translate site, a second point of the same kind as `C-6`'s and never the app runtime's (`C-8`) — and re-defines neither the node, nor the pane's content writer, nor the handler on it. The pane's own paint of those regions is unchanged, so a fill never competes with the last delivery.
+- **THE RENDERER'S REGISTRY TAKES THEM AS ITS FOUNDATION INPUT**: `renderer.ts` (`S-18`) hands `PLACEHOLDER_IDS` as `FoundationDeclarations.placeholder` — the domain the renderer composes and main composes empty (`docs/L2/declaration-registry/interface.md` §43). No module declares a placeholder id: the domain's module half is refusable by the same `declaration-duplicate` rule (`C-4`).
+
+## 5. What this page does not own
+
+- **`S-21`'s contribution route is `U5`'s** (`module-system`'s pane declaration beside it), and it adopts at this envelope's composition point; this page fixes the SET and the rule and writes neither the route nor the contribution.
+- **The L2 re-grain is OWED and is not this page's**: `docs/L2/secure-panels/interface.md` §1–§3 choose the compile-time table (`ASM-L2-1`) and refuse the run-time roster `(c)`/`(d)`; `S-10` supersedes that decision because the data now exists. **The page is 150/150 and its §1–§3 are the pane-drag record**, so its rev 10 is a separate act, declared as owed rather than silently contradicted (`docs/L2/declaration-registry/interface.md` §46's posture, `OWED-9`'s precedent).
+- **`renderer.ts` is `renderer-wiring`'s** (`S-18`): the construction site and the `SecurePanels` call are that seat's declared writes, in the same pass as the registry's renderer construction (`D-301`, `D-302`).
+- **No MCP tool, resource, transport, bridge member or IPC route is added** (`D-18`); the roster and the placeholder set are in-process data read at construction.
+
+## 6. The battery — `M-10`, three arms and the row that must be re-grained
+
+- **`M-10` IS RESERVED AND FILED WITH `S-10`** in `tests/integration/secure-panels/roster.test.ts` (this module's map row claims it), and it is RED until this design lands (`L1` §6; `D-40`). Its witness drives `SecurePanels`' construction over the layout-less shim and reads the AUTHORED nodes — no display is needed.
+- **ARM (i) — A GROUP WITH NO ROW**: a registry declaring a group the envelope authors no `toggle:<id>` for reds by that id. **ARM (ii) — A ROW WITH NO GROUP**: an authored `toggle:<id>` whose id no registry declares reds by that id. Both are read off `data-group` on the authored rows, so the row cannot be satisfied by a table and cannot be faked by the paint.
+- **ARM (iii) — THE PLACEHOLDER SET IS TOTAL**: every id in `PLACEHOLDER_IDS` is authored in the envelope and every authored live region is in the set, each direction red by name; and the registry's `declaredPlaceholders()` equals the set — the foundation's contribution read back.
+- **THE OLD ROW IS RE-GRAINED, NOT DELETED**: the roster row that reads the `ToolGroup` type-only import and the `GROUP_LABELS` table measures an arrangement that no longer exists. It is replaced BY NAME with the three arms above, and its `no-display` property is kept (`D-146`, `D-152`); no row is loosened to a lower bound.
+- **WHAT NO ROW HERE CAN SEE**: the operator's click, the gate's answer over IPC, and a module's own contribution (`S-21`'s) — a green here is the roster's and the envelope's, never the app's (brief §6, `D-27`).
+
+## 7. Assumptions, each with the alternative it rejected
+
+- **`ASM-SP-1` — the roster is the registry's set projected with the declarers' labels, built once at construction.** Rejected: re-translating the envelope per carrier answer (a new structural pattern, and the L2 page's measured refusal), and a roster built from the carriers alone without the registry (the set would then have no authority above the declarations and `M-10`'s equality would be vacuous).
+- **`ASM-SP-2` — the foundation's labels live beside `TOOL_GROUP_IDS` in `src/shared/types.ts`.** Rejected: a foundation label table in `secure-panels.ts` (a second spelling of the six ids, `S-8` §5), and a label member on the registry's entry (an entry's meaning is its consumer's, `C-9`).
+- **`ASM-SP-3` — the placeholder set is the envelope's four authored live regions, closed here.** Rejected: every authored `props.id` (it would admit controls a module must never fill) and an open set (ruling (a)'s one-time change would buy nothing).
+- **`ASM-SP-4` — a fill adds children under a placeholder and redefines nothing.** Rejected: letting a module write a placeholder's content, which would put two writers on one node and let a module overwrite the pane's delivery paint (`D-129`'s case (b)).
+
+## 8. Debts this page does not discharge
+
+- **`docs/L2/secure-panels/interface.md` rev 10 is OWED** (§5): `ASM-L2-1` and the `(c)`/`(d)` refusals are superseded by the data's arrival, and the page must say so in its own words.
+- **`src/shared/types.ts` is `ipc-contract`'s** and `renderer.ts` is `renderer-wiring`'s: `FOUNDATION_GROUPS` and the `SecurePanels` call are declared here and carried there.
+- **`tests/integration/secure-panels/roster.test.ts` re-grain is the landing act's**; `M-10` is filed with the step whose landing makes it green (`D-40`).
+- **`M-21` is `U5`'s** and this page does not claim it.
+
+```boundary-declared
+{"unit": "modularity", "layer": "L3", "module": "secure-panels", "writes": [{"path": "docs/L3/secure-panels/roster-and-placeholders.md", "d": "D-306", "why": "this page, rev 1 NEW — S-10 split by owner at the ceiling (`design.md` and its L2 page each 150/150): the compile-time label net replaced by a runtime set-equality row, the roster as the registry's projection (set from `declaredGroups()`, labels from the declarers), the foundation's labels re-grained into `FOUNDATION_GROUPS` beside `TOOL_GROUP_IDS`, the fifth domain pinned as four authored placeholders with a fill's rule, the one-construction seam at `renderer.ts:2048`, `M-10`'s three arms, four assumptions, and the L2 rev owed; no src byte"}]}
+```
