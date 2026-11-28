@@ -50,8 +50,8 @@
 // @source 260559b259261d0a6826037788a74ed5b1180bac213c9ac459f8acbd0c7a6ab3 src/shared/gutter.ts
 // @source 9279f38ee2954ee9f5f87cf60a32ba5ae48546ba40375b06656281ce57bccee5 src/shared/module-contract.ts
 // @source 40138fcc97cf13306712cc8ebf36a081302915b240ec87ff76cbafb83f898194 src/shared/overlay.ts
-// @source b76f68800a56d6d5a077f67d42353af64cb6dbd8edc85866a142c0eba0f9149f src/shared/registry/index.ts
-// @source 752313a1575f530eeabf068fe9e53a39d42409ed3fbfa0bb0dace3c551e3c1b2 src/shared/types.ts
+// @source 71b03e77b507d0322183b0743daf2ecf79710c3c96ee8551980434679d996aa4 src/shared/registry/index.ts
+// @source ca040fb35ab105b4c5e70a13a3828b7a0cef8f3c0331aaac2e6e6bf8d8698773 src/shared/types.ts
 // @source 6b239396e62f09b55499ceb19d0318298b01d725eb736851b6a49e0314b2cb39 src/shared/view-shape.ts
 // @end-sources
 // src/shared/gesture-session.ts
