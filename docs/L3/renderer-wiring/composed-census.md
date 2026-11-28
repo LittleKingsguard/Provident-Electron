@@ -1,0 +1,65 @@
+# L3 — `renderer-wiring`: the composed census — no sixth map, one overlay, and every answer read off the declared head
+
+- **Layer:** L3 · **Module:** `renderer-wiring` · **Unit:** `modularity` (`U5`'s `S-18`) · **Branch:** `main` · **Rev:** 1 — **NEW**: `design.md` and `signatures.md` each stand at **150/150**, so `S-18`'s cells are stated HERE and neither page is appended to (`D-1`, `D-2`, `AN-15`); `module-shape-signatures.md` §2's now-stale *"the composed set is `U2`'s"* is corrected to point here (rev 3 of that page)
+- **Inputs:** `docs/L1/modularity.md` §3 `S-17`/`S-18`, §4 `C-4`/`C-6`/`C-9`, §6 `M-18`, and `docs/guides/forking.md` §2.4; `docs/L3/module-system/pane-declaration{,-signatures}.md` rev 2; `src/renderer/renderer.ts` by site (`PANE_NODE_IDS`, `PANE_HEAD_IDS`, `PANE_BODY_IDS`, `PANE_COLLAPSE_IDS`, `PANE_MOVE_GRIP_IDS`, `startModuleShape`, `composedByRouter`); `src/shared/demo-envelope.ts` by site (`:951`, `paneCollapseNodeOf`, `paneMoveGripNodeOf`); `docs/L3/renderer-wiring/design-pane-node-map.md` §5–§8
+- **Write scope:** `docs/L3/renderer-wiring/` (brief §3); `src/**` read-only at this layer (`D-3`) · **Status:** DESIGN — `S-18` is OWED to L4 and lands in `U5`'s sub-unit; no `src/**` byte carries it, so `M-18` stays reserved and red for the absence it names (`D-40`)
+
+## 1. The subject, and the one thing it must not build
+
+- **THE FIVE CENSUS TABLES ARE THE FOUNDATION'S SPELLING AND THEY DO NOT BECOME DERIVED** (`PM-2`, `D-188` debt 2): `PANE_NODE_IDS`, `PANE_HEAD_IDS`, `PANE_BODY_IDS`, `PANE_COLLAPSE_IDS` and `PANE_MOVE_GRIP_IDS` each map a declared pane id to an authored node id, and the node side is a **spelled literal** — the equality is a row's, never a derivation. `S-18` moves **what the tables are total over**, not how they spell.
+- **NO SIXTH MAP IS WRITTEN** (`module-shape-signatures.md` §2's own refusal, kept): a sixth table would be the second authority `D-129` forbids. What `S-18` adds is **ONE OVERLAY** — a `Map<paneId, ComposedPane>` filled at the composition instant from the registry's declared panes and the composed graph, which the five lookups consult **after** their literal tables.
+- **THE READ ORDER IS `foundation ?? composed` AND NEVER `composed ?? foundation`**: a foundation pane is answered by its spelled literal even if a contribution also carries a node with its id — the literal table is the foundation's authority over its own five, and the overlay answers only where the tables are silent (`nodeIdForPane`'s stated `null`, never an identity fallback).
+
+## 2. The overlay — five answers from two declared ids and one authored operand
+
+| Answer | Resolver, and the operand that makes it a lookup rather than a convention |
+|---|---|
+| `nodeId` | **The first ancestor-or-self of the declared `head` node whose `props.pane` equals the pane id.** `src/shared/demo-envelope.ts:951` authors `props: { id, pane: paneId, zone }` on every foundation container, and the head row itself carries no `pane` — so the walk is unambiguous and needs **no class test**. A head with no such ancestor is a pane with no container: **named by id**, never `null`-painted |
+| `headId` | **The declaration's `head`, verbatim** (`S-17` §2): the module mints the node, the declaration names it, and the map answers it. No search |
+| `bodyId` | **The declaration's `body`, verbatim**, same rule |
+| `collapseId` | **The `pane-collapse` node inside the declared head's subtree**: `paneCollapseNodeOf` authors `css.classes: ['pane-collapse']`, `props: { id, tabindex, pane }` and one `pane-collapse` handler — the class is the discriminator and the node is the one the act already installs on |
+| `gripId` | **The `pane-grab` node inside the declared head's subtree**: `paneMoveGripNodeOf` authors `css.classes: ['pane-grab']` and — **measured** — **no `props.pane` at all** (`{ id, tabindex, name }`); its identity is therefore STRUCTURAL, its head's child, and that is why the search is scoped to the declared head and never to the graph |
+
+- **TWO DECLARED IDS CARRY ALL FIVE**: `head` and `body` are the only facts the module states, and every other answer is read off the head's own position and subtree. **That is what `C-9`'s node id being "the map's answer" costs** (`S-17`'s cell) — and it is why `S-17`'s grammar needs no collapse/grip member: they are the head row's *contents*, and a head row's contents are its author's.
+- **THE OVERLAY IS KEYED BY PANE ID AND HOLDS NO PANE RECORD**: `{ nodeId, headId, bodyId, collapseId, gripId }` and nothing else — no geometry, no zone, no figure (`C-9`'s entry rule, one domain over). A pane whose declaration omits `zone` still has all five; the zone is the record family's (`S-7`).
+- **A MISS IS `null` AND NEVER THE PANE ID** (`nodeIdForPane`'s landed rule, `D-174`): `?? paneId` would be right once and wrong after, and would hand every undeclared id a live route to any element sharing its name.
+
+## 3. The instant, and the re-drive
+
+- **THE OVERLAY IS FILLED WHERE THE CONTRIBUTION LANDS, NOT AT BOOT**: `startModuleShape(runtime, router, module)` already runs `composeModuleGraph` and re-drives the paints (`D-317`, `AN-7`). It gains **one turn**: for each pane the router's modules declare, resolve the five answers against the graph the contribution just composed, and write the entry. **THE PRECEDENT IS IN THE SAME FILE**: `composedByRouter` is a module-level `WeakMap` keyed by the router, written during composition and read afterwards (`renderer.ts:2241-2264`) — no graph handle is threaded into the five lookups, and none of their ~14 call sites moves.
+- **A PANE THAT CANNOT RESOLVE IS SKIPPED THERE AND RED WHERE IT IS MEASURED**: the fill records the pane id and the operand it lacked (`no-container`, `no-head`, `no-body`, `no-collapse`, `no-grip`) and the answer is a value, logged by the install's caller (`D-105`) — never a throw inside a contribution's turn, which `C-6` contains.
+- **AND THE TWO CENSUS INSTALLS RE-RUN WHEN THE OVERLAY GREW** — `installPaneCollapse` and `startPaneMove` walk their censuses at boot; a module pane's control and grip exist only after its contribution composes, so the installs run **one more time over the grown set**, the same `D-317` re-drive the paints already take. **A CONTROL INSTALLED TWICE IS NOT INSTALLED TWICE**: each act skips a node it already attached to (its own `installed`/`attached` reading is the guard), so the re-run's answer is the same count and no second live body exists.
+- **NO BOOT STEP MOVES** (`B-5`'s order, `D-117`'s rule): the overlay's fill and the re-run happen inside the channel's `evaluate` turn, after `bridge.ready()`, exactly where `startModuleShape` already runs.
+
+## 4. What reds, and where
+
+- **`PM-1`'s SOURCE PROBE STAYS AND ITS DOMAIN DOES NOT WIDEN** (`tests/unit/renderer-wiring/pane-node-map.test.ts`): it reads the five literals and `DECLARED_PANE_IDS` as **text and a real import**, so its subject is the FOUNDATION's spelling — a row cannot prove a composed graph's totality by reading source, and this page does not ask it to. Its two directions (a declared pane with no entry; an entry naming an undeclared pane) are unmoved.
+- **`M-18` IS THE COMPOSED ARM, AND IT REDS BY NAME**: reserved and filed here in `tests/integration/renderer-wiring/composed-census.test.ts` (this module's map row claims the directory). **ITS GRAIN IS INTEGRATION** by `D-324`'s rule — a boot cannot carry a module pane's contribution where a boot-constructed registry would read it, and the runtime + router are in-process facts.
+- **THE UNITS THE OVERLAY ADDS ARE THE PANE'S FIVE AND NO SIXTH**: a row that finds a sixth answer on an entry is a red (the entry's shape is a claim, not an open record).
+
+## 5. The battery — `M-18`
+
+- **ARM (i) — THE OVERLAY RESOLVES A MODULE PANE, ALL FIVE BY THE DECLARED HEAD**: a runtime boots the demo envelope, a contribution composes a pane's container/head/body/collapse/grip, and the declaration names `head`/`body`; after `startModuleShape`, `nodeIdForPane` answers the **container** (the head's ancestor carrying `props.pane`), `headIdForPane`/`bodyIdForPane` answer the declared ids, and the collapse/grip censuses include the two nodes found under the head.
+- **ARM (ii) — THE FOUNDATION'S LITERALS ARE UNMOVED AND WIN**: the three foundation panes still answer their spelled node ids and their three collapse/grip censuses are the same ids plus any module's — a contribution carrying a node whose `props.pane` is `pane-a` does not displace `gutter-pane`.
+- **ARM (iii) — A PANE WITH NO CONTAINER REDS BY NAME, AND THE OTHER FOUR ARE NOT GUESSED**: a declaration whose head has no `props.pane` ancestor yields **no entry** and a refusal naming the id and `no-container` — the arm every other arm's honesty rests on, because a fallback would paint into nothing and report `absent` (`D-225`'s limit (ii)).
+- **ARM (iv) — A MISS IS `null`**: an undeclared id answers `null` from all three id lookups and is absent from both censuses — `D-174`'s rule measured rather than restated.
+- **WHAT NO ROW HERE CAN SEE**: the rendered pane, the press on the control, and the drag (`AL-10`/`AL-12`'s markup arm and the live leg own those) — a green here is the census's, never the surface's (brief §6, `D-27`).
+
+## 6. Assumptions, each with the alternative it rejected
+
+- **`ASM-CC-1` — the container is the head's nearest `props.pane` ancestor.** Rejected: a scan of the whole graph for `props.pane` (the collapse control carries `pane` too, and a grip carries none — measured, §2); an identity rule `nodeId = paneId` (`PM-2` bans it, and it would be right once and wrong after); a sixth `S-17` member naming the container (it would make `C-9`'s node id the declaration's, which `S-17`'s own cell refuses).
+- **`ASM-CC-2` — the collapse and the grip are found UNDER THE DECLARED HEAD, by their authored class.** Rejected: extending `S-17`'s grammar with two more node ids (the head row's contents are its author's, and `C-9`'s five nouns are the predicate); a global class scan (a module may mint a `pane-grab` outside its head for its own purposes, and the overlay must not adopt it).
+- **`ASM-CC-3` — one overlay `Map`, filled at the composition instant; the lookups stay pure.** Rejected: threading a graph handle into all fourteen call sites (a wide change for an answer the composition already has); a `WeakMap` keyed by runtime (the census is per-realm, and `composedByRouter`'s key is the router for the same reason — one key, the thing that owns the contributions).
+- **`ASM-CC-4` — the overlay is `foundation ?? composed`, never the reverse.** Rejected: composed-first (a contribution could shadow a foundation pane's node while the foundation's literal still stood, and two answers would disagree on one id).
+- **`ASM-CC-5` — the two census installs re-run over the grown set.** Rejected: installing at boot only (a module pane's control would never be wired); a second install path for modules (the act is one, and `D-317`'s re-drive is the pattern already sanctioned).
+
+## 7. Debts this page does not discharge
+
+- **`tests/unit/renderer-wiring/pane-node-map.test.ts`'s `PM-1`/`PM-2` re-grain is the landing act's**, and it is a DOMAIN statement rather than a shape change: the probe keeps `DECLARED_PANE_IDS` and gains the sentence that a composed pane is `M-18`'s.
+- **`docs/guides/forking.md` §2.4's five sites** are the census `S-18` re-reads (`OWED-2`); the guide's own text is not this layer's.
+- **`docs/L3/module-system/pane-declaration.md` §2** states the `props.pane` operand as this page's input; if this page's `ASM-CC-1` were refused, that sentence would be re-grained in the same pass (`D-146`'s rule).
+- **`M-18`'s file is the landing act's**; `M-17` is `S-17`'s and landed (`CH-37`).
+
+```boundary-declared
+{"unit": "modularity", "layer": "L3", "module": "renderer-wiring", "writes": [{"path": "docs/L3/renderer-wiring/composed-census.md", "d": "D-306", "why": "this page, rev 1 NEW — S-18 split by owner at the ceiling: no sixth map, one overlay filled at the composition instant with the five answers read off the declared head (the container by props.pane ancestry, the collapse and grip by their authored classes under that head, both MEASURED from the envelope), the two census installs re-running over the grown set, PM-1's domain held to the foundation, M-18's four arms, five assumptions and four debts; no src byte"}]}
+```

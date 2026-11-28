@@ -1,4 +1,4 @@
-# handover — 2026-11-27 (rev 8): under its 60-line ceiling; `U2`'s L4 is COMPLETE, and what is left is `S-18`'s maps, `U6`'s cells and `U7`
+# handover — 2026-11-27 (rev 9): under its 60-line ceiling; `U2`'s L4 is COMPLETE, and what is left is `S-18`'s maps, `U6`'s cells and `U7`
 
 Read `strata/brief.md` first, then `strata/decisions.md` from **`D-304`** onward. **The unit's worklist is `strata/records/modularity-cleanup.md`** (`D-319`): re-grains, anomalies, process rules, environment limits and the sweep order.
 
@@ -35,9 +35,9 @@ The unit's own: boundary **10/10**, `M-7`/`M-8`/`M-9` green, `MF-1`…`MF-5`, `R
 
 ## What is open, named not hidden
 
-- **`U2`'s L4 IS COMPLETE** (`CH-31`…`CH-36`, `M-7`…`M-10` green, `AN-30`–`AN-33` swept) **AND `U5` HAS BEGUN — `S-17` LANDED** (`CH-37`): `capabilities.panes` typed, the parser's private pane arm keeping sound declarations and DROPPING the malformed by name, the projection's `paneIds`, and `M-17`'s four arms green.
-  The design was corrected to the three refusals the parse can name, the other two deferred to the admission (`D-323`). **`S-18` IS NOW UNGATED**; then `S-19`/`S-20`/`S-21`.
-- **`U6`**: `S-22` (coeffects — carried, judged by nobody), `S-24` (activate/deactivate by classification), `S-25`
+- **`U2` IS COMPLETE; `U5` IS DESIGNED TO ITS LAST STEP**: `S-17` landed (`CH-37` — the pane declaration typed and parsed, `M-17` green), and
+  **`S-18`'s census is DESIGNED** (`RG-17`): no sixth map, ONE overlay filled at the composition instant, the five answers read off the declared head — the collapse and grip are its
+  contents, found by class, because the grip carries no `props.pane` (measured). **`S-18`'s landing is the only step left in `U5`**; then `S-19`/`S-20`/`S-21`, `U6`, `U7`.
   (component-scoped replacement). **`U7`** (`S-26`…`S-28`, acceptance; no `src/modules/`) is **last**, on the user's ordering.
 - **Reserved**: `M-16` (mode adoption's e2e), `M-18` (the composed pane census, now ungated on `U5`), `M-29` (parity, on an absent WASM host).
 - **Decisions owed**: the **harness-cap ruling** (`module-system` L2 counts 246 lines against `50 + 10×N`; `bundle-boot-seam`
@@ -56,5 +56,5 @@ each found a defect (`AN-21`, `AN-23`, `AN-26`) review had not seen.
 then `U6`'s `S-22`/`S-24`/`S-25`; then `U7`; beside them the cap ruling, the sink, `app-shell`'s boot-route rev, and the two splits.
 
 ```boundary-declared
-{"unit":"modularity","layer":"L0","module":null,"writes":[{"path":"strata/records/handover.md","d":"D-115","why":"the page under its 60-line ceiling (rev 8): `U2` complete, `S-17` landed (`CH-37`) with the design correction stated, and `S-18` named as ungated with the remaining `U5` steps in order"}]}
+{"unit":"modularity","layer":"L0","module":null,"writes":[{"path":"strata/records/handover.md","d":"D-115","why":"the page under its 60-line ceiling (rev 9): `U2` complete, `S-17` landed, `S-18` designed (`RG-17`) with the measured grip/`props.pane` fact that decided the scope, and `S-18`'s landing named as `U5`'s last step"}]}
 ```

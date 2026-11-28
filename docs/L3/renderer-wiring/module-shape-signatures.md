@@ -1,6 +1,6 @@
 # L3 — `renderer-wiring`: the module shape's signature stubs
 
-- **Layer:** L3 · **Module:** `renderer-wiring` · **Unit:** `modularity` · **Branch:** `main` · **Rev:** 2 — **THE COMPOSITION STUB IS `runtime.contribute` AND THE RE-DRIVEN PAINTS ARE STATED, BESIDE `signatures.md`**: the app-layout signatures stand in their own file; the modularity cells' stubs are here (`D-1`, `D-2`)
+- **Layer:** L3 · **Module:** `renderer-wiring` · **Unit:** `modularity` · **Branch:** `main` · **Rev:** 3 — **THE COMPOSED-ARM NOTE IS RE-GRAINED TO THE LANDED TREE**: `U2` and `S-17` are landed, so §2's *"the composed set is `U2`'s"* pointed at a tree that no longer stands; it now points at `composed-census.md`, where `S-18`'s overlay is designed and a sixth map is still refused. Rev 2 was **THE COMPOSITION STUB IS `runtime.contribute` AND THE RE-DRIVEN PAINTS ARE STATED, BESIDE `signatures.md`**: the app-layout signatures stand in their own file; the modularity cells' stubs are here (`D-1`, `D-2`)
 - **Ceiling:** 150 lines, replaced and never appended (D-1, D-2) · **Inputs:** `module-shape.md` rev 1; `docs/L2/renderer-wiring/module-shape.md` rev 1; `docs/L3/module-system/design.md` §6 and `signatures.md` (`ActionRecord`); `docs/L3/producing-runtime/design.md` §2/§4 and `docs/L2/producing-runtime/interface.md` rev 3 §4; `src/renderer/renderer.ts`, `extensions.ts`, `runtime.ts`; `D-313`, `D-129`, `D-307` · **A stub is a DECLARATION and never a body** (D-3)
 - **Read order:** §1 the install → §2 the pane map → §3 the invariants
 
@@ -46,10 +46,12 @@ export function installModuleActions(runtime: Runtime, router: CapabilityRouter,
 /** **NO SIXTH MAP IS WRITTEN HERE, AND THAT IS `S-18`'S OWN SHAPE IN THIS TREE** (`S-18`, `C-9`): the five sites already
  *  stand in `src/renderer/renderer.ts` as declared literal tables — `PANE_NODE_IDS`, `PANE_HEAD_IDS`, `PANE_BODY_IDS`,
  *  `PANE_COLLAPSE_IDS` and `PANE_MOVE_GRIP_IDS` — each TOTAL over `DECLARED_PANE_IDS`, and `PM-1`/`PM-2` read them by
- *  name (`tests/unit/renderer-wiring/pane-node-map.test.ts`). **THE COMPOSED SET IS `U2`'S** (`S-17`): the declaration
- *  registry is not built, so the five tables are total over the foundation's set today and a module pane becomes a full
- *  pane the moment `U2` widens the declared set. A function composing a set that does not exist would be the second
- *  authority this page refuses (`D-129`). */
+ *  name (`tests/unit/renderer-wiring/pane-node-map.test.ts`). **⟶ REV 3: THE COMPOSED ARM IS WRITTEN AND IT IS NOT A SIXTH MAP**
+ *  (`docs/L3/renderer-wiring/composed-census.md`, `S-18`): `U2` has landed and `S-17` has landed, so the sentence this note
+ *  used to carry — *"the composed set is `U2`'s … the five tables are total over the foundation's set today"* — is now a
+ *  reading of a tree that no longer stands. The five tables stay the FOUNDATION's spelling; a module pane is answered by
+ *  ONE OVERLAY filled at the composition instant, and `PM-1`'s source probe keeps its foundation domain while `M-18` owns
+ *  the composed one (that page's §1–§5). **A sixth map is still refused** (`D-129`). */
 
 /** `CapabilityRouter.actions()`'s record gains the CLOSURE it registered (`docs/L3/module-system/signatures.md`'s
  *  `ActionRecord`): the host-side table's readable answer, so this seat installs what the module registered and reads
@@ -70,5 +72,5 @@ export interface ActionRecord {
 - **No `src/**` byte is declared here**; the install is L4's (D-3).
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L3", "module": "renderer-wiring", "writes": [{"path": "docs/L3/renderer-wiring/module-shape-signatures.md", "d": "D-317", "why": "this page, rev 3 \u2014 `ModuleShapeInstall.standing` and the two idempotence guards"}]}
+{"unit":"modularity","layer":"L3","module":"renderer-wiring","writes":[{"path":"docs/L3/renderer-wiring/module-shape-signatures.md","d":"D-306","why":"this page, rev 3 \u2014 \u00a72's composed-arm note re-grained: `U2` and `S-17` are landed, so the five tables are the FOUNDATION's spelling and a module pane is answered by `composed-census.md`'s overlay; a sixth map is still refused"}]}
 ```
