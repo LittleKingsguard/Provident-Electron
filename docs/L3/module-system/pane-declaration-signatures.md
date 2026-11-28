@@ -1,6 +1,6 @@
 # L3 — `module-system`: the pane declaration's signature stubs
 
-- **Layer:** L3 · **Module:** `module-system` · **Unit:** `modularity` (`U5`'s `S-17`) · **Branch:** `main` · **Rev:** 1 — **NEW**: `pane-declaration.md` rev 1 fixes the structure; this page fixes the declarations under it, and the split is the ceiling's (`design.md` 148/150, `signatures.md` 149/150; `D-1`, `D-2`)
+- **Layer:** L3 · **Module:** `module-system` · **Unit:** `modularity` (`U5`'s `S-17`) · **Branch:** `main` · **Rev:** 2 — **LANDED, AND THE STUB IS PRIVATE** (`CH-37`): `panesOf` is a module-private function in `mcp-server.ts` (`groupsOf`'s own shape), so no `endpoints` figure moves and `M-17` drives `handleModuleTool`. The refusal union is the THREE the parse can name; the zone and address-ownership checks are owed to the admission and named in §2. Rev 1 was NEW; the split is the ceiling's (`design.md` 148/150, `signatures.md` 149/150; `D-1`, `D-2`)
 - **Inputs:** `pane-declaration.md` §2–§3; `docs/L3/module-system/signatures.md`'s `ModuleCapabilities` and `ActionRecord`; `src/main/mcp-server.ts`'s `parseCapabilities` (`:331-369`) and `groupsOf` (`:349-360`); `src/shared/types.ts`'s `ModuleListenerDeclaration` (`:211-215`)
 - **Read order:** §1 the declaration → §2 the parse → §3 the invariants
 
@@ -55,22 +55,22 @@ export interface ModuleCapabilities {
 ## 2. `src/main/mcp-server.ts` — the parse, built exactly as `groupsOf` is
 
 ```ts
-/** THE FIVE REFUSALS, EACH A VALUE WITH A SUBJECT (`D-105`, `pane-declaration.md` §3): **THE FIRST FOUR STAND IN THE PARSE
- *  and the fifth needs the registry, so it stands at ADMISSION** — the same split `D-323` records for the operator record,
- *  because the domain can only be asked where it exists. */
-export type PaneDeclarationRefusal =
-  | { readonly status: 'refused'; readonly reason: 'pane-undeclared-id' | 'pane-unheaded' | 'pane-unbodied'; readonly subject: string }
-  | { readonly status: 'refused'; readonly reason: 'pane-zone-unknown' | 'pane-placed-address-owned'; readonly subject: string }
+/** THE THREE REFUSALS THE PARSE CAN NAME, each a value with a subject (`D-105`, `pane-declaration.md` §3) — **PRIVATE,
+ *  like `groupsOf`, so no `endpoints` figure moves and no consumer can read a parser's internal answer as a contract**.
+ *  **`pane-zone-unknown` AND `pane-placed-address-owned` ARE NOT HERE**: the first needs `declaredZoneIds()` and the second
+ *  the other authors' address set, and neither exists where the parse runs — they are owed to the admission (`C-5`) and
+ *  named there, never faked against the foundation's own set (`D-323`). */
+type PaneParseRefusal = { readonly reason: 'pane-undeclared-id' | 'pane-unheaded' | 'pane-unbodied'; readonly subject: string }
 
 /** `parseCapabilities`'s pane arm (`pane-declaration.md` §3, `ASM-PD-4`): each entry kept only where `paneId`/`head`/`body`
- *  are non-empty strings, the two placed arrays kept only where they are arrays of that shape, and **A MALFORMED ENTRY IS
- *  DROPPED AND NAMED, NEVER COERCED AND NEVER THE WHOLE MODULE REFUSED**. It reuses the `groupsOf` shape two lines above it
- *  rather than inventing a second admission idiom (`D-129`). */
-export function panesOf(raw: unknown): { readonly panes: readonly PaneDeclaration[]; readonly refused: readonly PaneDeclarationRefusal[] }
+ *  are non-empty strings, the two placed arrays kept by shape (`constraintsOf`/`listenersOf`), and **A MALFORMED ENTRY IS
+ *  DROPPED AND NAMED, NEVER COERCED AND NEVER THE WHOLE MODULE REFUSED**. It reuses `groupsOf`'s shape rather than
+ *  inventing a second admission idiom (`D-129`). A module declaring no pane yields NO member, never `{}` and never `[]`. */
+function panesOf(raw: unknown): { readonly panes: readonly PaneDeclaration[]; readonly refused: readonly PaneParseRefusal[] }
 ```
 
-- **THE RETURN'S ONE LINE IS THE WHOLE EDIT AT THIS SITE** (`mcp-server.ts:361-368`): the object literal gains `...(panes.length > 0 ? { panes } : {})`, so a module with no pane yields **no member** and not an empty array — the distinction `declarationsOf` already keeps (`C-9`'s "declared nothing" versus "declared an empty set").
-- **THE OTHER TWO STRUCTURAL READS DROP TO THE TYPED MEMBER IN THE SAME PASS** (`C-4`'s widening rule): `src/shared/registry/index.ts`'s `DomainCapabilities.panes?` is deleted, so no consumer reads a member the contract now types.
+- **THE RETURN'S ONE LINE IS THE WHOLE EDIT AT THAT SITE** (`mcp-server.ts:361-368`): the object literal gains `...(panes.length > 0 ? { panes } : {})`, so a module with no pane yields **no member** and not an empty array — the distinction `declarationsOf` already keeps (`C-9`'s "declared nothing" versus "declared an empty set").
+- **THE PROJECTION LEARNS THE DECLARATION'S SHAPE IN THE SAME PASS** (`C-4`'s widening rule, `D-146`'s "the census the widening moves is re-read"): `src/shared/registry/index.ts`'s `DomainCapabilities.panes?` is deleted, and `declarationsOf`'s `read('pane', capabilities.panes, stringIds)` becomes `paneIds` — **a pane crosses the projection as its `paneId` and nothing else**, the way a group crosses as its `id` (`C-9`'s entry rule). The registry's own unit battery's `OwedDomains` drops `panes` with it, for the same reason.
 
 ## 3. The invariants a stub reader must not lose
 
@@ -81,5 +81,5 @@ export function panesOf(raw: unknown): { readonly panes: readonly PaneDeclaratio
 - **No second refusal**: a duplicate id, a foundation collision and the set's own admission are `S-6`'s, named once.
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L3", "module": "module-system", "writes": [{"path": "docs/L3/module-system/pane-declaration-signatures.md", "d": "D-306", "why": "this page, rev 1 NEW — S-17's stubs split at the ceiling: `PaneDeclaration` and `PaneConstraintDeclaration` with the member that is typed and the node id that deliberately is not, `ModuleCapabilities.panes`, the five named refusals with the parse/admission split, `panesOf` built on `groupsOf`'s own shape, and the five invariants; no src byte"}]}
+{"unit":"modularity","layer":"L3","module":"module-system","writes":[{"path":"docs/L3/module-system/pane-declaration-signatures.md","d":"D-306","why":"this page, rev 2 \u2014 the stub is PRIVATE (`groupsOf`'s shape, no endpoint moves), the refusal union is the three the parse can name with the two deferred ones named, and the projection's `paneIds` is recorded beside the return line"}]}
 ```

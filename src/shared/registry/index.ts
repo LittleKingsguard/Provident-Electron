@@ -21,7 +21,7 @@
  *  without minting the edit — the bridge `AN-21` named, kept explicit rather than hidden behind `any`.
  */
 
-import type { ModuleCapabilities, ModuleGroupDeclaration } from '../types.js'
+import type { ModuleCapabilities, ModuleGroupDeclaration, PaneDeclaration } from '../types.js'
 
 /** THE FIVE DOMAINS, CLOSED (`C-4`): a sixth is a corpus change, not a data change. */
 export type DeclarationDomain = 'pane' | 'zone' | 'group' | 'tool' | 'placeholder'
@@ -180,16 +180,29 @@ export interface DeclarationCarrier {
   readonly capabilities: ModuleCapabilities
 }
 
-/** THE FOUR DOMAIN MEMBERS THIS FILE DOES NOT TYPE YET (`S-8`/`U5`), read structurally so the projection exists before the
- *  interface does. `groups` is typed already (`S-8`'s member), so only the three others are widened here. */
+/** THE TWO DOMAIN MEMBERS THIS FILE DOES NOT TYPE YET (`U5`), read structurally so the projection exists before the
+ *  interface does. **`groups` AND `panes` ARE TYPED NOW** — `S-8`'s member and `S-17`'s — so only `zones` and
+ *  `placeholders` are widened here, and each drops to the typed member in the pass that types it (`C-4`'s widening rule). */
 interface DomainCapabilities extends ModuleCapabilities {
-  readonly panes?: readonly unknown[]
   readonly zones?: readonly unknown[]
   readonly placeholders?: readonly unknown[]
 }
 
 const stringIds = (raw: readonly unknown[]): string[] =>
   raw.filter((value): value is string => typeof value === 'string' && value !== '')
+
+/** **A PANE DECLARATION'S ID IS ITS `paneId`** (`S-17`, `C-9`): a pane crosses this projection as its DECLARED RECORD ID and
+ *  nothing else — its `head`/`body` belong to `renderer-wiring`'s map (`S-18`) and its placed arrays to the admission that
+ *  installs them, so no consumer reads a declaration's shape from here (`C-9`'s entry rule, one domain over from `groupIds`). */
+const paneIds = (raw: readonly unknown[]): string[] => {
+  const out: string[] = []
+  for (const value of raw) {
+    if (value === null || typeof value !== 'object') continue
+    const id = (value as PaneDeclaration).paneId
+    if (typeof id === 'string' && id !== '' && !out.includes(id)) out.push(id)
+  }
+  return out
+}
 
 const groupIds = (raw: readonly unknown[]): string[] => {
   const out: string[] = []
@@ -217,7 +230,7 @@ export function declarationsOf(carrier: DeclarationCarrier): readonly Declaratio
     out.push({ module: moduleName, domain, ids: toIds(raw as readonly unknown[]) })
   }
 
-  read('pane', capabilities.panes, stringIds)
+  read('pane', capabilities.panes, paneIds)
   read('zone', capabilities.zones, stringIds)
   read('group', capabilities.groups, groupIds)
   read('tool', capabilities.tools, stringIds)

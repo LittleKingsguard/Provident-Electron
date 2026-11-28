@@ -254,6 +254,43 @@ export interface ModuleCapabilities {
   listeners?: ModuleListenerDeclaration[]
   /** The group domain's module half (`S-8`): one entry per group the module declares, its label its own. */
   groups?: readonly ModuleGroupDeclaration[]
+  /** **The pane domain's module half** (`S-17`, `C-9`): one entry per pane the module declares — the five nouns the pane
+   *  API owns plus the two arrays of `S-1` declarations PLACED on it. Before `S-17` this member was read structurally by
+   *  `declarationsOf` and kept by no parser, so a module's pane declarations never reached the census at all. */
+  panes?: readonly PaneDeclaration[]
+}
+
+/** ONE PANE A MODULE DECLARES (`S-17`, `C-9`; `docs/L3/module-system/pane-declaration.md` §2): `C-9`'s FIVE NOUNS as the
+ *  pane API's, and TWO ARRAYS OF `S-1` DECLARATIONS PLACED ON IT (`C-5`). **THE NODE ID IS NOT A MEMBER**:
+ *  `renderer-wiring`'s map answers it (`S-18`), and the operand that makes a module pane answerable is the container's
+ *  authored `props.pane = paneId` (`src/shared/demo-envelope.ts:951`). */
+export interface PaneDeclaration {
+  /** The DECLARED RECORD ID: `['panes', paneId]`'s key, and the id the pane family is total over (`S-7`). A foundation id
+   *  is the registry's own `declaration-duplicate`, refused by name there and never here (`S-6`). */
+  readonly paneId: string
+  /** The GEOMETRY SOURCE's zone: one of the foundation's four or a registry-declared zone id, validated where the domain
+   *  can be asked. **ABSENT IS THE STAGE** (`C-9`'s absence rule). */
+  readonly zone?: string
+  /** The axis defaults, used ONLY by a creation with no stored record; a stated member is never rewritten. Absent means the
+   *  family's own default, never `0`. */
+  readonly width?: number
+  readonly height?: number
+  /** The authored HEAD row's node id — a node id the module's own contribution mints, never a subtree (`S-15`, `C-6`). */
+  readonly head: string
+  /** The authored SCROLL BODY's node id (`D-243`, `D-270`). A node id, same rule. */
+  readonly body: string
+  /** One address-keyed pair per element, at an address UNDER this pane's id — the store's own declaration shape, adopted and
+   *  restated nowhere (`S-19`). Its ownership check belongs to the admission that installs it (`C-5`). */
+  readonly constraints?: readonly PaneConstraintDeclaration[]
+  /** `ModuleListenerDeclaration` at an address under the pane's id, its owner the module (`C-5`). */
+  readonly listeners?: readonly ModuleListenerDeclaration[]
+}
+
+/** The store's constraint pair, by reference and not by a second spelling: the ONE construction adopts a list of these. */
+export interface PaneConstraintDeclaration {
+  readonly address: readonly (string | number)[]
+  readonly id: string
+  readonly constraint: unknown
 }
 
 /** A module dependency (M-r9 — declared, no resolver this pass). */

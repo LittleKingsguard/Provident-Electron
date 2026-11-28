@@ -12,7 +12,7 @@ import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js'
 import {StreamableHTTPServerTransport} from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import {z} from 'zod'
 import {createServer, type IncomingMessage, type ServerResponse} from 'node:http'
-import type {RpcRequest, RpcReply, DispatchRequest, ModuleCapabilities, ModuleGroupDeclaration} from '../shared/types.js'
+import type {RpcRequest, RpcReply, DispatchRequest, ModuleCapabilities, ModuleGroupDeclaration, ModuleListenerDeclaration, PaneConstraintDeclaration, PaneDeclaration} from '../shared/types.js'
 import {SecurityGate, exclusionAllowsWork, registrationAllowed, type ToolGroup, moduleToolAllowed} from './security.js'
 // **THE MODULE REGISTRY'S INTERFACE LIVES HERE NOW (D-81, 2026-11-02).** It stood in `module-store.ts`
 // — the raw-`fs` registry module, deleted with the Q-5 arm that was its only reader (`D-78`'s second
@@ -314,6 +314,46 @@ export interface ModuleStore {
  *  secure crossing's `file.modules.<id>` rows — the legacy store and its `put`/`remove`/`setDisabled`
  *  FILE writers are deleted, `D-81`). The module tools are NOT routed to the renderer. Exported for
  *  direct unit testing. */
+/** **THE TWO PLACED ARRAYS, KEPT BY SHAPE AND ADMITTED NOWHERE HERE** (`S-17` §2, `C-5`): a constraint element is the
+ *  store's own pair (`address`, `id`, `constraint`), a listener element is `ModuleListenerDeclaration`
+ *  (`address`, `main?`, `client?`). Both answer `undefined` where the member is absent — so `declarationsOf`'s
+ *  "declared nothing" and "declared an empty set" stay distinct (`C-9`) — and each keeps only well-shaped elements,
+ *  because a malformed element is no declaration. **THE ADDRESS-OWNERSHIP CHECK IS THE ADMISSION'S** (`C-5`), and this
+ *  parse invents none: it has no registry and no other author's set to compare against (`D-323`'s rule, one level up). */
+function constraintsOf(value: unknown): PaneConstraintDeclaration[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const out: PaneConstraintDeclaration[] = []
+  for (const entry of value) {
+    if (entry === null || typeof entry !== 'object' || Array.isArray(entry)) continue
+    const held = entry as { address?: unknown; id?: unknown; constraint?: unknown }
+    if (typeof held.id !== 'string' || held.id === '') continue
+    if (!Array.isArray(held.address)) continue
+    const address = held.address.filter((part): part is string | number => typeof part === 'string' || typeof part === 'number')
+    if (address.length !== held.address.length || address.length === 0) continue
+    if (held.constraint === undefined) continue
+    out.push({ address, id: held.id, constraint: held.constraint })
+  }
+  return out
+}
+
+/** `ModuleListenerDeclaration`, kept the same way (`S-17` §2). */
+function listenersOf(value: unknown): ModuleListenerDeclaration[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const out: ModuleListenerDeclaration[] = []
+  for (const entry of value) {
+    if (entry === null || typeof entry !== 'object' || Array.isArray(entry)) continue
+    const held = entry as { address?: unknown; main?: unknown; client?: unknown }
+    if (!Array.isArray(held.address) || held.address.length === 0) continue
+    const address = held.address.filter((part): part is string => typeof part === 'string' && part !== '')
+    if (address.length !== held.address.length) continue
+    const listener: { address: string[]; main?: string; client?: string } = { address }
+    if (typeof held.main === 'string' && held.main !== '') listener.main = held.main
+    if (typeof held.client === 'string' && held.client !== '') listener.client = held.client
+    out.push(listener)
+  }
+  return out
+}
+
 export function handleModuleTool(store: ModuleStore | null, name: string, args: Record<string, unknown>, write = true): unknown {
   if (!store) throw new Error(`${name}: no module store configured`)
   const nameArg = typeof args.name === 'string' ? args.name : ''
@@ -329,7 +369,7 @@ export function handleModuleTool(store: ModuleStore | null, name: string, args: 
   // **THEY ARE NOT A NAME SOURCE ANY MORE**: the published dynamic half is the PORT's `activations()` and
   // nothing in this file composes from these rows (`docs/L3/mcp-surface/design.md` §3, §5; L2 §10).
   const parseCapabilities = (src: string, argCaps?: unknown): ModuleCapabilities => {
-    type Raw = { tools?: unknown; hooks?: unknown; transforms?: unknown; groups?: unknown; listeners?: unknown }
+    type Raw = { tools?: unknown; hooks?: unknown; transforms?: unknown; groups?: unknown; listeners?: unknown; panes?: unknown }
     let parsed: { capabilities?: Raw } | null = null
     const trimmed = src.trim()
     if (trimmed.startsWith('{')) {
@@ -359,11 +399,59 @@ export function handleModuleTool(store: ModuleStore | null, name: string, args: 
         return out
       }
       const groups = groupsOf(c.groups)
+      // **THE PANE DOMAIN'S MODULE HALF** (`S-17`, `C-9`): the member this parser DROPPED until now, so a module's pane
+      // declarations never reached the census and the pane domain was empty by construction on both realms. Each entry is
+      // kept only where the three required members are non-empty strings, and **A MALFORMED ENTRY IS DROPPED AND NAMED,
+      // never coerced and never the whole module refused** (`ASM-PD-4`, `D-105`). The two placed arrays are carried BY
+      // SHAPE: their ownership check belongs to the admission that installs them (`C-5`), and no check is invented here.
+      const panesOf = (v: unknown): { panes: PaneDeclaration[]; refused: { reason: 'pane-undeclared-id' | 'pane-unheaded' | 'pane-unbodied'; subject: string }[] } => {
+        const panes: PaneDeclaration[] = []
+        const refused: { reason: 'pane-undeclared-id' | 'pane-unheaded' | 'pane-unbodied'; subject: string }[] = []
+        if (!Array.isArray(v)) return { panes, refused }
+        for (const entry of v) {
+          if (entry === null || typeof entry !== 'object' || Array.isArray(entry)) {
+            refused.push({ reason: 'pane-undeclared-id', subject: '(non-object)' })
+            continue
+          }
+          const held = entry as { paneId?: unknown; zone?: unknown; width?: unknown; height?: unknown; head?: unknown; body?: unknown; constraints?: unknown; listeners?: unknown }
+          const paneId = typeof held.paneId === 'string' && held.paneId !== '' ? held.paneId : ''
+          if (paneId === '') {
+            refused.push({ reason: 'pane-undeclared-id', subject: '(no pane id)' })
+            continue
+          }
+          if (typeof held.head !== 'string' || held.head === '') {
+            refused.push({ reason: 'pane-unheaded', subject: paneId })
+            continue
+          }
+          if (typeof held.body !== 'string' || held.body === '') {
+            refused.push({ reason: 'pane-unbodied', subject: paneId })
+            continue
+          }
+          const pane: { paneId: string; head: string; body: string; zone?: string; width?: number; height?: number; constraints?: PaneConstraintDeclaration[]; listeners?: ModuleListenerDeclaration[] } = { paneId, head: held.head, body: held.body }
+          if (typeof held.zone === 'string' && held.zone !== '') pane.zone = held.zone
+          const figure = (value: unknown): number | undefined => (typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined)
+          const width = figure(held.width)
+          const height = figure(held.height)
+          if (width !== undefined) pane.width = width
+          if (height !== undefined) pane.height = height
+          const constraints = constraintsOf(held.constraints)
+          const listeners = listenersOf(held.listeners)
+          if (constraints !== undefined) pane.constraints = constraints
+          if (listeners !== undefined) pane.listeners = listeners
+          panes.push(pane)
+        }
+        return { panes, refused }
+      }
+      const heldPanes = panesOf(c.panes)
+      for (const refusal of heldPanes.refused) {
+        console.error(`[provident-mcp] pane declaration '${refusal.subject}' refused — ${refusal.reason}`)
+      }
       return {
         ...(strArr(c.tools) ? { tools: strArr(c.tools) } : {}),
         ...(strArr(c.hooks) ? { hooks: strArr(c.hooks) } : {}),
         ...(strArr(c.transforms) ? { transforms: strArr(c.transforms) } : {}),
         ...(groups === undefined ? {} : { groups }),
+        ...(heldPanes.panes.length > 0 ? { panes: heldPanes.panes } : {}),
       }
     }
     return {}

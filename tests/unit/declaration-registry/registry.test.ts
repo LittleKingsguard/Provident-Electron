@@ -33,7 +33,6 @@ const declaration = (module: string, domain: Declaration['domain'], ids: readonl
  *  and hands it to a `DeclarationCarrier` — the same bridge the registry file carries, in the one place a test may take
  *  it without minting the interface's edit. */
 type OwedDomains = {
-  readonly panes?: readonly string[]
   readonly zones?: readonly string[]
   readonly placeholders?: readonly string[]
 }
@@ -111,7 +110,7 @@ describe('declaration-registry · the composition, its refusals and its queries'
 
   it('R-5 · `declarationsOf` IS ONE PROJECTION: A PRESENT DOMAIN BECOMES ONE DECLARATION IN THE CARRIER\'S ORDER, AN OMITTED ONE YIELDS NONE, AND A GROUP CONTRIBUTES ITS ID AND NEVER ITS LABEL', () => {
     const both = declarationsOf(carrier('matrix-a', {
-      panes: ['pane-a2', 'pane-b2'],
+      panes: [{ paneId: 'pane-a2', head: 'a2-head', body: 'a2-body' }, { paneId: 'pane-b2', head: 'b2-head', body: 'b2-body' }],
       groups: [{ id: 'reporting', label: 'reporting (the matrix)' }],
       tools: ['answer'],
     }))
@@ -132,8 +131,8 @@ describe('declaration-registry · the composition, its refusals and its queries'
 
   it('R-6 · THE TWO CONSTRUCTIONS AGREE ON THE SAME FACTS: a foundation input and a carrier set compose the SAME entries in each realm, whatever the realm is called', () => {
     const carriers = [
-      carrier('matrix-a', { panes: ['pane-a2'], groups: [{ id: 'reporting', label: 'reporting' }] }),
-      carrier('matrix-b', { panes: ['pane-b2'] }),
+      carrier('matrix-a', { panes: [{ paneId: 'pane-a2', head: 'a2-head', body: 'a2-body' }], groups: [{ id: 'reporting', label: 'reporting' }] }),
+      carrier('matrix-b', { panes: [{ paneId: 'pane-b2', head: 'b2-head', body: 'b2-body' }] }),
     ]
     const main = createRegistry(FOUNDATION, carriers.flatMap((carrier) => declarationsOf(carrier)))
     const renderer = createRegistry(FOUNDATION, carriers.flatMap((carrier) => declarationsOf(carrier)))
