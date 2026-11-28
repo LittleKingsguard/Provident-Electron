@@ -1,6 +1,6 @@
 # L3 — `secure-panels`: the roster's and the placeholders' signature stubs — the projection, the pinned set, and the constructor's delta
 
-- **Layer:** L3 · **Module:** `secure-panels` · **Unit:** `modularity` (`U2`'s `S-10`) · **Branch:** `main` · **Rev:** 1 — **NEW**: `roster-and-placeholders.md` rev 1 fixes the structure; this page fixes the declarations under it, and the split is the ceiling's (`design.md` and `docs/L2/secure-panels/interface.md` each 150/150; `D-1`, `D-2`, `AN-15`)
+- **Layer:** L3 · **Module:** `secure-panels` · **Unit:** `modularity` (`U2`'s `S-10`) · **Branch:** `main` · **Rev:** 2 — **NEW**: `roster-and-placeholders.md` rev 1 fixes the structure; this page fixes the declarations under it, and the split is the ceiling's (`design.md` and `docs/L2/secure-panels/interface.md` each 150/150; `D-1`, `D-2`, `AN-15`)
 - **Ceiling:** 150 lines (class max); replaced, never appended (D-1, D-2) · **A stub is a DECLARATION and never a body** (D-3) · **Citations:** a site, never an offset (D-41)
 - **Inputs:** `roster-and-placeholders.md` §1–§8; `docs/L3/declaration-registry/signatures.md` §1–§2 (`DeclarationRegistry`, `DeclarationCarrier`); `docs/L3/mcp-surface/group-domain.md` §2–§3; `src/renderer/secure-panels.ts`, `src/renderer/renderer.ts:2048`, `src/shared/types.ts` by site · **Read order:** §1 the roster → §2 the placeholders → §3 the class and the retired names → §4 the shared member → §5 the invariants
 
@@ -16,7 +16,11 @@ export interface GroupRow {
 }
 
 /** THE ROSTER (`ASM-SP-1`, `ASM-SP-2`): `declaredGroups()` in the REGISTRY's order — foundation first, then the
- *  registration order — each id labelled by the declarer that owns it. **A DECLARED GROUP WITH NO LABEL IS A REFUSAL
+ *  registration order — each id labelled by the declarer that owns it. **THE `carriers` ARE THE `LOADED` ROWS AND NEVER
+ *  THE `LISTED` ONES** (`AN-33`, `PR-10`): the registry this is handed was composed over `status().loaded`'s predicate
+ *  (hash-verified, `disabled !== true`, not quarantined — `src/main/main.ts:741`), so a row for a disabled or quarantined
+ *  module's group is a toggle the gate would refuse. This function READS that set and never re-filters it: the caller's
+ *  registry and this list are one composition, or the roster outruns the gate. **A DECLARED GROUP WITH NO LABEL IS A REFUSAL
  *  NAMING THE ID** (`{status:'refused', reason:'declaration-unlabelled', subject: id}` — this page's OWN reason and not
  *  a `RefusalName` member, because no admission is being made), never a row painted `undefined`
  *  and never a silent skip; the caller names it beside the boot's other refusals (`D-105`). */
@@ -48,8 +52,10 @@ function paneEnvelope(roster: readonly GroupRow[]): LegacyInitialData
 export class SecurePanels {
   /** THE ONE DELTA (`roster-and-placeholders.md` §2): two optional members, so the landed call shape —
    *  `new SecurePanels(panesMount, { maxJournalLength })` — still compiles and authors NO toggle row. **An absent
-   *  registry is an EMPTY roster and never a second source** (`ASM-1`'s posture); `renderer.ts:2048` is the ONE site
-   *  that passes them (`S-18`'s declared write). The roster is `groupRoster(registry, carriers)` here, ONCE. */
+   *  registry is an EMPTY roster and never a second source** (`ASM-1`'s posture); `renderer.ts` is the ONE site that
+   *  passes them (`S-18`'s declared write), **and it passes them from ONE boot census read taken BEFORE this call**
+   *  (`AN-32`'s fix (b), `PR-10`): the mount moves after `bridge.module.get()`, so the roster and the gate share one
+   *  composition instant. The roster is `groupRoster(registry, carriers)` here, ONCE, over the loaded rows (`AN-33`). */
   constructor(
     mount: HTMLElement,
     opts?: {
@@ -95,10 +101,11 @@ export const TOOL_GROUP_IDS: readonly string[]
 - **No table**: no `Record<string, string>` label map, no `GROUPS`-equivalent projection and no foundation label literal in `secure-panels.ts` — the labels are `FOUNDATION_GROUPS`' and the declarations', and the roster is `groupRoster`'s (`ASM-SP-2`).
 - **No second construction**: `groupRoster` takes an instance; it constructs nothing, and `SecurePanels` never builds a registry (`ASM-DR-4`).
 - **No defaulted label**: a declared group with no label is a refusal naming the id; a row whose label is `''` after trim is the same refusal, because an empty label is no label (`D-105`).
+- **No unloaded row**: a carrier whose module is `disabled` or in the answer's recomputed `quarantined` list is not handed here at all (`AN-33`) — the roster's set is the gate's set, and a toggle the gate refuses is worse than an absent one.
 - **No open placeholder set**: `PLACEHOLDER_IDS` is a closed tuple; a fifth id is a foundation edit, not a push.
 - **No re-translation**: `paneEnvelope` is called once, in the constructor; `groupRoster` runs there and nowhere else (`docs/L2/secure-panels/interface.md` §1's measured reason).
 - **No body on this page and no literal beyond the four placeholder ids and the six ids** — the labels are authored text at the landing, and this page marks them `string` (`D-41`).
 
 ```boundary-declared
-{"unit": "modularity", "layer": "L3", "module": "secure-panels", "writes": [{"path": "docs/L3/secure-panels/roster-and-placeholders-signatures.md", "d": "D-306", "why": "this page, rev 1 NEW — S-10's stubs split at the ceiling: `GroupRow` and `groupRoster` (the registry's set with the declarers' labels, an unlabelled group a named refusal), the closed `PLACEHOLDER_IDS` tuple and `paneEnvelope(roster)`, the constructor's two optional members with the landed call shape unmoved, `GROUP_LABELS`/`GROUPS` retired by name, `FOUNDATION_GROUPS`/`TOOL_GROUP_IDS` as ipc-contract's re-grain, and the five invariants; no src byte"}]}
+{"unit":"modularity","layer":"L3","module":"secure-panels","writes":[{"path":"docs/L3/secure-panels/roster-and-placeholders-signatures.md","d":"D-319","why":"this page, rev 2 \u2014 `groupRoster`'s doc pins the carriers as the LOADED rows and says it re-filters nothing; the constructor's doc pins the ONE boot census read before the mount (`AN-32` fix (b)); and \u00a75 gains the no-unloaded-row invariant, so a carrier whose module is disabled or recomputed-quarantined is never handed here (`AN-33`)"}]}
 ```
