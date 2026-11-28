@@ -26,10 +26,12 @@ import { basename, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
+import { snapshotViews, restoreViews, type ViewSnapshot } from '../harness/session.js'
+
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..')
 const pkg = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8')) as { main: string }
@@ -485,17 +487,27 @@ interface Boot {
  *  must stand BEFORE the store's own construction, and there is no later instant at which a row could put it
  *  there. The profile is registered for reaping before the hook runs, so a hook that throws still leaves
  *  nothing for the teardown to miss. */
-function bootApp(entry: string, extra: string[] = [], prepare?: (profile: string) => void): Boot {
+async function bootApp(entry: string, extra: string[] = [], prepare?: (profile: string) => void): Promise<Boot> {
+  // **EVERY BOOT IN THIS FILE TAKES THE HOST-WIDE LIVE-BOOT LOCK** (`D-94`, `D-227`; `D-325`): this battery used to lock
+  // its BUILD and let its boots run free, so several forks could each hold an Electron tree at once — the measured
+  // constraint (`D-325`). The lock is released in `stop`, and the exit net releases it for a run that never reaches `stop`.
+  const releaseBootLock = await acquireLiveBoot(`bundle-boot-seam boot ${extra.join(' ') || 'default'} on ${entry.split('/').pop() ?? entry}`)
   const profile = mkdtempSync(join(tmpdir(), 'bundle-boot-seam-'))
   scratchDirs.push(profile)
   trackedProfiles.push(profile)
   prepare?.(profile)
   const args = [...extra, entry, ...BASE_ARGS, `--user-data-dir=${profile}`, `--provident-user-data=${profile}`]
-  const child = spawn(electronBin, args, {
-    cwd: repoRoot,
-    stdio: ['pipe', 'pipe', 'pipe'],
-    env: { ...stringEnv(), DISPLAY: process.env.DISPLAY ?? ':0', ELECTRON_DISABLE_SANDBOX: '1' },
-  })
+  let child: ChildProcess
+  try {
+    child = spawn(electronBin, args, {
+      cwd: repoRoot,
+      stdio: ['pipe', 'pipe', 'pipe'],
+      env: { ...stringEnv(), DISPLAY: process.env.DISPLAY ?? ':0', ELECTRON_DISABLE_SANDBOX: '1' },
+    })
+  } catch (error) {
+    releaseBootLock()
+    throw error
+  }
   children.push(child)
   if (child.pid !== undefined) trackedRoots.push(child.pid)
   let trace = ''
@@ -521,6 +533,7 @@ function bootApp(entry: string, extra: string[] = [], prepare?: (profile: string
     // the root first, so it cannot fork a child while the sweep runs; then the tree, SIGKILL only
     try { child.kill('SIGKILL') } catch { /* already gone */ }
     reap([profile], [child.pid ?? 0])
+    releaseBootLock()
   }
 
   const waitFor = (pattern: RegExp, label: string): Promise<void> =>
@@ -572,7 +585,8 @@ function bootApp(entry: string, extra: string[] = [], prepare?: (profile: string
  *  `stop()` closes the transport — which is the SDK's own courtesy path, `stdin.end()` then SIGTERM then
  *  SIGKILL, and it reaches the MAIN process only — and then reaps the tree and PROVES it, because the three
  *  children holding the profile are not the SDK's to kill. */
-async function handshake(entry: string, extra: string[] = ['--mcp-transport=stdio']): Promise<{ client: Client; trace: () => string; stop: () => Promise<void> }> {
+async function handshake(entry: string, extra: string[] = ['--mcp-transport=stdio']): Promise<{ client: Client; trace: () => string; profile: string; stop: () => Promise<void> }> {
+  const releaseBootLock = await acquireLiveBoot(`bundle-boot-seam handshake ${extra.join(' ') || 'default'} on ${entry.split('/').pop() ?? entry}`)
   const profile = mkdtempSync(join(tmpdir(), 'bundle-boot-seam-'))
   scratchDirs.push(profile)
   trackedProfiles.push(profile)
@@ -592,9 +606,33 @@ async function handshake(entry: string, extra: string[] = ['--mcp-transport=stdi
   const stop = async (): Promise<void> => {
     await client.close().catch(() => undefined)
     reap([profile], [])
+    releaseBootLock()
   }
-  return { client, trace: () => trace, stop }
+  return { client, trace: () => trace, profile, stop }
 }
+
+/** **ONE STDIO BOOT SERVES `B-2`…`B-5`, AND EACH ROW KEEPS ITS OWN CLAIM** (`D-325`): module evaluation survives, the
+ *  handshake completes, one real tool call answers through it, and the boot order holds — four facts about ONE process,
+ *  measured on the process this file already has instead of three more. **THE ROWS' STIMULUS IS THE BOOT AND NOT A
+ *  CLEAN PROFILE**: none of the four writes a byte the next one reads, so no restore is owed between them; the rows that
+ *  DO need a different boot (the HTTP transport, the other two bundles, a corrupt carrier, an unoccupiable profile) keep
+ *  their own, and that is the battery half of the policy — see `D-325`'s isolation clause. */
+/** **A WAIT OVER A TRACE THAT IS ALREADY RUNNING** (`D-325`): `bootApp.waitFor` belongs to its own process, so the shared
+ *  boot's rows wait on the trace the way the boot does — the same bound, the same named failure, and the same `tail` a red
+ *  carries. It asserts nothing; the row's own `expect` is the claim. */
+async function untilTrace(trace: () => string, pattern: RegExp, label: string): Promise<void> {
+  const started = Date.now()
+  while (Date.now() - started < BOUND_MS) {
+    if (pattern.test(trace())) return
+    await new Promise<void>((resolve) => setTimeout(resolve, 50))
+  }
+  throw new Error(`${label}: the trace never carried ${String(pattern)} within ${String(BOUND_MS)} ms; the trace stands:\n${tail(trace())}`)
+}
+
+// **THE SESSION IS OPENED IN A NESTED `beforeAll` AND CLOSED IN ITS `afterAll`**, and that is not tidiness: the live-boot
+// lock is held for the tree's lifetime (the harness's own rule), so a session left open across `B-6`'s boot would block
+// it — a measured 120-second failure when this was first written flat. The nested hooks give the session exactly the
+// window its rows occupy, and the lock with it (`D-325`).
 
 /** `suspect` is the pid the bound names if it expires: a stdio client's own child, or — for B-6, whose connection
  *  spawns nothing — the boot under test (`D-227` residual (i)). */
@@ -844,29 +882,43 @@ describe('bundle-boot-seam — the boot contract of the built bundle', () => {
     expect(readFileSync(entry).byteLength).toBeGreaterThan(0)
   }, ROW_MS)
 
-  it('B-2 the built main bundle survives module evaluation', async () => {
-    const boot = bootApp(mainEntry, ['--mcp-transport=stdio'])
-    try {
-      await boot.waitFor(TRACE, 'B-2 module evaluation')
-      expect(boot.trace()).not.toMatch(LOAD_ERROR)
-    } finally {
-      boot.stop()
-    }
+  describe('one stdio boot, four facts (`D-325`)', () => {
+    // **THE LOCK'S WINDOW IS THE SESSION'S WINDOW**: `handshake` takes the host-wide live-boot lock and `stop` releases it,
+    // so these four rows hold ONE Electron tree between them and `B-6` below takes the lock the moment this closes.
+    let boot: Awaited<ReturnType<typeof handshake>>
+    /** **THE DATA HOOK** (`D-325`, `tests/e2e/harness/session.ts`): the four view roots as the session found them, restored
+     *  before every row. **NO ROW HERE MUTATES ONE TODAY**, so the restore is a proven no-op — it is here because the next
+     *  row that does gets its isolation for free, and because a restore the store REFUSED would red this battery rather
+     *  than silently leave the following row on dirt (`D-105`). */
+    let pristine: ViewSnapshot | null
+    beforeAll(async () => {
+      boot = await handshake(mainEntry)
+      pristine = await snapshotViews(boot.client)
+    }, ROW_MS)
+    beforeEach(async () => {
+      await restoreViews(boot.client, pristine)
+    }, ROW_MS)
+    afterAll(async () => {
+      await boot.stop()
+    })
+
+    it('B-2 the built main bundle survives module evaluation', async () => {
+    // ONE BOOT FOR FOUR ROWS (`D-325`): the handshake below is this process's own, so the row waits on the trace the
+    // session already published and asserts the same fact against the same tree.
+    await untilTrace(boot.trace, TRACE, 'B-2 module evaluation')
+    expect(boot.trace()).not.toMatch(LOAD_ERROR)
   }, ROW_MS)
 
   it('B-3 the bundle completes a stdio handshake', async () => {
-    const { client, trace, stop } = await handshake(mainEntry)
-    try {
-      const names = await toolNames(client, 'B-3', trace)
-      expect(names).toContain('provident.get_rendered_html')
-    } finally {
-      await stop()
-    }
+    const { client, trace } = boot
+    expect(trace(), 'the session process completed its handshake before this row ran').toMatch(STDIO_READY)
+    const names = await toolNames(client, 'B-3', trace)
+    expect(names).toContain('provident.get_rendered_html')
   }, ROW_MS)
 
   it('B-4 it answers a real tool call through that handshake', async () => {
-    const { client, trace, stop } = await handshake(mainEntry)
-    try {
+    const { client, trace } = boot
+    {
       expect(trace()).toMatch(STDIO_READY)
       const answered = await withBound(
         client.callTool({ name: 'provident.get_rendered_html', arguments: {} }),
@@ -879,30 +931,26 @@ describe('bundle-boot-seam — the boot contract of the built bundle', () => {
       const parsed = JSON.parse(first.text ?? '{}') as { renderedHtml?: unknown }
       expect(typeof parsed.renderedHtml).toBe('string')
       expect((parsed.renderedHtml as string).length).toBeGreaterThan(0)
-    } finally {
-      await stop()
     }
   }, ROW_MS)
 
   it('B-5 the boot order holds and the storeroom instance constructs', async () => {
-    const boot = bootApp(mainEntry, ['--mcp-transport=stdio'])
-    try {
-      await boot.waitFor(TRACE, 'B-5 boot trace')
-      await boot.waitFor(STDIO_READY, 'B-5 transport ready')
-      await boot.waitFor(RENDERER_READY, 'B-5 renderer ready')
+    {
+      await untilTrace(boot.trace, TRACE, 'B-5 boot trace')
+      await untilTrace(boot.trace, STDIO_READY, 'B-5 transport ready')
+      await untilTrace(boot.trace, RENDERER_READY, 'B-5 renderer ready')
       const trace = boot.trace()
       expect(trace.search(TRACE)).toBeLessThan(trace.search(STDIO_READY))
       expect(trace.search(TRACE)).toBeLessThan(trace.search(RENDERER_READY))
       expect(trace).not.toMatch(LOAD_ERROR)
       expect(readdirSync(boot.profile)).toContain(INSTANCE_FILE)
-    } finally {
-      boot.stop()
     }
-  }, ROW_MS)
+    }, ROW_MS)
+  })
 
   it('B-6 the HTTP transport binds and answers on the configured port', async () => {
     const port = 38300 + (process.pid % 500)
-    const boot = bootApp(mainEntry, ['--mcp-transport=http', `--mcp-port=${port}`])
+    const boot = await bootApp(mainEntry, ['--mcp-transport=http', `--mcp-port=${port}`])
     try {
       await boot.waitFor(HTTP_READY, 'B-6 http transport ready')
       expect(boot.trace()).toContain(`http transport ready on http://127.0.0.1:${port}/mcp`)
@@ -970,7 +1018,7 @@ describe('bundle-boot-seam — the boot contract of the built bundle', () => {
       'dir',
     )
     writeFileSync(corrupt, `throw new Error(${JSON.stringify(reason)})\n${readFileSync(mainEntry, 'utf8')}`)
-    const boot = bootApp(corrupt)
+    const boot = await bootApp(corrupt)
     let report = ''
     try {
       await boot.waitFor(TRACE, 'B-8 negative control')
@@ -1001,7 +1049,7 @@ describe('bundle-boot-seam — the boot contract of the built bundle', () => {
    *  `STATED_REFUSAL` never matches and the row reports the object it found. The consequence sentence and the
    *  `status '…'` spelling are what make this row red on revert rather than merely present. */
   it('B-9 a profile that cannot be OCCUPIED fails the boot with a stated message, not an unhandled throw', async () => {
-    const boot = bootApp(mainEntry, [], (profile) => {
+    const boot = await bootApp(mainEntry, [], (profile) => {
       mkdirSync(join(profile, PROFILE_FILE))
     })
     try {

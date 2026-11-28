@@ -1,4 +1,4 @@
-# handover — 2026-11-27 (rev 9): under its 60-line ceiling; `U2`'s L4 is COMPLETE, and what is left is `S-18`'s maps, `U6`'s cells and `U7`
+# handover — 2026-11-27 (rev 10): under its 60-line ceiling; `U2`'s L4 is COMPLETE, and what is left is `S-18`'s maps, `U6`'s cells and `U7`
 
 Read `strata/brief.md` first, then `strata/decisions.md` from **`D-304`** onward. **The unit's worklist is `strata/records/modularity-cleanup.md`** (`D-319`): re-grains, anomalies, process rules, environment limits and the sweep order.
 
@@ -48,7 +48,7 @@ The unit's own: boundary **10/10**, `M-7`/`M-8`/`M-9` green, `MF-1`…`MF-5`, `R
 ## Three habits, and the next acts in order
 
 1. **Touch a boundary block ⇒ run the boundary battery before committing** (`tests/e2e/boundary-grain/declarations.test.ts`,
-   `tests/integration/store-view-record/boundary.test.ts`); one live block per page. 2. **The four legs are green only on a CLEAN
+   `tests/integration/store-view-record/boundary.test.ts`); one live block per page. 2. **Every live boot holds the host-wide lock, and rows that assert facts about ONE process share ONE session** (`D-325`; `tests/e2e/harness/session.ts`); **the four legs are green only on a CLEAN
 tree**: typecheck/typecheck:tests/build/filter → commit → `npm test` → report. 3. **Measure a row's stimulus first**: `M-11`…`M-2b`
 each found a defect (`AN-21`, `AN-23`, `AN-26`) review had not seen.
 
@@ -56,5 +56,5 @@ each found a defect (`AN-21`, `AN-23`, `AN-26`) review had not seen.
 then `U6`'s `S-22`/`S-24`/`S-25`; then `U7`; beside them the cap ruling, the sink, `app-shell`'s boot-route rev, and the two splits.
 
 ```boundary-declared
-{"unit":"modularity","layer":"L0","module":null,"writes":[{"path":"strata/records/handover.md","d":"D-115","why":"the page under its 60-line ceiling (rev 9): `U2` complete, `S-17` landed, `S-18` designed (`RG-17`) with the measured grip/`props.pane` fact that decided the scope, and `S-18`'s landing named as `U5`'s last step"}]}
+{"unit":"modularity","layer":"L0","module":null,"writes":[{"path":"strata/records/handover.md","d":"D-115","why":"the page under its 60-line ceiling (rev 10): the live-boot policy added to the habits (`D-325` \u2014 every boot locked, one session per boot subject, the data hook's tier-4 limit), with `U2`/`S-17`/`S-18` state unmoved"}]}
 ```
