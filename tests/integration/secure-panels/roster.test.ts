@@ -1,17 +1,22 @@
 // tests/integration/secure-panels/roster.test.ts — THE L2 BATTERY for `secure-panels`, part 1:
 // THE ARRANGEMENT, AND THE ROUTE A CLICK REACHES.
 //
-// THE CONTRACT: docs/L2/secure-panels/interface.md §1-§5 and §7, and behaviour.md §1 and §3. §1 is
-// the decision this unit exists for — the pane's group roster stops being a second hand-written list
-// and becomes a PROJECTION of ONE label table typed exhaustively against the gate's `ToolGroup`. §2
-// is why that arm won. §4 is the surface the arrangement does not change: one `label` node per
-// group, its two attributes, one generated handler, and the route a click's body reaches. §5 is
-// exactly what is added for the sixth group — one table entry, no second list, no MCP tool, no
-// route, no class. behaviour.md §3 is what one click does, in order; part 2 of this battery is the
-// bytes, in `persistence.test.ts` beside this file.
+// THE CONTRACT: `docs/L3/secure-panels/roster-and-placeholders.md` (the split page `S-10` wrote at the ceiling; the
+// standing L2 page's rev 10 is OWED and is named in §8) and `behaviour.md` §1 and §3. **THE ARRANGEMENT `S-10` REPLACES
+// IS THE ONE THIS BATTERY USED TO READ**: the roster was a hand-written label table typed against the gate's closed
+// `ToolGroup` union, and it is now the DECLARATION REGISTRY'S PROJECTION — foundation first, then each module's own
+// order, each id labelled by its declarer (`C-9`). §4's surface does not move: one `label` node per roster row, its two
+// attributes, one generated handler, and the route a click's body reaches. behaviour.md §3 is what one click does, in
+// order; part 2 of this battery is the bytes, in `persistence.test.ts` beside this file.
 //
-// EACH ROW IS ONE CLAIM, and each names the document it reads. Rows 1-2 read the pane's SOURCE;
-// rows 3-5 DRIVE the pane and the route module. Nothing here is inferred from prose alone.
+// EACH ROW IS ONE CLAIM, and each names the document it reads. **`M-10`'s three arms DRIVE the pane's isolated graph** and
+// read the AUTHORED nodes off the supervisor — the stronger witness, because an envelope that echoed its input would pass
+// a roster-array read; rows 4-6 drive the click and the route module. Nothing here is inferred from prose alone.
+//
+// **`M-10` IS THE NET THE RETIRED UNION LEFT** (`S-10`: the compile-time `Record<ToolGroup, string>` binding died with
+// `S-8`'s `ToolGroup = string`). It is a RUNTIME SET EQUALITY in both directions, red by id, plus the placeholder domain —
+// and it is filed HERE rather than in a new battery because the rows it replaces lived here (`D-40`: the row's grain is
+// its subject's, and this subject is the pane's construction).
 //
 // WHAT THIS BATTERY IS NOT. It is not the unit's decisive evidence and it does NOT re-test `P-1`…`P-7`
 // (docs/L1/secure-panels.md §4.3): the rendered sixth toggle, its rendered attribute, the status
@@ -26,15 +31,11 @@
 // `tests/integration/security-store-storeroom/isolation.test.ts` §`ISO-3` uses for the same reason
 // and with the same stated limit.
 //
-// WHICH CLAIMS ARE TYPE-CHECKED RATHER THAN EXECUTED — stated here because it is the claim most
-// easily faked. The net interface.md §1 relies on is that a `ToolGroup` member with no label-table
-// entry reddens `npm run typecheck` (`interface.md` §3 `S-1`: `TS2741`), and that is a COMPILE-TIME
-// claim: a vitest row cannot observe a compiler diagnostic, and no row here pretends to — none
-// compares the table's key set against the union and calls the difference a failure. That would be
-// a second, weaker net wearing the typecheck's name, and `interface.md` §7 already declines it
-// ("no, and it is the wrong home anyway"). What IS executed is the SHAPE that net rests on (row 1)
-// and the ORDER the projection paints (row 2). Row 1's annotation check states the BINDING; the
-// net's own reading is `npm run typecheck`'s, and no row here claims to have taken it.
+// WHICH CLAIMS ARE EXECUTED RATHER THAN TYPE-CHECKED — and the direction reversed with `S-10`. The retired net was a
+// COMPILE-TIME one (`TS2741` on a seventh group with no table row), and a vitest row could not observe a compiler
+// diagnostic, so the old rows read the table's SHAPE and said so. **`M-10` executes the claim instead**: the registry's
+// declared ids and the envelope's authored nodes are compared at RUN time, by name, in both directions — the net the
+// union could not give once `ToolGroup` became a `string`. No row here pretends to read a compiler.
 //
 // THE PAIRING THIS BATTERY READS, AND ITS DIRECTION. The pane's body issues
 // `window.provident.security.set(...)`; the ROUTE half here is the real
@@ -54,7 +55,8 @@ import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { installShim, mountEl } from '../../../src/shared/dom-shim.js'
-import { SecurePanels } from '../../../src/renderer/secure-panels.js'
+import { PLACEHOLDER_IDS, SecurePanels } from '../../../src/renderer/secure-panels.js'
+import { paneRegistry } from './foundation-registry.js'
 import { createSecurityClient } from '../../../src/renderer/security-client.js'
 import { createSettingsSurface, type SettingsGateSink } from '../../../src/main/settings-surface/index.js'
 
@@ -93,78 +95,11 @@ function gateGroupsOf(source: string): string[] {
 
 const GATE_GROUPS = gateGroupsOf(GATE)
 
-/** THE FIVE LANDED ROWS, in their landed order (L1 §5; `src/renderer/secure-panels.ts:72` at this
- *  head). A hand-written list ON PURPOSE: this is the expected data of the order claim, and a list
- *  derived from the pane would make the row vacuous — the same reason `isolation.test.ts` spells
- *  `RPC_METHODS` out while reading the union beside it. */
-const LANDED = ['read', 'dispatch', 'graph', 'code', 'module']
-
-/** THE ORDER ROW'S EXPECTED SIXTH: whatever member the gate declares that the five landed rows do
- *  not carry — computed, so this battery follows the union instead of restating it (D-26, D-39). */
-const SIXTH = GATE_GROUPS.filter((group) => !LANDED.includes(group))
-
-/** One `label`-table declaration of the pane: the annotation it carries and the keys it authors, in
- *  authored order. The table is found BY SHAPE rather than by its identifier, because the spelling
- *  of §1's annotation is L3's (`interface.md` §8 `R-3`) and a row must not pin it. */
-interface LabelTable {
-  name: string
-  annotation: string
-  keys: string[]
-}
-
-function labelTablesOf(source: string): LabelTable[] {
-  const tables: LabelTable[] = []
-  for (const declaration of source.matchAll(/^const (\w+)\b([^=\n]*)=\s*\{/gm)) {
-    const open = declaration.index + declaration[0].length
-    const close = source.indexOf('\n}', open)
-    if (close === -1) continue
-    const body = source.slice(open, close)
-    const keys = [...body.matchAll(/^\s{2}(\w+):\s*'/gm)].map((match) => match[1]).filter((key) => GATE_GROUPS.includes(key))
-    if (keys.length <= 1) continue
-    // THE BINDING MAY BE AN ANNOTATION ON THE DECLARATION (`: Record<ToolGroup, string>`) OR A
-    // `satisfies` CLAUSE AFTER IT. Both are "typed against the union" — interface.md §1 states the
-    // binding, and which of the two spells it is L3's (`interface.md` §8 `R-3`) — so this reader
-    // takes either instead of pinning a spelling the design did not fix.
-    const lineEnd = source.indexOf('\n', close + 1)
-    const after = source.slice(close, lineEnd === -1 ? source.length : lineEnd)
-    const satisfies = /satisfies\s+([^\n]+)/.exec(after)?.[1] ?? ''
-    tables.push({ name: declaration[1], annotation: `${declaration[2].trim()} ${satisfies.trim()}`.trim(), keys })
-  }
-  return tables
-}
-
-/** The expression `paneEnvelope()` iterates to author one row per group — the roster, as the pane
- *  itself computes it. Read without pinning a spelling: an inline call is returned as written, and
- *  a bare identifier is resolved to its own initializer. A name with no initializer in this file
- *  (an import, a parameter) is returned as the name. */
-function rosterExpressionOf(source: string): string {
-  const envelope = /function paneEnvelope\(\): LegacyInitialData \{([\s\S]*?)\n\}/.exec(source)
-  if (envelope === null) throw new Error(`${PANE_FILE}: no \`paneEnvelope()\` is declared, so the roster has no authored expression this row can read`)
-  const receiver = /([A-Za-z_$][\w$.]*(?:\([^()]*\))?)\.map\s*\(/.exec(envelope[1])
-  if (receiver === null) {
-    // No `.map(`: the envelope must still author its rows FROM the table it holds. This row reads
-    // what it can see and says so rather than passing on a shape it did not find.
-    const table = labelTablesOf(source)[0]
-    if (table !== undefined && envelope[1].includes(table.name)) return table.name
-    throw new Error(`${PANE_FILE}: \`paneEnvelope()\` authors no row set this row can read — neither a \`.map(\` receiver nor a reference to the label table`)
-  }
-  const expression = receiver[1]
-  if (expression.includes('(')) return expression
-  const initializer = new RegExp(`const ${expression}\\b[^=\\n]*=\\s*([^\\n]*)`).exec(source)
-  return initializer === null ? expression : initializer[1]
-}
-
-/** Every import of the gate module and whether it is TYPE-ONLY (`import type`), so `ASM-L2-2`'s
- *  claim — the binding costs no runtime edge and no bundle byte (`interface.md` §3 `S-4`) — is read
- *  from the import list rather than assumed. */
-function gateImportsOf(source: string): Array<{ specifier: string; names: string[]; typeOnly: boolean }> {
-  const imports: Array<{ specifier: string; names: string[]; typeOnly: boolean }> = []
-  for (const found of source.matchAll(/^import\s+(type\s+)?(?:\{([^}]*)\}|\*\s+as\s+\w+|\w+)\s+from\s+'([^']*security[^']*)'/gm)) {
-    const names = (found[2] ?? '').split(',').map((name) => name.trim().split(/\s+as\s+/)[0]).filter((name) => name !== '')
-    imports.push({ specifier: found[3], names, typeOnly: found[1] !== undefined })
-  }
-  return imports
-}
+/** **THE DEAD READS ARE RETIRED WITH THE NET THEY MEASURED** (`S-10`, `M-10`): `labelTablesOf`, `rosterExpressionOf`,
+ *  `gateImportsOf`, `LANDED` and `SIXTH` read a label TABLE and the union binding it carried, and both are gone — the table
+ *  by `S-10`, the binding by `S-8` (`ToolGroup` is `string`). `M-10`'s three arms above are the net that replaced them, and
+ *  they read the AUTHORED graph rather than the source, which is the stronger witness. `gateGroupsOf` stays: row 4 still
+ *  walks the foundation's ids, and the walk must not restate them (`D-26`, `D-39`). */
 
 /** A `security.set` patch, as the bridge and the surface both declare it
  *  (`src/main/preload.ts:108-110`; `src/main/settings-surface/index.ts:67-68`). The pane's body
@@ -209,13 +144,40 @@ async function fillPane(panels: SecurePanels): Promise<void> {
   panels.applySecurity(client.shape())
 }
 
+/** **THE ENVELOPE'S AUTHORED NODES, READ OFF THE SUPERVISOR AND NOT OFF THE ROSTER ARRAY** (`M-10`): the pane's own graph is
+ *  the only witness to what was AUTHORED, so an envelope that echoed its input cannot pass by construction. The supervisor is
+ *  the pane's private engine, reached the way `tests/host-guard-panes.test.ts` reaches it — the same instrument, stated. */
+function authoredNodesOf(panels: SecurePanels): Array<{ content?: unknown; props?: { id?: string; content?: unknown } }> {
+  return (panels as unknown as { supervisor: { allNodes(): Array<{ content?: unknown; props?: { id?: string; content?: unknown } }> } }).supervisor.allNodes()
+}
+
+/** Every authored `toggle:<id>`'s id, in the envelope's order. */
+function authoredToggleIds(panels: SecurePanels): string[] {
+  return authoredPropsIds(panels)
+    .filter((id) => id.startsWith('toggle:'))
+    .map((id) => id.slice('toggle:'.length))
+}
+
+/** Every authored `props.id`, in the envelope's order. */
+function authoredPropsIds(panels: SecurePanels): string[] {
+  return authoredNodesOf(panels)
+    .map((node) => node.props?.id)
+    .filter((id): id is string => typeof id === 'string' && id !== '')
+}
+
+/** **THE FOUR AUTHORED LIVE REGIONS, HAND-WRITTEN ON PURPOSE** (`M-10(iii)`): "this authored element is a region a delivery
+ *  FILLS" is a judgement about the envelope's intent, and no node property states it. Spelling the four here is what makes
+ *  the second direction a claim rather than a tautology; `PLACEHOLDER_IDS` must equal it in both directions, and each must be
+ *  authored. A fifth live region is a foundation edit and this list is where its author records it. */
+const LIVE_REGIONS = ['security-status', 'status', 'module-status', 'module-list']
+
 /** Boot the real pane under the layout-less shim with the carrier answer `initial` stands for, then
  *  click one authored row by its generated id (`props.id` = `toggle:<group>`, `interface.md` §4). */
 async function clickRow(group: string, initial: { token: string | null; enabled: string[] }): Promise<{ patches: SetPatch[] }> {
   installShim()
   const recorder = recordingBridge(initial)
   ;(globalThis as unknown as { window?: unknown }).window = { provident: { security: recorder.bridge } }
-  const panels = new SecurePanels(mountEl() as never)
+  const panels = new SecurePanels(mountEl() as never, { registry: paneRegistry() })
   panels.refresh()
   await fillPane(panels)
   await panels.dispatch(`toggle:${group}`)
@@ -229,7 +191,7 @@ async function clickRow(group: string, initial: { token: string | null; enabled:
 async function clickRowWithoutBridge(group: string): Promise<{ threw: unknown; bridgeAfter: unknown }> {
   installShim()
   ;(globalThis as unknown as { window?: unknown }).window = undefined
-  const panels = new SecurePanels(mountEl() as never)
+  const panels = new SecurePanels(mountEl() as never, { registry: paneRegistry() })
   let threw: unknown = null
   try {
     panels.refresh()
@@ -254,37 +216,55 @@ afterEach(() => {
 })
 
 describe('secure-panels · the arrangement and the route a click reaches', () => {
-  it('the roster has ONE author: a label table whose keys are the FOUNDATION’S SIX, with the roster computed from them — the union’s compile-time net is RETIRED at `S-8` and `S-10`’s runtime row is its successor (interface.md §1, §2 (b); ASM-L2-2, ASM-L2-16)', () => {
-    const tables = labelTablesOf(PANE)
-    expect(tables.length, 'exactly one declaration in the pane maps a group name to a label — a second table would be the copy this unit removes').toBe(1)
-    const table = tables[0]!
-    expect(table.keys.length, 'and it is the group table, not an incidental object: its keys are gate group names').toBeGreaterThan(1)
-    // **THE NET IS RETIRED, NOT RE-BOUGHT** (`S-8`): `ToolGroup` is `string`, so `Record<ToolGroup, string>` binds
-    // nothing and this row must not pin the annotation as if it did. What stands is the ONE author and its keys; the
-    // runtime set-equality row that replaces the net is `S-10`'s (`M-10`), and this row points at it rather than faking it.
-    expect(table.annotation, 'the table still carries the one annotation (`interface.md` §1) as the `Record<…>` it was; that it no longer binds is the `S-8` step, and `S-10` replaces the net').toContain('Record<')
-    expect(Object.keys(table).length, 'and the table is a label table, not an incidental object').toBeGreaterThan(0)
-    const gateImports = gateImportsOf(PANE)
-    const binding = gateImports.find((entry) => entry.typeOnly && entry.names.includes('ToolGroup'))
-    expect(binding, '`ToolGroup` reaches the pane by a TYPE-ONLY import of the gate module — the same idiom the pane already uses for `ExclusionState` (ASM-L2-2, S-4)').toBeDefined()
-    expect(gateImports.filter((entry) => !entry.typeOnly).map((entry) => entry.specifier), 'and the gate module is imported for no value: a value import would put a main module in the renderer bundle (ASM-L2-2, S-4)').toEqual([])
-    const roster = rosterExpressionOf(PANE)
-    expect(roster.trimStart().startsWith('['), 'the roster is COMPUTED, never authored: a hand-written group array beside the table is the third copy L1 §8 `F-3` files').toBe(false)
-    expect(roster, 'and it is computed FROM the table, so the table’s keys are the roster’s only author (interface.md §1: "the table’s own key set in the table’s own authoring order — never a second literal beside it")').toContain(table.name)
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // `M-10` — `S-10`'s RUNTIME SET-EQUALITY, THREE ARMS (`docs/L3/secure-panels/roster-and-placeholders.md` §6). The
+  // union's compile-time net died with `ToolGroup = string` (`S-8`), and these arms are its replacement: the registry's
+  // declared set and the envelope's AUTHORED toggle nodes are compared AS SETS, red BY NAME in both directions, with the
+  // placeholder domain read the same way. **The envelope's rows are read off the SUPERVISOR** — the authored nodes, not the
+  // roster array — so an envelope that authored a row nobody declared cannot pass by echoing its own input.
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  it('M-10(i) · A DECLARED GROUP WITH NO ROW REDS BY ITS ID — every id the registry declares has an authored `toggle:<id>` node', () => {
+    installShim()
+    const carrier = { name: 'alpha-module', capabilities: { groups: [{ id: 'alpha', label: 'alpha (fixture module)' }] } }
+    const registry = paneRegistry([{ module: 'alpha-module', domain: 'group', ids: ['alpha'] }])
+    const panels = new SecurePanels(mountEl() as never, { registry, carriers: [carrier] })
+    const declared = registry.declaredGroups()
+    expect(declared, 'the set the row compares against is the registry\'s own, not a list this row wrote').toContain('alpha')
+    const authored = authoredToggleIds(panels)
+    const missing = declared.filter((id) => !authored.includes(id))
+    expect(missing, 'a declared group with no authored row reds BY NAME — the envelope is not a list beside the set, it is the set\'s projection').toEqual([])
+    expect(authored, 'and the module row is labelled by its DECLARER (`C-9`): the carrier\'s text, never the foundation\'s pair').toContain('alpha')
+    const row = authoredNodesOf(panels).find((node) => node.props?.id === 'toggle:alpha')
+    const label = row?.content ?? row?.props?.content
+    expect(label, 'the label it paints is the declaring carrier\'s `capabilities.groups[].label`').toBe('alpha (fixture module)')
   })
 
-  it('the projection’s ORDER keeps the five landed rows where they stand and lands the gate’s sixth LAST — order, never a count (interface.md §1-§2, S-3)', () => {
-    const tables = labelTablesOf(PANE)
-    if (tables.length === 0) throw new Error(`${PANE_FILE}: no group→label table is declared, so the projection has no order this row can read`)
-    const keys = tables[0]!.keys
-    // `Object.keys` over a non-numeric-keyed literal answers INSERTION order (S-3), so the table's
-    // authored order IS the order the roster paints. That mechanism is why this row reads authored
-    // order; the five rendered rows' preservation against the landed paint is `P-7`'s row, and the
-    // COUNT of the set is nobody's (`behaviour.md` §1: "the set difference is the claim, never a
-    // count").
-    expect(keys, 'the five landed rows keep their relative order and the union’s sixth is appended after them').toEqual([...LANDED, ...SIXTH])
-    expect(keys.slice(-1), 'so the sixth is last, and no landed row moved to make room for it').toEqual(SIXTH)
+  it('M-10(ii) · A ROW WITH NO GROUP REDS BY ITS ID — every authored `toggle:<id>` names an id the registry declares', () => {
+    installShim()
+    const registry = paneRegistry()
+    const panels = new SecurePanels(mountEl() as never, { registry })
+    const declared = registry.declaredGroups()
+    const undeclared = authoredToggleIds(panels).filter((id) => !declared.includes(id))
+    expect(undeclared, 'an authored row whose id no registry declares reds BY NAME — the direction that catches a hand-written row').toEqual([])
+    // AND THE ABSENT REGISTRY AUTHORS NOTHING, which is what makes arm (ii) non-vacuous: a pane handed no set has no row,
+    // because a roster is a READING (`D-129`) and this constructor invents no default (`ASM-SP-1`).
+    const bare = new SecurePanels(mountEl() as never)
+    expect(authoredToggleIds(bare), 'no registry, no row: the pane says nothing about a set it was not handed').toEqual([])
   })
+
+  it('M-10(iii) · THE PLACEHOLDER SET IS TOTAL, BOTH DIRECTIONS — every pinned id is authored and every authored live region is pinned', () => {
+    installShim()
+    const registry = paneRegistry()
+    const panels = new SecurePanels(mountEl() as never, { registry })
+    const authored = authoredPropsIds(panels)
+    const missing = PLACEHOLDER_IDS.filter((id) => !authored.includes(id))
+    expect(missing, 'every id the fifth domain pins is authored by the envelope — the set is closed HERE because the envelope authors it').toEqual([])
+    const stray = LIVE_REGIONS.filter((id) => authored.includes(id) && !PLACEHOLDER_IDS.includes(id))
+    expect(stray, 'and every authored live region is in the set: an authored region outside it is a fill target nobody pinned').toEqual([])
+    expect(registry.declaredPlaceholders(), 'the registry\'s placeholder domain IS the set — the pane hands it as its foundation contribution').toEqual([...PLACEHOLDER_IDS])
+  })
+
+
 
   it('a click composes ONE patch naming ONE name in ONE direction, taken off the row’s own props — and a click with no bridge composes nothing at all (behaviour.md §3 steps 1-2)', async () => {
     // THE CONTROL comes first: a LANDED row, so a red below cannot be this instrument's failure.

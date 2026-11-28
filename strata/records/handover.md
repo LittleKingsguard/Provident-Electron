@@ -1,4 +1,4 @@
-# handover — 2026-11-27 (rev 5): under its 60-line ceiling; `U2`'s L4 is landed to its renderer half, and what is left is that half, `U6`'s cells and `U7`
+# handover — 2026-11-27 (rev 6): under its 60-line ceiling; `U2`'s L4 is COMPLETE, and what is left is `S-18`'s maps, `U6`'s cells and `U7`
 
 Read `strata/brief.md` first, then `strata/decisions.md` from **`D-304`** onward. **The unit's worklist is `strata/records/modularity-cleanup.md`** (`D-319`): re-grains, anomalies, process rules, environment limits and the sweep order.
 
@@ -9,7 +9,7 @@ Read `strata/brief.md` first, then `strata/decisions.md` from **`D-304`** onward
 count written here is stale on the commit that writes it (rev 3 said `48`; the next session read `50`). Pins stand
 (`provident-storeroom ^2.0.0`, lock 2.0.1; `provident-ssr ^0.6.0`); the demo bundle is regenerated (`D-118`).
 
-## The readings (clean tree at `c621b4a`; the commits since touch this page and the corpus only)
+## The readings (clean tree at `cce224b`; the commits since touch this page and the corpus only)
 
 `typecheck` **0** · `typecheck:tests` **0** · `build` **0** · **`npm test` GREEN — 3,101 passed / 2 skipped of 3,103 over 169 files**, all `tests/e2e/` batteries inside it.
 The unit's own: boundary **10/10**, `M-7`/`M-8`/`M-9` green, `MF-1`…`MF-5`, `RW-M1`…`RW-M7`, `D-317(a)`…`(c)` with `M-14`/`M-15`, `MC-1`…`MC-13`, `M-11`/`M-13`/`M-2b` on ONE boot.
@@ -30,13 +30,13 @@ The unit's own: boundary **10/10**, `M-7`/`M-8`/`M-9` green, `MF-1`…`MF-5`, `R
   crosses and evaluates; one registration counts one; the census entry names no source).
 - **`U2`'s L4 — FOUR STEPS LANDED** (`CH-31`…`CH-35`): `S-6`'s registry and its unit battery; `S-9`'s group domain as an optional thunk with the PATCH its
   one gate (`AN-30` swept); `S-8`'s `GroupRule` and the gate moved after the registry (`M-8`, and the bare/published name defect its first arm found);
-  `S-7`'s composed pane/zone domains at two instants (`AN-31` swept).
+  `S-7`'s composed pane/zone domains at two instants (`AN-31` swept); **`S-10` LANDED** (`CH-36`: the roster as the registry's projection, `PLACEHOLDER_IDS`, the constructor delta, `M-10`'s three arms, and the renderer's ONE census read over the loaded rows).
 - **The corpus caught up**: `docs/L1/modularity.md` rev 22, the `app-shell` pages' ELEVENTH member, the map's `D-321` `planned` member with `MF-1`…`MF-5` stat-ing both arms; `D-319`–`D-321` are the pass's decisions.
+
 ## What is open, named not hidden
 
-- **`U2`'s L4 — THE RENDERER HALF IS THE ONLY STEP LEFT** (`AN-32`'s fix `(b)` TAKEN, `PR-10`): the mount moves after ONE boot census
-  read, so the roster and the gate share one composition instant; the carriers are the LOADED rows, not `IPC_MODULE_GET`'s listed ones (`AN-33`, else
-  the roster paints toggles the frozen rule refuses). The write is `S-18`'s / `U5`'s; `S-10`'s `groupRoster`/`PLACEHOLDER_IDS`/`M-10` land on top of it.
+- **`U2`'s L4 IS COMPLETE** (`CH-31`…`CH-36`): the registry and all five consuming re-grains landed, `M-7`/`M-8`/`M-9`/`M-10` green, and `AN-30`/`AN-31` swept.
+  **What remains of the maps is `S-18`'s / `U5`'s** (`M-18`): the five census maps total over the composed domain — the renderer's registry and the boot read it needs already stand, so that step adds the map entries and no second composition (`PR-10`).
 - **`U6`**: `S-22` (coeffects — carried, judged by nobody), `S-24` (activate/deactivate by classification), `S-25`
   (component-scoped replacement). **`U7`** (`S-26`…`S-28`, acceptance; no `src/modules/`) is **last**, on the user's ordering.
 - **Reserved**: `M-16` (mode adoption's e2e), `M-18` (composed pane census, on `U2`), `M-29` (parity, on an absent WASM host).
@@ -56,5 +56,5 @@ each found a defect (`AN-21`, `AN-23`, `AN-26`) review had not seen.
 then `U6`'s `S-22`/`S-24`/`S-25`; then `U7`; beside them the cap ruling, the sink, `app-shell`'s boot-route rev, and the two splits.
 
 ```boundary-declared
-{"unit":"modularity","layer":"L0","module":null,"writes":[{"path":"strata/records/handover.md","d":"D-115","why":"the page under its 60-line ceiling (rev 5): the readings (3,101/169, four legs at 0), `U2`'s L4's four landed steps, the renderer half as the only step left with `AN-32`'s fix (b), `PR-10`'s shared instant and `AN-33`'s loaded rows named, and the next acts re-ordered"}]}
+{"unit":"modularity","layer":"L0","module":null,"writes":[{"path":"strata/records/handover.md","d":"D-115","why":"the page under its 60-line ceiling (rev 6): `U2`'s L4 complete with `S-10` landed (`CH-36`) and `M-7`\u2026`M-10` green, the remaining maps named as `S-18`'s / `U5`'s (`M-18`), and the next acts re-ordered"}]}
 ```

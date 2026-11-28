@@ -22,6 +22,7 @@ import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { Runtime } from '../src/renderer/runtime.js'
 import { demoEnvelope } from '../src/shared/demo-envelope.js'
 import { SecurePanels } from '../src/renderer/secure-panels.js'
+import { paneRegistry } from './integration/secure-panels/foundation-registry.js'
 import { createSecurityClient } from '../src/renderer/security-client.js'
 
 beforeAll(() => {
@@ -71,7 +72,7 @@ describe('SecurePanels — the isolated security/debug pane graph', () => {
     const mount = mountEl() as never
     const fake = fakeSecurity()
     installBridge(fake)
-    const panels = new SecurePanels(mount as never)
+    const panels = new SecurePanels(mount as never, { registry: paneRegistry() })
     await panels.refresh()
     const html = (mount as unknown as { innerHTML: string }).innerHTML
     expect(html).toContain('Security')
@@ -87,7 +88,7 @@ describe('SecurePanels — the isolated security/debug pane graph', () => {
     const paneMount = document.createElement('div') as never
     const fake = fakeSecurity()
     installBridge(fake)
-    const panels = new SecurePanels(paneMount)
+    const panels = new SecurePanels(paneMount, { registry: paneRegistry() })
     await panels.refresh()
     // The app Runtime boots the DEMO graph only — its rendered HTML + targets
     // must NOT contain any security-pane content.
@@ -105,7 +106,7 @@ describe('SecurePanels — the isolated security/debug pane graph', () => {
     const mount = document.createElement('div') as never
     const fake = fakeSecurity()
     installBridge(fake)
-    const panels = new SecurePanels(mount)
+    const panels = new SecurePanels(mount, { registry: paneRegistry() })
     await panels.refresh()
     expect(fake.current().token).toBe(null)
     await panels.dispatch('token-gen')
@@ -116,7 +117,7 @@ describe('SecurePanels — the isolated security/debug pane graph', () => {
     const mount = document.createElement('div') as never
     const fake = fakeSecurity()
     installBridge(fake)
-    const panels = new SecurePanels(mount)
+    const panels = new SecurePanels(mount, { registry: paneRegistry() })
     panels.refresh()
     // **`D-106` — THE ROW'S `data-on` IS THE CARRIER'S READING, AND THE CARRIER'S READING ARRIVES BY DELIVERY.** `refresh()`
     // no longer reads the record, so each turn below is the app's own: the toggle's act, then the delivery's re-read (the

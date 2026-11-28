@@ -9,6 +9,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { Runtime } from '../src/renderer/runtime.js'
 import { SecurePanels } from '../src/renderer/secure-panels.js'
+import { paneRegistry } from './integration/secure-panels/foundation-registry.js'
 import { createSecurityClient } from '../src/renderer/security-client.js'
 import { demoEnvelope } from '../src/shared/demo-envelope.js'
 import { translateLegacy, createLinkHub } from 'provident-ssr'
@@ -57,7 +58,7 @@ async function makePair() {
   const app = new Runtime({ mount: mountEl() as never, envelope: demoEnvelope() as never })
   app.bootstrap()
   const paneMount = document.createElement('div')
-  const panels = new SecurePanels(paneMount)
+  const panels = new SecurePanels(paneMount, { registry: paneRegistry() })
   panels.refresh()
   await fillPane(panels)
   return { app, panels, fake, paneMount }

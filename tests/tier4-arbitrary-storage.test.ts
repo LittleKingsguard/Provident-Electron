@@ -67,6 +67,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { SecurePanels } from '../src/renderer/secure-panels.js'
+import { paneRegistry } from './integration/secure-panels/foundation-registry.js'
 import { createSecurityClient } from '../src/renderer/security-client.js'
 import { SecurityGate, exclusionAllowsWork } from '../src/main/security.js'
 import {
@@ -114,7 +115,7 @@ async function mountPaneFor(carrier: Record<string, unknown>): Promise<{ panels:
   }
   ;(globalThis as unknown as { window?: unknown }).window = { provident: { security: bridge } }
   const mount = mountEl()
-  const panels = new SecurePanels(mount as never)
+  const panels = new SecurePanels(mount as never, { registry: paneRegistry() })
   panels.refresh()
   await fillPane(panels)
   return { panels, mount, reads: () => reads }
@@ -393,7 +394,7 @@ describe('S2 REPAIR (gate 4\'s ruled repair contract) — THE SURVIVING ROWS: `D
     // state 1 — a BRIDGE-REJECTED refresh on a never-supplied pane (the ruling's own named case):
     ;(globalThis as unknown as { window?: unknown }).window = { provident: { security: { get: async () => { throw new Error('bridge down') } } } }
     const mount = mountEl()
-    const panels = new SecurePanels(mount as never)
+    const panels = new SecurePanels(mount as never, { registry: paneRegistry() })
     panels.refresh()
     // **⟶ `D-106`: THE REJECTED READ IS DRIVEN THROUGH THE SHAPE.** `refresh()` no longer reads, so the rejecting route is
     // taken where the app takes it — the shape's `fill()`, whose `unread` answer fills nothing and leaves the pane at its own
@@ -664,14 +665,14 @@ describe('S2 GATE-6 `F-1` — THE PANE\'S RE-SOURCE TO THE HOLDER IS TOTAL: no A
      * read is skipped entirely and `cfg.exclusion` stays at its declared `null` ("no reading
      * yet"). */
     ;(globalThis as unknown as { window?: unknown }).window = {}
-    const s1 = new SecurePanels(mountEl() as never)
+    const s1 = new SecurePanels(mountEl() as never, { registry: paneRegistry() })
     s1.refresh()
     await fillPane(s1)
     readOf('F1-S1', s1)
 
     /* `F1-S2` — A BRIDGE THAT REJECTS (`S2-ADV-01` limb (c)): no reading was TAKEN this turn. */
     ;(globalThis as unknown as { window?: unknown }).window = { provident: { security: { get: async () => { throw new Error('bridge down') } } } }
-    const s2 = new SecurePanels(mountEl() as never)
+    const s2 = new SecurePanels(mountEl() as never, { registry: paneRegistry() })
     s2.refresh()
     await fillPane(s2)
     readOf('F1-S2', s2)
@@ -679,7 +680,7 @@ describe('S2 GATE-6 `F-1` — THE PANE\'S RE-SOURCE TO THE HOLDER IS TOTAL: no A
     /* `F1-S3` — THE FIRST PAINT, DRIVEN SYNCHRONOUSLY: the `[T]` shape of the live sequence
      * (`renderer.ts:643`'s UN-AWAITED `void panels.refresh()` beside `:645`'s synchronous
      * `refreshDebug(runtime)` in the SAME TURN) — `syncConfig()` runs with NO reading taken. */
-    const s3 = new SecurePanels(mountEl() as never)
+    const s3 = new SecurePanels(mountEl() as never, { registry: paneRegistry() })
     s3.refreshDebug(runtimeStub)
     readOf('F1-S3', s3)
 

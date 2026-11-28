@@ -21,6 +21,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { SecurePanels } from '../src/renderer/secure-panels.js'
+import { paneRegistry } from './integration/secure-panels/foundation-registry.js'
 // THE FIXTURE IS THE CROSSING'S, NOT A FILE'S (2026-11-02, D-78's second clause / D-81): the rows
 // arrive through `tests/module-registry-fixture.ts`, which builds the registry over
 // `createSettingsSurface` — the same surface `src/main/main.ts` reads and commits — because
@@ -147,7 +148,7 @@ describe('SecurePanels — the module management pane (§4)', () => {
       const bridge = fakeModuleBridge(store)
       installModuleBridge(bridge)
       const mount = mountEl() as never
-      const panels = new SecurePanels(mount as never)
+      const panels = new SecurePanels(mount as never, { registry: paneRegistry() })
       // RE-GRAINED UNDER `D-104`: the fill is the CLIENT's shape, adopted from its one read — the pane's own `refresh()`
       // reads no module any more, because a request-time ask is the class the rule condemns. The claim is unmoved: the
       // envelope carries the node and the pane paints the registry into it.
@@ -173,7 +174,7 @@ describe('SecurePanels — the module management pane (§4)', () => {
       const bridge = fakeModuleBridge(store)
       installModuleBridge(bridge)
       const mount = mountEl() as never
-      const panels = new SecurePanels(mount as never)
+      const panels = new SecurePanels(mount as never, { registry: paneRegistry() })
       // The same re-grain as row 3: the shape is what the pane paints, and the shape is what a read answered.
       const client = createModuleClient({ bridge })
       await client.fill()

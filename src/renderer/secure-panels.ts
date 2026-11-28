@@ -42,9 +42,13 @@ import type { TabsRecordRow } from '../shared/types.js'
 import type { ViewPaneGeometry, ViewThemeRecord, ViewZone } from '../main/view-record/index.js'
 // PAR-13 — the two closed state tokens, imported TYPE-ONLY from the gate module that owns them
 // (the `SecurityWriteReceipt` precedent above: erased at build, no runtime coupling to main).
-// L3 (secure-panels E-1) — the group roster's binding to the gate's union: `ToolGroup` is
-// TYPE-ONLY here, on the `ExclusionState` precedent above (erased at build; no runtime edge).
-import type { ExclusionState as EXCLUSION_STATE, ToolGroup } from '../main/security.js'
+// L3 (secure-panels E-1) — the group roster's binding: `ToolGroup` WAS a type-only import from the gate's union and
+// `S-10` retires that edge whole (`ToolGroup` is `string`). The foundation's ids and labels now arrive as ONE literal
+// from `src/shared/types.ts` (`FOUNDATION_GROUPS`, projected as `TOOL_GROUP_IDS`), and the set itself is the declaration
+// registry's — computed in the renderer realm and handed here, never built here (`ASM-DR-4`, `ASM-SP-1`).
+import { FOUNDATION_GROUPS } from '../shared/types.js'
+import type { DeclarationCarrier, DeclarationRegistry } from '../shared/registry/index.js'
+import type { ExclusionState as EXCLUSION_STATE } from '../main/security.js'
 // **THE SECURITY SHAPE'S TYPE — TYPE-ONLY**, on the `SecurityWriteReceipt` precedent above: the client that maintains the
 // shape (`src/renderer/security-client.ts`, `D-106`) is a renderer module and this import is erased at build, so no value of
 // the secure crossing reaches the renderer bundle from here.
@@ -166,23 +170,60 @@ declare global {
     }
   }
 }
-// ONE author for the pane's group set: the gate's union types the table, and the table's own
-// key order IS the roster's order. A seventh gate group with no row is TS2741; a row naming
-// no group is TS2353; a misspelt key is TS2561 — all on `npm run typecheck`, the floor leg.
-const GROUP_LABELS: Record<ToolGroup, string> = {
-  read: 'read (get_rendered_html, get_markdown, list_targets, get_node_state, code.get, code.validate)',
-  dispatch: 'dispatch (synthetic event driving)',
-  graph: 'graph (load, op, export, validate, teardown)',
-  code: 'code (code.set/create/delete/load — evaluates handler bodies)',
-  module: 'module (module.install/update/list + module:<name>.<tool> extensions — trusted-equivalent to code)',
-  data: 'data (data.read/write/delete/list/journal — the central store)',
+/** ONE AUTHORED TOGGLE ROW'S DATUM (`S-10`, `ASM-SP-1`): the id the registry declares and the label its DECLARER wrote —
+ *  the foundation's pair for a foundation group, the declaring module's `capabilities.groups[].label` for a module's. **A
+ *  label is never derived from an id and never defaulted** (`C-9`). */
+export interface GroupRow {
+  readonly id: string
+  readonly label: string
 }
-// The roster is the table's own keys, in insertion order (non-numeric string keys keep their
-// creation order), so the five landed rows stay in place and `data` lands last (P-7). The one
-// assertion in this unit asserts only what the annotation has already proven — the key set IS
-// `ToolGroup` — because `Object.keys` erases that to `string[]`; without it the index in
-// `paneEnvelope()` reddens as a second TS7053 (T-3).
-const GROUPS = Object.keys(GROUP_LABELS) as readonly ToolGroup[]
+
+/** **THE ROSTER IS THE REGISTRY'S PROJECTION AND NOT A TABLE** (`S-10`, `ASM-SP-1`): `declaredGroups()` in the registry's
+ *  order — foundation first, then the registration order — each id labelled by the declarer that owns it. **THE `carriers`
+ *  ARE THE `LOADED` ROWS AND NEVER THE `LISTED` ONES** (`AN-33`, `PR-10`): this function READS the set and re-filters
+ *  nothing, so a row for a disabled or recomputed-quarantined module's group cannot reach the envelope — the caller's
+ *  registry and this list are one composition, or the roster outruns the gate.
+ *
+ *  **A DECLARED GROUP WITH NO LABEL IS A REFUSAL NAMING THE ID**, never a row painted `undefined` and never a silent skip
+ *  (`D-105`): `reason: 'declaration-unlabelled'` is this consumer's own, because no admission is being made. */
+export function groupRoster(
+  registry: DeclarationRegistry,
+  carriers: readonly DeclarationCarrier[],
+): {
+  readonly rows: readonly GroupRow[]
+  readonly refused: readonly { readonly status: 'refused'; readonly reason: 'declaration-unlabelled'; readonly subject: string }[]
+} {
+  const foundation = new Map(FOUNDATION_GROUPS.map((group) => [group.id, group.label]))
+  const rows: GroupRow[] = []
+  const refused: { readonly status: 'refused'; readonly reason: 'declaration-unlabelled'; readonly subject: string }[] = []
+  for (const entry of registry.groupEntries()) {
+    const label = entry.source === 'foundation' ? foundation.get(entry.id) : labelOf(carriers, entry.origin, entry.id)
+    if (typeof label !== 'string' || label.trim() === '') {
+      refused.push({ status: 'refused', reason: 'declaration-unlabelled', subject: entry.id })
+      continue
+    }
+    rows.push({ id: entry.id, label })
+  }
+  return { rows, refused }
+}
+
+/** The declaring module's own label, read off the carrier the registry composed (`C-9`): a group's meaning is its owner's
+ *  and never the entry's, so the registry carries no label and this reads the one declaration that does. */
+function labelOf(carriers: readonly DeclarationCarrier[], origin: string | undefined, id: string): string | undefined {
+  if (origin === undefined) return undefined
+  for (const carrier of carriers) {
+    if (carrier.name !== origin) continue
+    const groups = carrier.capabilities?.groups
+    if (!Array.isArray(groups)) continue
+    for (const group of groups) if (group.id === id) return group.label
+  }
+  return undefined
+}
+
+/** **THE FIFTH DOMAIN'S FOUNDATION CONTRIBUTION** (`C-4`, `S-10`, `ASM-SP-3`): the overlay's four authored live regions,
+ *  CLOSED here because the envelope authors them and no set pins them. **A fifth is a foundation edit**, not a push: a
+ *  module may only ADD CHILDREN under one of these at `S-21`'s composition point, never redefine the id (`ASM-SP-4`). */
+export const PLACEHOLDER_IDS: readonly string[] = ['security-status', 'status', 'module-status', 'module-list']
 
 /** U-ENGINE-PIN §2.4 (AMENDED — ruling 1 applied to the pane channel) — the
  *  managed channel's OWN call site for the same SHAPE-ONLY predicate as
@@ -273,13 +314,13 @@ const EXCLUSION_TOGGLE_BODY = `function (ctx) {
 /** The pane-graph envelope: the Security Settings pane + the Debug pane,
  *  authored as provident data. The group toggles are one node per group; their
  *  `data-on`/`data-group` props are refreshed by syncConfig on each refresh. */
-function paneEnvelope(): LegacyInitialData {
-  const toggles = GROUPS.map((g) => ({
+function paneEnvelope(roster: readonly GroupRow[]): LegacyInitialData {
+  const toggles = roster.map((row) => ({
     type: 'label',
-    props: { id: `toggle:${g}`, 'data-group': g, 'data-on': 'false' },
+    props: { id: `toggle:${row.id}`, 'data-group': row.id, 'data-on': 'false' },
     css: { classes: ['group-row'] },
-    content: GROUP_LABELS[g],
-    handlers: [{ name: `toggle-${g}`, event: 'click', body: TOGGLE_BODY }],
+    content: row.label,
+    handlers: [{ name: `toggle-${row.id}`, event: 'click', body: TOGGLE_BODY }],
   }))
   return {
     template: {
@@ -477,18 +518,42 @@ export class SecurePanels {
    *  defeated on this pane (§2.5 items 1/2/4's measured evidence). */
   private readonly maxJournalLength: number | undefined
 
+  /** **THE ROSTER THIS PANE AUTHORED ITS TOGGLE ROWS FROM** (`S-10`, `ASM-SP-1`): the registry's declared groups with their
+   *  declarers' labels, computed ONCE in the constructor. `syncConfig`'s `toggle:` arm finds an id HERE and nowhere else, so
+   *  a row the envelope never authored refreshes nothing. **EMPTY IS A STATE AND NOT A DEFAULT**: an absent registry authors
+   *  no toggle row at all, exactly as `cfg.enabled === null` paints none (`D-129`) — the pane says NOTHING about a group set
+   *  it has not been handed (`ASM-1`'s posture). */
+  private readonly roster: readonly GroupRow[]
+
   /** Test/visibility accessor — the current Debug pane text (census + SSR
    *  preview). */
   debugText(): string {
     return this.debugValue
   }
 
-  constructor(mount: HTMLElement, opts?: { maxJournalLength?: number }) {
+  constructor(
+    mount: HTMLElement,
+    opts?: {
+      maxJournalLength?: number
+      /** **THE COMPOSED GROUP SET AND ITS LABELS** (`S-10`, `ASM-SP-1`): the registry the CALLER constructed in this realm
+       *  (never one built here, `ASM-DR-4`) and the carriers it composed. Absent authors NO toggle row — a roster is a
+       *  reading, never a default (`D-129`). */
+      registry?: DeclarationRegistry
+      carriers?: readonly DeclarationCarrier[]
+    },
+  ) {
     this.mount = mount
     this.maxJournalLength = opts?.maxJournalLength
+    const roster = opts?.registry === undefined ? { rows: [], refused: [] } : groupRoster(opts.registry, opts.carriers ?? [])
+    this.roster = roster.rows
+    // **A REFUSAL IS NAMED AND NEVER PAINTED** (`D-105`): a declared group whose declarer states no label has no row, and
+    // the caller's own boot list is where the name belongs — this pane is a surface and not a logger.
+    for (const refusal of roster.refused) {
+      console.warn(`[provident-renderer] group roster: '${refusal.subject}' refused — ${refusal.reason}`)
+    }
     this.scope = createIsolatedScope()
     const hub = createLinkHub()
-    const t = translateLegacy(paneEnvelope(), { hub, graphScope: this.scope })
+    const t = translateLegacy(paneEnvelope(this.roster), { hub, graphScope: this.scope })
     // RH-3 half (a) (G3 §2.5 items 1/2 — the pane-cap IDENTITY): the pane
     // Supervisor is built WITH `maxJournalLength` — the tier-4 operator's
     // setting, read ONCE at boot and passed in from the SAME snapshot the app
@@ -703,16 +768,16 @@ export class SecurePanels {
         // TYPE is `string`, and the roster is the only thing entitled to say so. The guard
         // reads the roster, never a cast: an id that spells no group refreshes nothing, where
         // `GROUP_LABELS[id.slice('toggle:'.length) as ToolGroup]` would paint `☐ undefined`.
-        const g = GROUPS.find((k) => `toggle:${k}` === id)
-        if (g === undefined) continue
+        const row = this.roster.find((entry) => `toggle:${entry.id}` === id)
+        if (row === undefined) continue
         // **A TOGGLE NOBODY HAS READ IS NOT PAINTED, AND ITS AUTHORED WORDS STAND** (`D-129`): the envelope authors
         // `data-on="false"` and the plain label on every row, so leaving the node alone is this pane saying NOTHING about
         // the gate — where a `☐` would say the group is off, which is a configuration and not an absence.
         const enabled = this.cfg.enabled
         if (enabled === null) continue
-        const on = enabled.includes(g)
+        const on = enabled.includes(row.id)
         mutation.push({ targetProp: 'props.data-on', mode: 'replace', value: on ? 'true' : 'false' })
-        mutation.push({ targetProp: 'content', value: `${on ? '☑' : '☐'} ${GROUP_LABELS[g]}` })
+        mutation.push({ targetProp: 'content', value: `${on ? '☑' : '☐'} ${row.label}` })
       } else if (id === 'exclusion-toggle') {
         // §2.4 items 2/3 — the toggle's `data-state` + its affordance word, refreshed by THIS pass
         // exactly as the group toggles' `data-on` is. **⟶ `D-vi` (`2026-10-11`, the gate-4 repair

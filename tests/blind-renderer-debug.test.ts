@@ -22,6 +22,7 @@ import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { Runtime } from '../src/renderer/runtime.js'
 import { demoEnvelope } from '../src/shared/demo-envelope.js'
 import { SecurePanels } from '../src/renderer/secure-panels.js'
+import { paneRegistry } from './integration/secure-panels/foundation-registry.js'
 
 /** A fake Electron BrowserWindow + webContents built from the greens doc's
  *  description: `.on(event,cb)` + `.send(channel,msg)` + `.isDestroyed()` +
@@ -339,7 +340,7 @@ describe('Debug panel — hosted by the isolated SecurePanels graph (secure-pane
   })
 
   it('D1.1 — SecurePanels.refreshDebug(runtime) writes /inTree \d+ · registered \d+/ with the SSR preview on a new line', () => {
-    const panels = new SecurePanels(document.createElement('div'))
+    const panels = new SecurePanels(document.createElement('div'), { registry: paneRegistry() })
     const runtime = new Runtime({ mount: mountEl() as never, envelope: demoEnvelope() as never })
     runtime.bootstrap()
     panels.refreshDebug(runtime)
@@ -353,7 +354,7 @@ describe('Debug panel — hosted by the isolated SecurePanels graph (secure-pane
   it('D1.3 — after await runtime.teardownResult() + refreshDebug: contains "inTree 1" (root-only)', async () => {
     const runtime = new Runtime({ mount: mountEl() as never, envelope: demoEnvelope() as never })
     runtime.bootstrap()
-    const panels = new SecurePanels(document.createElement('div'))
+    const panels = new SecurePanels(document.createElement('div'), { registry: paneRegistry() })
     await runtime.teardownResult()
     panels.refreshDebug(runtime)
     expect(panels.debugText()).toContain('inTree 1')
@@ -364,7 +365,7 @@ describe('Debug panel — hosted by the isolated SecurePanels graph (secure-pane
     runtime.bootstrap()
     const { ssrHtml } = runtime.renderedHtmlResult()
     expect(ssrHtml.length).toBeGreaterThan(120)
-    const panels = new SecurePanels(document.createElement('div'))
+    const panels = new SecurePanels(document.createElement('div'), { registry: paneRegistry() })
     panels.refreshDebug(runtime)
     const preview = panels.debugText().split('\n').slice(1).join('\n')
     expect(preview.endsWith('…')).toBe(true)
@@ -374,7 +375,7 @@ describe('Debug panel — hosted by the isolated SecurePanels graph (secure-pane
   it('D3.8 — F1: a non-number census field is coerced to "?" — the text contains "inTree ?", never undefined/NaN', () => {
     const runtime = new Runtime({ mount: mountEl() as never, envelope: demoEnvelope() as never })
     runtime.bootstrap()
-    const panels = new SecurePanels(document.createElement('div'))
+    const panels = new SecurePanels(document.createElement('div'), { registry: paneRegistry() })
     const stub = runtime as unknown as { renderedHtmlResult: () => unknown }
     stub.renderedHtmlResult = () => ({ renderedHtml: '', ssrHtml: '', census: { inTree: undefined, registered: NaN, unplaced: 0, destroyed: 0, prototypes: 0 } })
     expect(() => panels.refreshDebug(runtime)).not.toThrow()
@@ -386,7 +387,7 @@ describe('Debug panel — hosted by the isolated SecurePanels graph (secure-pane
   it('D3.9 — F2: a non-string ssrHtml does NOT throw (coerced to ""); null/whitespace → preview (empty)', () => {
     const runtime = new Runtime({ mount: mountEl() as never, envelope: demoEnvelope() as never })
     runtime.bootstrap()
-    const panels = new SecurePanels(document.createElement('div'))
+    const panels = new SecurePanels(document.createElement('div'), { registry: paneRegistry() })
     const stub = runtime as unknown as { renderedHtmlResult: () => unknown }
     stub.renderedHtmlResult = () => ({ renderedHtml: '', ssrHtml: 42 as never, census: { inTree: 1, registered: 1, unplaced: 0, destroyed: 0, prototypes: 0 } })
     expect(() => panels.refreshDebug(runtime)).not.toThrow()

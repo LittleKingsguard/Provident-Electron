@@ -265,6 +265,7 @@ import { ProvidentMcpServer, RendererBackend } from '../src/main/mcp-server.js'
 import { createOperatorSettings } from '../src/main/operator-settings/index.js'
 import { createSettingsSurface } from '../src/main/settings-surface/index.js'
 import { SecurePanels } from '../src/renderer/secure-panels.js'
+import { paneRegistry } from './integration/secure-panels/foundation-registry.js'
 import { createSecurityClient } from '../src/renderer/security-client.js'
 import { Runtime } from '../src/renderer/runtime.js'
 import { demoEnvelope } from '../src/shared/demo-envelope.js'
@@ -468,7 +469,7 @@ function appAndPaneOrAbsent(): { runtime: RuntimeProbeLike; panels: SecurePanels
   if (panels === null) {
     absent(
       '§2.4 item 2 / §2.7 item 1 — the ISOLATED PANE GRAPH the control is authored into',
-      '`new SecurePanels(paneMount)` — its construction FAILED (the pre-repair helper swallowed the failure and the isolation probes then passed with NO PANE AT ALL)',
+      '`new SecurePanels(paneMount)` — its construction FAILED (the pre-repair helper swallowed the failure and the isolation probes then passed with NO PANE AT ALL, { registry: paneRegistry() })',
     )
   }
   return { runtime, panels }
@@ -1086,7 +1087,7 @@ function appAndPane(): { runtime: RuntimeProbeLike; panels: SecurePanels | null 
   const paneMount = mountEl() as unknown as HTMLElement
   let panels: SecurePanels | null = null
   try {
-    panels = new SecurePanels(paneMount as never)
+    panels = new SecurePanels(paneMount as never, { registry: paneRegistry() })
   } catch {
     panels = null
   }
@@ -3650,7 +3651,7 @@ const registerSpecs: RegisterRow[] = [
           const runtime = new Runtime({ mount, envelope: demoEnvelope(), maxJournalLength: undefined } as never) as unknown as RuntimeProbeLike
           const before = runtime.renderedHtmlResult().census as Record<string, number>
           const paneMount = mountEl() as unknown as HTMLElement
-          const panels = new SecurePanels(paneMount as never)
+          const panels = new SecurePanels(paneMount as never, { registry: paneRegistry() })
           const after = runtime.renderedHtmlResult().census as Record<string, number>
           expect(after.inTree, `§2.7 item 1 — the app census's node count is UNCHANGED by the pane's construction (before ${before.inTree}, after ${after.inTree}); the pane graph is a SECOND, isolated scope (nodes: ${paneNodes(panels).length})`).toBe(before.inTree)
         },
@@ -5053,7 +5054,10 @@ describe('S1 §2.6 item 3 THE STATIC CENSUS ROWS', () => {
 
   it('the PANE NODE CENSUS: `paneEnvelope()` adds EXACTLY the label node + the toggle node, with NO new class and NO new structural pattern (§2.4 item 2)', () => {
     const panels = sourceOf(SECURE_PANELS_SRC)
-    const envelope = /function paneEnvelope\(\): LegacyInitialData \{([\s\S]*?)\n\}/.exec(panels)?.[1] ?? ''
+    // **⟶ `S-10` RE-GRAIN (`2026-11-27`): the envelope takes the ROSTER as its one parameter** — its rows are the
+    // declaration registry's projection, not a table's keys — so the reader admits a parameter list instead of pinning the
+    // empty one. The row's claim is unmoved: the envelope is readable and adds the toggle node in the landed shape.
+    const envelope = /function paneEnvelope\([^)]*\): LegacyInitialData \{([\s\S]*?)\n\}/.exec(panels)?.[1] ?? ''
     expect(envelope.length, '§2.4 item 2 — `paneEnvelope()` is readable and unchanged in form').toBeGreaterThan(0)
     expect(/id:\s*'exclusion-toggle'/.test(envelope),
       "§2.4 item 2 — the toggle node is authored with `props.id = 'exclusion-toggle'` inside the landed `settings-pane` section. RED: absent.").toBe(true)
@@ -5895,7 +5899,7 @@ async function paneOnLiveBoundary(boundary: LiveBoundary): Promise<PaneBoundary>
   }
   ;(globalThis as Record<string, unknown>).window = { provident: { security } }
   const mount = mountEl()
-  const panels = new SecurePanels(mount as unknown as HTMLElement)
+  const panels = new SecurePanels(mount as unknown as HTMLElement, { registry: paneRegistry() })
   panels.refresh()
   // **⟶ `D-106` — THE PANE'S `cfg` IS A DELIVERY'S NOW.** `refresh()` no longer opens the read; the carrier's answer reaches
   // the pane through the shape's ONE read (`src/renderer/security-client.ts`) and the pane's adopt step, exactly as

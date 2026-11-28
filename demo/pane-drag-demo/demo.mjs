@@ -6,8 +6,8 @@
 // generated body itself. A source that moved, an import that appeared, or a hand-edited body makes --check exit 1
 // and the suite's DB-1 row red.
 // @generated-by demo/pane-drag-demo/build.mjs
-// @source-count 43
-// @body-sha256 7f8471201f5f5ad9f37696b14b69e669f15be253db5dfc9732900e197f204956
+// @source-count 45
+// @body-sha256 4d7267051d11441546aa45b0073bf23efc955e5e340746bcfbd04d5678f52d45
 // @source b9d0892225756daaaef6b40b5cf27eb1aa69c19e3b96252aa57d085797204324 demo/pane-drag-demo/build.mjs
 // @source b6d243f4ee16061a333055125d803a4b5ceef5c116a9c6a71d17e3849dff8aa5 demo/pane-drag-demo/demo.ts
 // @source e7f3564e5831beabef16930462d25d124e30ba710b9a34d1d81e4a8d5bdc5c9c demo/pane-drag-demo/stub-view.ts
@@ -38,9 +38,9 @@
 // @source b20691dd74804c2b1c79cda47d49c83d8b07d61b7fb448da635591cb631e675f src/renderer/extensions.ts
 // @source 4e4c5559f64ef77af88be316d21a2bae043110c045b2b925b23cf7fc1a5e2640 src/renderer/module-channel-client.ts
 // @source eabf4c62fe382ad327e362872700106e460c15ebda1608142104025366069be8 src/renderer/module-client.ts
-// @source e63d5737df7398ec73a5cb7bb97b015f5db9634a982d57ee00e40b7e7193badd src/renderer/renderer.ts
+// @source 6c91ec7d8034e0f8dd1bee3f40553e82ba389892103446221cb90bf672a2e5af src/renderer/renderer.ts
 // @source ea31a33e63da664fc535f3c5e603b5aae9038d0180602c0ffe8644012cd41735 src/renderer/runtime.ts
-// @source 8e97e789ce38a9318cc6348aab5d734e5efd084310bfb173ca972382d0a09882 src/renderer/secure-panels.ts
+// @source cb09092d0a305e654c52d1e6400bc6720e7c7d260d5bc505259ad86de12fe419 src/renderer/secure-panels.ts
 // @source bbdfae90fd2190eb71c9f3b5b909b401f36be67872f88bd42820b1753608c8a4 src/renderer/security-client.ts
 // @source 36187d7cf2e011e13739b74d34acf313a5d5583b803982cab72eba5bed3121e8 src/renderer/tabs-client.ts
 // @source ce0a6d037f99a7b3bd7b12f4404b7d716ae3c5ecd18f8e5df9d571119c888e54 src/renderer/view-client.ts
@@ -50,6 +50,8 @@
 // @source 260559b259261d0a6826037788a74ed5b1180bac213c9ac459f8acbd0c7a6ab3 src/shared/gutter.ts
 // @source 9279f38ee2954ee9f5f87cf60a32ba5ae48546ba40375b06656281ce57bccee5 src/shared/module-contract.ts
 // @source 40138fcc97cf13306712cc8ebf36a081302915b240ec87ff76cbafb83f898194 src/shared/overlay.ts
+// @source b76f68800a56d6d5a077f67d42353af64cb6dbd8edc85866a142c0eba0f9149f src/shared/registry/index.ts
+// @source 752313a1575f530eeabf068fe9e53a39d42409ed3fbfa0bb0dace3c551e3c1b2 src/shared/types.ts
 // @source 6b239396e62f09b55499ceb19d0318298b01d725eb736851b6a49e0314b2cb39 src/shared/view-shape.ts
 // @end-sources
 // src/shared/gesture-session.ts
@@ -1177,16 +1179,19 @@ function gutterSeamExample() {
 }
 var TABS_ROW_HOOKS_KIND = { [TABS_ROWS_ID]: "placement" };
 
-// src/renderer/secure-panels.ts
-var GROUP_LABELS = {
-  read: "read (get_rendered_html, get_markdown, list_targets, get_node_state, code.get, code.validate)",
-  dispatch: "dispatch (synthetic event driving)",
-  graph: "graph (load, op, export, validate, teardown)",
-  code: "code (code.set/create/delete/load \u2014 evaluates handler bodies)",
-  module: "module (module.install/update/list + module:<name>.<tool> extensions \u2014 trusted-equivalent to code)",
-  data: "data (data.read/write/delete/list/journal \u2014 the central store)"
-};
-var GROUPS = Object.keys(GROUP_LABELS);
+// src/shared/types.ts
+var FOUNDATION_GROUPS = [
+  { id: "read", label: "read (get_rendered_html, get_markdown, list_targets, get_node_state, code.get, code.validate)" },
+  { id: "dispatch", label: "dispatch (synthetic event driving)" },
+  { id: "graph", label: "graph (load, op, export, validate, teardown)" },
+  { id: "code", label: "code (code.set/create/delete/load \u2014 evaluates handler bodies)" },
+  { id: "module", label: "module (module.install/update/list + module:<name>.<tool> extensions \u2014 trusted-equivalent to code)" },
+  { id: "data", label: "data (data.read/write/delete/list/journal \u2014 the central store)" }
+];
+var TOOL_GROUP_IDS = FOUNDATION_GROUPS.map((group) => group.id);
+
+// src/shared/registry/index.ts
+var EMPTY_ENTRIES = Object.freeze([]);
 
 // src/shared/view-shape.ts
 var DEFAULT_PANE_ID = "pane-a";

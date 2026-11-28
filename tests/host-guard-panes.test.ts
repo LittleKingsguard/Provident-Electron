@@ -54,6 +54,7 @@ import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import type { ShimElement } from '../src/shared/dom-shim.js'
 import { Runtime } from '../src/renderer/runtime.js'
 import { SecurePanels } from '../src/renderer/secure-panels.js'
+import { paneRegistry } from './integration/secure-panels/foundation-registry.js'
 import {
   PANE_NODES,
   absentValueKeyMutation,
@@ -109,7 +110,7 @@ function expectAppliedSemantics(res: PaneApplyResult, label: string): void {
  *  the security bridge — spec §2.4a). */
 async function bootPanes(): Promise<{ panels: SecurePanels; mount: ShimElement }> {
   const mount = mountEl()
-  const panels = new SecurePanels(mount as never)
+  const panels = new SecurePanels(mount as never, { registry: paneRegistry() })
   await panels.refresh()
   return { panels, mount }
 }

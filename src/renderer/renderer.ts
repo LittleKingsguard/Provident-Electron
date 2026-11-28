@@ -7,7 +7,9 @@ import { CapabilityRouter } from './extensions.js'
 import { createModuleChannelClient } from './module-channel-client.js'
 import { demoEnvelope, gutterSeamExample, GUTTER_AFFORDANCE_ID, GUTTER_STATUS_ID, GUTTER_TARGET_ID, TABS_LANDING_PAGE_ID, TABS_ERROR_PAGE_ID, TABS_ROWS_ID, TABS_ROW_PROTOTYPE_ID, TABS_ADD_ID, APP_ROOT_ID, OVERLAY_STATE_ID, OVERLAY_OPEN_ID, OVERLAY_CLOSE_ID, OVERLAY_DIALOG_ID, MENUS_AFFORDANCE_ID, MENUS_RECEIPT_ID, LAYOUT_MEASURED_ID } from '../shared/demo-envelope.js'
 import { overlayTransition, overlayInertDeclaration, type OverlayState } from '../shared/overlay.js'
-import { SecurePanels } from './secure-panels.js'
+import { SecurePanels, PLACEHOLDER_IDS } from './secure-panels.js'
+import { createRegistry, declarationsOf } from '../shared/registry/index.js'
+import { TOOL_GROUP_IDS } from '../shared/types.js'
 import { createGestureSession, POINTER_TYPES } from '../shared/gesture-session.js'
 import { createGutterAffordance, domEventSource } from '../shared/gutter-affordance.js'
 import type { RpcRequest, RpcReply, TabsRecordRow } from '../shared/types.js'
@@ -2045,7 +2047,34 @@ async function main(): Promise<void> {
   // RH-3 half (a) (G3 §2.5 item 2): the pane is constructed with the SAME boot
   // snapshot `maxJournalLength` the app Runtime read (renderer.ts:546-553) — a
   // boot-read projection of tier 4, never re-read after boot.
-  const panels = panesMount ? new SecurePanels(panesMount, { maxJournalLength }) : null
+  // **THE RENDERER'S ONE REGISTRY, AND THE ONE BOOT READ THAT FILLS IT** (`S-10`'s second half; `S-18`'s site, `ASM-DR-4`,
+  // `PR-10`). The roster and the gate must be projections of ONE pair at ONE instant, and the gate's rule is composed once in
+  // main, so this realm composes its set from the SAME rows main did: **the `LOADED` rows, never the listed ones** (`AN-33`) —
+  // `ModuleShape.loaded` is `status().loaded` crossing the wire, and a disabled or recomputed-quarantined module's group would
+  // otherwise be a toggle the frozen rule refuses. **THE READ IS `D-104`'s CLASS (i)** — the boot's own stated read, exactly as
+  // `bridge.security.get()` above is, and never the request-time ask `D-106` deleted. Its failure is a VALUE: no rows, the
+  // foundation's six, and a line naming it (`D-105`).
+  const moduleReading = await getModuleClient().fill()
+  const censusRows = moduleReading.status === 'committed'
+    ? moduleReading.modules.filter((row) => moduleReading.loaded.includes(row.name))
+    : []
+  if (moduleReading.status !== 'committed') {
+    console.warn(`[provident-renderer] module census: ${moduleReading.status} (${moduleReading.reason}) — the roster is the foundation's`)
+  }
+  const rendererComposition = createRegistry(
+    { pane: [], zone: [], group: TOOL_GROUP_IDS, tool: [], placeholder: PLACEHOLDER_IDS },
+    censusRows.flatMap((row) => declarationsOf({ name: row.name, capabilities: row.capabilities ?? {} })),
+  )
+  for (const refusal of rendererComposition.refused) {
+    console.warn(`[provident-renderer] declaration: '${refusal.subject}' refused — ${refusal.reason}`)
+  }
+  const panels = panesMount
+    ? new SecurePanels(panesMount, {
+      maxJournalLength,
+      registry: rendererComposition.registry,
+      carriers: censusRows.map((row) => ({ name: row.name, capabilities: row.capabilities ?? {} })),
+    })
+    : null
   if (panels) {
     // **THIS CALL IS A PAINT AND NO LONGER A READ** (`D-106`): it used to open an IPC read of the security record — the boot's
     // own ask, `D-104`'s audit class (i) — and the record now reaches the pane from the shape `startSecurityShape` below

@@ -11,6 +11,7 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { installShim } from '../src/shared/dom-shim.js'
 import { SecurePanels } from '../src/renderer/secure-panels.js'
+import { paneRegistry } from './integration/secure-panels/foundation-registry.js'
 import { SecurityGate } from '../src/main/security.js'
 import { ProvidentMcpServer, type McpBackend } from '../src/main/mcp-server.js'
 
@@ -48,7 +49,7 @@ describe('A1 — N3: SecurePanels NEVER emits the notify (no operator leak)', ()
   it('a pane graph has NO notify surface — an operator action cannot push to the agent', async () => {
     const fake = fakeSecurity()
     ;(globalThis as unknown as { window?: unknown }).window = { provident: { security: fake.bridge } }
-    const panels = new SecurePanels(document.createElement('div'))
+    const panels = new SecurePanels(document.createElement('div'), { registry: paneRegistry() })
     await panels.refresh()
     // SecurePanels exposes NO notify — there is no code path from a pane
     // action to a renderer→main push. Its public surface is only refresh/

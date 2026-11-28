@@ -10,6 +10,7 @@ import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { Runtime } from '../src/renderer/runtime.js'
 import { demoEnvelope } from '../src/shared/demo-envelope.js'
 import { SecurePanels } from '../src/renderer/secure-panels.js'
+import { paneRegistry } from './integration/secure-panels/foundation-registry.js'
 
 beforeAll(() => {
   installShim()
@@ -28,7 +29,7 @@ describe('debug panel — hosted by the isolated SecurePanels graph (SecurePanel
   it('writes the census line + SSR preview into the panes graph #status node', () => {
     installBridge()
     const mount = document.createElement('div')
-    const panels = new SecurePanels(mount)
+    const panels = new SecurePanels(mount, { registry: paneRegistry() })
     const runtime = new Runtime({ mount: mountEl() as never, envelope: demoEnvelope() as never })
     runtime.bootstrap()
     panels.refreshDebug(runtime)

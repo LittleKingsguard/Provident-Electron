@@ -14,6 +14,7 @@ import {
   userAuthEnvelope,
 } from '../tests/fixtures/handlers-scenarios-data.mjs';
 import { SecurePanels } from '../src/renderer/secure-panels.js';
+import { paneRegistry } from './integration/secure-panels/foundation-registry.js'
 
 // THE FILE'S OWN BUDGET (`AN-18`, `AN-27`): every row here loads a depth-12 cycle envelope, and the harness's 5 s DEFAULT
 // is a budget mismatch rather than a claim — under a full parallel suite the load alone crosses it while the assertions
@@ -370,14 +371,14 @@ describe('Gemma4 Blind Battery', () => {
   describe('Part 4 — Debug panel + divergence', () => {
     it('S30. debug-panel census line', () => {
       // PREDICTION: PASS. matches /inTree \d+ · registered \d+/
-      const panels = new SecurePanels(document.createElement('div'));
+      const panels = new SecurePanels(document.createElement('div'), { registry: paneRegistry() });
       panels.refreshDebug(runtime);
       expect(panels.debugText()).toMatch(/inTree \d+ · registered \d+/);
     });
 
     it('S31. debug-panel truncated preview', () => {
       // PREDICTION: PASS. ends with … and ≤ ~125 chars.
-      const panels = new SecurePanels(document.createElement('div'));
+      const panels = new SecurePanels(document.createElement('div'), { registry: paneRegistry() });
       panels.refreshDebug(runtime);
       const lines = panels.debugText().split('\n');
       const preview = lines[1] || '';
