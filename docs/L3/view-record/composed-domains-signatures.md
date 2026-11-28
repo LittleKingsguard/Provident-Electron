@@ -1,6 +1,6 @@
 # L3 — `view-record`: the composed domains' signature stubs — two required inputs, four parameterised readers, and no new rule
 
-- **Layer:** L3 · **Module:** `view-record` (map row `store-view-record`) · **Unit:** `modularity` (`U2`'s `S-7`) · **Branch:** `main` · **Rev:** 1 — **NEW**: `docs/L2/view-record/composed-domains.md` rev 1 fixes the cells; this page fixes the declarations under them (`D-1`, `D-2`; `design.md` stands at 150/150)
+- **Layer:** L3 · **Module:** `view-record` (map row `store-view-record`) · **Unit:** `modularity` (`U2`'s `S-7`) · **Branch:** `main` · **Rev:** 2 — **THE INPUTS ARE THUNKS AND THE SECOND INSTANT IS ONE MEMBER** (`AN-31`'s fix (a)): rev 1's required sets are withdrawn — the creation repair runs before the registry — so `paneIds`/`zoneIds` are optional thunks defaulting to the foundation's literals, and `standMissingFamilies()` is the additive post-registry pass. · **Rev:** 1 — **NEW**: `docs/L2/view-record/composed-domains.md` rev 1 fixes the cells; this page fixes the declarations under them (`D-1`, `D-2`; `design.md` stands at 150/150)
 - **Ceiling:** 150 lines (class max); replaced, never appended (D-1, D-2) · **A stub is a DECLARATION and never a body** (D-3) · **Citations:** a site, never an offset (D-41)
 - **Inputs:** `composed-domains.md` §1–§4; `docs/L3/declaration-registry/signatures.md` §2; `src/main/view-record/index.ts` (`ViewRecordOptions`, `paneNodeAdmits`, `zoneNodeAdmits`, `paneOf`, `repairPanes`, `repairedZones`, `zoneFamilyStatesSizes`), `src/shared/view-shape.ts` (`viewPanesPlaceholder`, `viewZonesPlaceholder`) · **Read order:** §1 the instance's inputs → §2 the placeholders → §3 the readers → §4 the invariants
 
@@ -10,12 +10,15 @@
 export interface ViewRecordOptions {
   readonly store: Store
   readonly delivery: ViewDelivery
-  /** THE PANE DOMAIN, COMPOSED (`composed-domains.md` §2; `S-7`): `registry.declaredPaneIds()`. **REQUIRED** — an optional
-   *  member defaulting to `DECLARED_PANE_IDS` is the copy renamed, and one defaulting to `[]` empties the creation repair,
-   *  so the omission is a `typecheck` red at every construction site (`D-11`). The order is the registry's. */
-  readonly paneIds: readonly string[]
-  /** THE ZONE DOMAIN, COMPOSED: `registry.declaredZoneIds()`, same rule. */
-  readonly zoneIds: readonly string[]
+  /** THE PANE DOMAIN, COMPOSED, ASKED WHERE IT IS NEEDED (`composed-domains.md` §2; `AN-31`'s fix (a)): a THUNK, because the
+   *  creation repair runs before the registry exists and the admission predicates run after it. **ABSENT ANSWERS
+   *  `DECLARED_PANE_IDS`** — the foundation's own literal, and never `[]`, which would empty the creation repair. */
+  readonly paneIds?: () => readonly string[]
+  /** THE ZONE DOMAIN, same rule. */
+  readonly zoneIds?: () => readonly string[]
+  /** **THE SECOND INSTANT** (`AN-31`): the additive pass over the composed set, called once by `main.ts` after the registry
+   *  stands. It adds the records the composed set names and the family lacks, and never rewrites a stated member (`C-9`). */
+  standMissingFamilies?(): ViewMissingFamiliesAnswer
 }
 ```
 
@@ -53,6 +56,27 @@ const repairPanes = (getStore: () => Store | null, paneIds: readonly string[]): 
  *  memberless module zone answers `false` and the boot-time repair that follows is the lawful cost (`D-191`). */
 const repairedZones = (held: unknown, zoneIds: readonly string[]): Record<string, unknown>
 const zoneFamilyStatesSizes = (family: unknown, zoneIds: readonly string[]): boolean
+```
+
+```ts
+/** THE CONSTRUCTION'S DECLARATIONS NOW CARRY THE TWO THUNKS (`AN-31`): the creation's constraints are built before the store,
+ *  so each family's repair reads the thunk's answer at the instant it fires.
+ */
+export function viewConstraintDeclarations(
+  getStore: () => Store | null,
+  paneIds?: () => readonly string[],
+  zoneIds?: () => readonly string[],
+): readonly ViewConstraintDeclaration[]
+
+/** THE SECOND PASS'S ANSWER, a value and never a throw (`D-105`): what was ADDED per family, in the family's own words. */
+export interface ViewMissingFamiliesAnswer {
+  readonly panes: { readonly status: 'committed' | 'absent'; readonly added: readonly string[] }
+  readonly zones: { readonly status: 'committed' | 'absent'; readonly added: readonly string[] }
+}
+
+/** `ViewRecord.standMissingFamilies(): ViewMissingFamiliesAnswer` — the SAME mint-the-absent rule, at the instant the
+ *  registry stands. A family that already stands is READ, never rewritten; only the absent records are written, through
+ *  the same whole-value path the creation uses. */
 ```
 
 - **`defaultPaneGeometry(id)` IS UNMOVED AND TAKES NO SET**: it answers one id's figure and reads no domain; a module pane reaches it through the same loop as a foundation pane, which is why no pane id is spelled in the placeholder (`D-41`).
