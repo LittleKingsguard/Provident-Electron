@@ -37,6 +37,11 @@
 //     ROW, STATED PLAINLY: a fourth declared pane, an entry naming a pane the domain does not declare, a duplicated
 //     `paneId`, a derived (or unspellable) node id, an empty side, or a map the probe cannot find.**
 //
+// **⟶ `S-18` LANDED AND THIS ROW'S DOMAIN IS THE FOUNDATION'S, BY DESIGN** (`D-325`'s grain rule, `CH-39`): the five tables
+// stay the FOUNDATION's spelling (`PM-2` unmoved) and a MODULE pane is answered by the composed overlay
+// (`docs/L3/renderer-wiring/composed-census.md` §2). **THE COMPOSED ARM'S ROW IS `M-18`**
+// (`tests/integration/renderer-wiring/composed-census.test.ts`), because a composed graph's totality cannot be read from
+// source text. This probe is unchanged in what it reads and says so where a reader would expect it to have grown.
 // **AND THE ONE THING THIS ROW DOES NOT SAY IS THAT THE MAP IS CORRECT.** A wrong-but-existing node id is invisible here
 // **by design**: `D-225`'s limit `(ii)` — the write and the report consult the SAME map, so a carrier reading it back
 // would report a figure from the wrong element and call it right. **`AL-10` is the arm that catches that**, because it

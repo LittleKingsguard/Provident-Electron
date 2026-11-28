@@ -12,7 +12,7 @@ import { createRegistry, declarationsOf } from '../shared/registry/index.js'
 import { TOOL_GROUP_IDS } from '../shared/types.js'
 import { createGestureSession, POINTER_TYPES } from '../shared/gesture-session.js'
 import { createGutterAffordance, domEventSource } from '../shared/gutter-affordance.js'
-import type { RpcRequest, RpcReply, TabsRecordRow } from '../shared/types.js'
+import type { PaneDeclaration, RpcRequest, RpcReply, TabsRecordRow } from '../shared/types.js'
 import { clampToBounds } from '../shared/gutter.js'
 import { createTabsClient, NEW_TAB_TARGET_PREFIX, type TabsClient, type TabsClientReading, type TabsCommittedAnswer, type TabsNodeResolver, type TabsSubscription } from './tabs-client.js'
 import { createViewClient, type ViewClient, type ViewClientReading, type ViewSubscription, type ViewWriteOutcome } from './view-client.js'
@@ -2068,6 +2068,11 @@ async function main(): Promise<void> {
   for (const refusal of rendererComposition.refused) {
     console.warn(`[provident-renderer] declaration: '${refusal.subject}' refused — ${refusal.reason}`)
   }
+  // **THE PANE DECLARATIONS THE CENSUS COMPOSES FROM** (`S-18` §3): the census rows' own `capabilities.panes`, carried
+  // beside the carriers they were read from, so the composition asks nothing it did not already hold.
+  const paneDeclarations = censusRows.flatMap((row) =>
+    (row.capabilities?.panes ?? []).map((pane) => ({ module: row.name, pane })),
+  )
   const panels = panesMount
     ? new SecurePanels(panesMount, {
       maxJournalLength,
@@ -2129,7 +2134,7 @@ async function main(): Promise<void> {
         const answer = moduleRouter.registerModule(frame.module, frame.client)
         if (!answer.registered) return
         if (answer.withdrawn.length > 0) runtime.withdraw(answer.withdrawn)
-        const install = startModuleShape(runtime, moduleRouter, frame.module)
+        const install = startModuleShape(runtime, moduleRouter, frame.module, paneDeclarations)
         console.info(`[provident-module] shape: standing ${JSON.stringify(install.standing)}, added ${JSON.stringify(install.added)}, skipped ${JSON.stringify(install.skipped)}, actions ${install.actions}, withdrawn ${JSON.stringify(answer.withdrawn)}`)
       },
       fire: (handle, entry) => { moduleRouter?.fire(handle, entry) },
@@ -2221,9 +2226,32 @@ export interface ModuleShapeInstall {
 
 /** THE ONE ENTRY: compose, install, and re-drive the paints when anything was added. Called from the channel client's
  *  `evaluate` AFTER `registerModule`, once per NEW module. */
-export function startModuleShape(runtime: Runtime, router: CapabilityRouter, installed?: string): ModuleShapeInstall {
+export function startModuleShape(
+  runtime: Runtime,
+  router: CapabilityRouter,
+  installed?: string,
+  paneDeclarations: readonly { readonly module: string; readonly pane: PaneDeclaration }[] = [],
+): ModuleShapeInstall {
   const composed = composeModuleGraph(runtime, router)
   const actions = installModuleActions(runtime, router, installed)
+  // **THE COMPOSED CENSUS'S ONE TURN** (`S-18` §3): resolve every declared module pane against ITS OWN contribution, then —
+  // **AND ONLY WHEN THE SET GREW** — wire the two affordances the new entries name. **THE FOUNDATION'S CONTROLS ARE NOT
+  // TOUCHED**: only the added panes' ids are installed, and `startPaneMove` skips a grip it already captured, so a re-run
+  // adds an act and never a second one (`ASM-CC-5`). A refusal is a value and is named here, never thrown inside a
+  // contribution's turn (`C-6`, `D-105`).
+  if (paneDeclarations.length > 0) {
+    const census = composePaneCensus(router, paneDeclarations)
+    for (const refusal of census.refused) {
+      console.error(`[provident-renderer] pane census: '${refusal.paneId}' not composed — ${refusal.reason}`)
+    }
+    if (census.added.length > 0) {
+      for (const paneId of census.added) {
+        const entry = composedPanes.get(paneId)
+        if (entry !== undefined) installPaneCollapseHandler(runtime, entry.collapseId)
+      }
+      startPaneMove(runtime)
+    }
+  }
   if (composed.changed) reDriveModuleShapePaints(runtime)
   return { standing: [...router.modules()], added: composed.added, skipped: composed.skipped, actions }
 }
@@ -2959,12 +2987,16 @@ function paneMoveCensusOf(runtime: Runtime): { readonly grips: readonly PaneMove
     if (typeof nodeId !== 'string' || nodeId === '') continue
     const held = authoredPropOf(runtime, nodeId, 'id')
     if (!held.readable || typeof held.held !== 'string') continue
-    if (PANE_MOVE_GRIP_IDS.includes(held.held)) {
-      grips.push({ id: held.held, nodeId })
+    const name = held.held as string
+    const composedGrips = [...composedPanes.values()].map((pane) => pane.gripId)
+    if (PANE_MOVE_GRIP_IDS.includes(name) || composedGrips.includes(name)) {
+      grips.push({ id: name, nodeId })
       continue
     }
-    if (!PANE_MOVE_DROP_IDS.includes(held.held)) continue
-    drops.push({ id: held.held, nodeId })
+    // **A MODULE GRIP'S DROPS ARE ITS OWN AUTHORED CHILDREN**, named `<gripId>-<zone>` — the convention the foundation's
+    // `paneMoveGripNodeOf` authors (`src/shared/demo-envelope.ts:1015`), and the only relation the flat target list carries.
+    if (!PANE_MOVE_DROP_IDS.includes(name) && !composedGrips.some((grip) => name.startsWith(`${grip}-`))) continue
+    drops.push({ id: name, nodeId })
   }
   return { grips, drops }
 }
@@ -3297,12 +3329,13 @@ function installPaneCollapseHandler (runtime: Runtime, nodeId: string): { readon
 export function installPaneCollapse (runtime: Runtime): { readonly controls: number; readonly installed: number; readonly attached: number } {
   let installed = 0
   let attached = 0
-  for (const nodeId of PANE_COLLAPSE_IDS) {
+  const census = collapseCensus()
+  for (const nodeId of census) {
     const wiring = installPaneCollapseHandler(runtime, nodeId)
     if (wiring.installed) installed += 1
     if (wiring.attached) attached += 1
   }
-  return { controls: PANE_COLLAPSE_IDS.length, installed, attached }
+  return { controls: census.length, installed, attached }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -4844,7 +4877,7 @@ function installPaneMoveDrag (runtime: Runtime, grip: PaneMoveNodeRef, targets: 
  *  AND TAKES ITS OWN FOUR DROPS** — paired by the envelope's `<grip>-<zone>` spelling, both ends of which stand in this
  *  file as literals (`PANE_MOVE_GRIP_IDS`, `PANE_MOVE_DROP_IDS`), so a grip whose drops did not resolve installs a drag
  *  with no target rather than a target belonging to the other pane. */
-function startPaneMove(runtime: Runtime): {
+export function startPaneMove(runtime: Runtime): {
   readonly grips: number
   readonly captured: number
   readonly drops: number
@@ -4867,8 +4900,15 @@ function startPaneMove(runtime: Runtime): {
   }
   let captured = 0
   for (const grip of census.grips) {
+    if (capturedGrips.has(grip.id)) {
+      captured += 1
+      continue
+    }
     const own = targets.filter((target) => target.id.startsWith(`${grip.id}-`))
-    if (installPaneMoveDrag(runtime, grip, own)) captured += 1
+    if (installPaneMoveDrag(runtime, grip, own)) {
+      captured += 1
+      capturedGrips.add(grip.id)
+    }
   }
   return { grips: census.grips.length, captured, drops: census.drops.length, installed, attached }
 }
@@ -5123,9 +5163,10 @@ const PANE_NODE_IDS: readonly { readonly paneId: string; readonly nodeId: string
  *  shares its name — the confusion `view-shape.ts:137-138` refuses. **A `find` OVER A DECLARED LIST AND NOT AN INDEX
  *  SIGNATURE**: `tsconfig.json` carries `strict` but not `noUncheckedIndexedAccess`, so a `Record<string, string>` would
  *  type the lookup `string` and lie at runtime about a missing key (`paneGeometryIn`'s own `find`, `view-shape.ts:264`). */
-function nodeIdForPane(paneId: string): string | null {
+export function nodeIdForPane(paneId: string): string | null {
   const held = PANE_NODE_IDS.find((entry) => entry.paneId === paneId)
-  return held === undefined ? null : held.nodeId
+  if (held !== undefined) return held.nodeId
+  return composedPanes.get(paneId)?.nodeId ?? null
 }
 
 /** **THE PANE ↔ HEAD-ROW MAP: WHICH AUTHORED HEAD ROW CARRIES ONE PANE'S INDICATOR** (`design-pane-collapse.md` §4,
@@ -5141,9 +5182,10 @@ const PANE_HEAD_IDS: readonly { readonly paneId: string; readonly headId: string
 ]
 
 /** **The head row for one pane, or the stated `null` — never the pane's own id (`nodeIdForPane`'s rule, one node over). */
-function headIdForPane(paneId: string): string | null {
+export function headIdForPane(paneId: string): string | null {
   const held = PANE_HEAD_IDS.find((entry) => entry.paneId === paneId)
-  return held === undefined ? null : held.headId
+  if (held !== undefined) return held.headId
+  return composedPanes.get(paneId)?.headId ?? null
 }
 
 /** **THE PANE ↔ BODY MAP: WHICH AUTHORED BODY CARRIES ONE PANE'S SCROLL** (`D-270`; `app-envelope`'s `<pane>-body` nodes).
@@ -5165,15 +5207,165 @@ const PANE_BODY_IDS: readonly { readonly paneId: string; readonly bodyId: string
 ]
 
 /** The body for one pane, or the stated `null` — never the pane's own id (`headIdForPane`'s rule, one node over). */
-function bodyIdForPane(paneId: string): string | null {
+export function bodyIdForPane(paneId: string): string | null {
   const held = PANE_BODY_IDS.find((entry) => entry.paneId === paneId)
-  return held === undefined ? null : held.bodyId
+  if (held !== undefined) return held.bodyId
+  return composedPanes.get(paneId)?.bodyId ?? null
 }
 
 /** **THE THREE COLLAPSE CONTROLS' AUTHORED IDS — one per pane, LITERALS at both ends** (`app-envelope` rev 2 §2: `menus-collapse`,
  *  `inspector-collapse`, `gutter-collapse`). The wiring needs them as a census to install the act on each, and no entry
  *  carries a RECORD id: that operand is read OFF EACH NODE's `props.pane` at press time (`installPaneCollapse`, `C2`). */
 const PANE_COLLAPSE_IDS: readonly string[] = ['menus-collapse', 'inspector-collapse', 'gutter-collapse']
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// THE COMPOSED OVERLAY (`S-18`, `docs/L3/renderer-wiring/composed-census.md` §2) — NO SIXTH MAP
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+/** **ONE MODULE PANE'S FIVE ANSWERS, RESOLVED AT THE COMPOSITION INSTANT** (`S-18`, `ASM-CC-1`/`ASM-CC-2`): the container,
+ *  the head, the body, the collapse control and the grip. The foundation's five tables stay SPELLED (`PM-2`); this is the
+ *  arm that answers only where they are silent (`ASM-CC-4`: `foundation ?? composed`, never the reverse). */
+export interface ComposedPane {
+  readonly paneId: string
+  readonly nodeId: string
+  readonly headId: string
+  readonly bodyId: string
+  readonly collapseId: string
+  readonly gripId: string
+}
+
+/** **THE OVERLAY ITSELF** — one entry per module pane that resolved, keyed by the declared record id. It holds the five ids
+ *  and NOTHING ELSE (`C-9`'s entry rule): no geometry, no zone, no figure. */
+const composedPanes = new Map<string, ComposedPane>()
+/** The grips a drag has already been captured on, so the composition's re-run never attaches a second one (`S-18` §3). */
+const capturedGrips = new Set<string>()
+
+/** The overlay, for a row and for the re-grains that read it. A copy, so no caller can mutate the census. */
+export function composedPaneCensus(): ReadonlyMap<string, ComposedPane> {
+  return new Map(composedPanes)
+}
+
+/** The foundation's ids plus every composed pane's — the two censuses the acts walk (`S-18` §3). */
+const collapseCensus = (): readonly string[] => [...PANE_COLLAPSE_IDS, ...[...composedPanes.values()].map((pane) => pane.collapseId)]
+const gripCensus = (): readonly string[] => [...PANE_MOVE_GRIP_IDS, ...[...composedPanes.values()].map((pane) => pane.gripId)]
+
+/** One authored node's id: `css.id` first, then `props.id` — the two spellings the envelope and the live index use. */
+const authoredIdOf = (node: Readonly<Record<string, unknown>>): string | null => {
+  const css = node['css'] as { id?: unknown; classes?: unknown } | undefined
+  if (css !== undefined && typeof css.id === 'string' && css.id !== '') return css.id
+  const props = node['props'] as { id?: unknown } | undefined
+  return props !== undefined && typeof props.id === 'string' && props.id !== '' ? props.id : null
+}
+const paneOfNode = (node: Readonly<Record<string, unknown>>): string | null => {
+  const props = node['props'] as { pane?: unknown } | undefined
+  return props !== undefined && typeof props.pane === 'string' && props.pane !== '' ? props.pane : null
+}
+const hasClass = (node: Readonly<Record<string, unknown>>, name: string): boolean => {
+  const css = node['css'] as { classes?: unknown } | undefined
+  return css !== undefined && Array.isArray(css.classes) && css.classes.includes(name)
+}
+const childrenOf = (node: Readonly<Record<string, unknown>>): readonly Readonly<Record<string, unknown>>[] => {
+  const held = node['children']
+  return Array.isArray(held) ? (held as Readonly<Record<string, unknown>>[]) : []
+}
+
+/** Every node of a contributed forest with its ancestor chain (self last). */
+function walkContribution(
+  nodes: readonly Readonly<Record<string, unknown>>[],
+  visit: (node: Readonly<Record<string, unknown>>, path: readonly Readonly<Record<string, unknown>>[]) => void,
+  path: readonly Readonly<Record<string, unknown>>[] = [],
+): void {
+  for (const node of nodes) {
+    const here = [...path, node]
+    visit(node, here)
+    walkContribution(childrenOf(node), visit, here)
+  }
+}
+
+/** The first descendant of `root` (self excluded) carrying the authored class — the collapse control and the grip are
+ *  found this way, UNDER THE DECLARED HEAD (`ASM-CC-2`), never by a graph-wide class scan. */
+function descendantWithClass(
+  root: Readonly<Record<string, unknown>>,
+  name: string,
+): Readonly<Record<string, unknown>> | null {
+  for (const child of childrenOf(root)) {
+    if (hasClass(child, name)) return child
+    const found = descendantWithClass(child, name)
+    if (found !== null) return found
+  }
+  return null
+}
+
+/** **THE COMPOSITION'S ONE TURN** (`S-18` §3, `ASM-CC-1`…`ASM-CC-5`): resolve each declared pane against ITS OWN module's
+ *  contributed forest, write the overlay, and answer what it added and what it refused BY NAME. A refusal is a value
+ *  (`D-105`) and the caller names it; nothing here throws inside a contribution's turn (`C-6`). */
+export function composePaneCensus(
+  router: CapabilityRouter,
+  declarations: readonly { readonly module: string; readonly pane: PaneDeclaration }[],
+): { readonly added: readonly string[]; readonly refused: readonly { readonly paneId: string; readonly reason: 'no-head' | 'no-container' | 'no-body' | 'no-collapse' | 'no-grip' }[] } {
+  const added: string[] = []
+  const refused: { paneId: string; reason: 'no-head' | 'no-container' | 'no-body' | 'no-collapse' | 'no-grip' }[] = []
+  for (const { module, pane } of declarations) {
+    if (composedPanes.has(pane.paneId)) continue
+    const record = router.contributions().find((entry) => entry.module === module)
+    if (record === undefined) {
+      refused.push({ paneId: pane.paneId, reason: 'no-container' })
+      continue
+    }
+    const roots = record.contribution.nodes as readonly Readonly<Record<string, unknown>>[]
+    let head: Readonly<Record<string, unknown>> | null = null
+    let headPath: readonly Readonly<Record<string, unknown>>[] = []
+    let bodyFound = false
+    walkContribution(roots, (node, path) => {
+      const id = authoredIdOf(node)
+      if (id === pane.head && head === null) {
+        head = node
+        headPath = path
+      }
+      if (id === pane.body) bodyFound = true
+    })
+    if (head === null) {
+      refused.push({ paneId: pane.paneId, reason: 'no-head' })
+      continue
+    }
+    const container = [...headPath].reverse().find((node) => paneOfNode(node) === pane.paneId)
+    if (container === undefined) {
+      refused.push({ paneId: pane.paneId, reason: 'no-container' })
+      continue
+    }
+    if (!bodyFound) {
+      refused.push({ paneId: pane.paneId, reason: 'no-body' })
+      continue
+    }
+    const collapse = descendantWithClass(head as Readonly<Record<string, unknown>>, 'pane-collapse')
+    if (collapse === null || authoredIdOf(collapse) === null) {
+      refused.push({ paneId: pane.paneId, reason: 'no-collapse' })
+      continue
+    }
+    const grip = descendantWithClass(head as Readonly<Record<string, unknown>>, 'pane-grab')
+    if (grip === null || authoredIdOf(grip) === null) {
+      refused.push({ paneId: pane.paneId, reason: 'no-grip' })
+      continue
+    }
+    const nodeId = authoredIdOf(container)
+    const collapseId = authoredIdOf(collapse)
+    const gripId = authoredIdOf(grip)
+    if (nodeId === null || collapseId === null || gripId === null) {
+      refused.push({ paneId: pane.paneId, reason: 'no-container' })
+      continue
+    }
+    composedPanes.set(pane.paneId, {
+      paneId: pane.paneId,
+      nodeId,
+      headId: pane.head,
+      bodyId: pane.body,
+      collapseId,
+      gripId,
+    })
+    added.push(pane.paneId)
+  }
+  return { added, refused }
+}
 
 /** **THE PANE'S TWO AXIS MEMBERS, AND THE PANE'S `zone` IS WHAT SELECTS WHICH ONE IT PAINTS** (`D-186`'s axis rule as
  *  `D-189`/`D-191` settled it; `D-194`); in `top`/`bottom` the zone fixes the height, so the pane's own member is its

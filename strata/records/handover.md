@@ -1,4 +1,4 @@
-# handover — 2026-11-27 (rev 10): under its 60-line ceiling; `U2`'s L4 is COMPLETE, and what is left is `S-18`'s maps, `U6`'s cells and `U7`
+# handover — 2026-11-27 (rev 11): under its 60-line ceiling; `U2` is complete and `U5`'s composed half is landed — what is left is the tab-template half, `U6` and `U7`
 
 Read `strata/brief.md` first, then `strata/decisions.md` from **`D-304`** onward. **The unit's worklist is `strata/records/modularity-cleanup.md`** (`D-319`): re-grains, anomalies, process rules, environment limits and the sweep order.
 
@@ -35,9 +35,9 @@ The unit's own: boundary **10/10**, `M-7`/`M-8`/`M-9` green, `MF-1`…`MF-5`, `R
 
 ## What is open, named not hidden
 
-- **`U2` IS COMPLETE; `U5` IS DESIGNED TO ITS LAST STEP**: `S-17` landed (`CH-37` — the pane declaration typed and parsed, `M-17` green), and
-  **`S-18`'s census is DESIGNED** (`RG-17`): no sixth map, ONE overlay filled at the composition instant, the five answers read off the declared head — the collapse and grip are its
-  contents, found by class, because the grip carries no `props.pane` (measured). **`S-18`'s landing is the only step left in `U5`**; then `S-19`/`S-20`/`S-21`, `U6`, `U7`.
+- **`U2` IS COMPLETE AND `U5`'S COMPOSED HALF IS LANDED** (`CH-37`, `CH-39`): `S-17` typed and parsed the pane declaration (`M-17`), and `S-18` built the composed
+  overlay — five answers off each module's own contribution, the two grown censuses with the `<gripId>-<zone>` drop spelling, `foundation ?? composed`, the re-run guard, `M-18` green.  **What remains of `U5` is the TAB-TEMPLATE half** (`S-19`/`S-20`) and the overlay's placeholder route (`S-21`).
+- **`U6`**: `S-22` (coeffects — carried, judged by nobody), `S-24` (activate/deactivate by classification), `S-25`
   (component-scoped replacement). **`U7`** (`S-26`…`S-28`, acceptance; no `src/modules/`) is **last**, on the user's ordering.
 - **Reserved**: `M-16` (mode adoption's e2e), `M-18` (the composed pane census, now ungated on `U5`), `M-29` (parity, on an absent WASM host).
 - **Decisions owed**: the **harness-cap ruling** (`module-system` L2 counts 246 lines against `50 + 10×N`; `bundle-boot-seam`
@@ -56,5 +56,5 @@ each found a defect (`AN-21`, `AN-23`, `AN-26`) review had not seen.
 then `U6`'s `S-22`/`S-24`/`S-25`; then `U7`; beside them the cap ruling, the sink, `app-shell`'s boot-route rev, and the two splits.
 
 ```boundary-declared
-{"unit":"modularity","layer":"L0","module":null,"writes":[{"path":"strata/records/handover.md","d":"D-115","why":"the page under its 60-line ceiling (rev 10): the live-boot policy added to the habits (`D-325` \u2014 every boot locked, one session per boot subject, the data hook's tier-4 limit), with `U2`/`S-17`/`S-18` state unmoved"}]}
+{"unit":"modularity","layer":"L0","module":null,"writes":[{"path":"strata/records/handover.md","d":"D-115","why":"the page under its 60-line ceiling (rev 11): `U2` complete, `S-17`/`S-18` landed (`CH-37`, `CH-39`) with `M-17`/`M-18` green, and the rest of `U5` named (the tab-template half and `S-21`)"}]}
 ```
