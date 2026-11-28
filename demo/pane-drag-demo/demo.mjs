@@ -50,7 +50,7 @@
 // @source 260559b259261d0a6826037788a74ed5b1180bac213c9ac459f8acbd0c7a6ab3 src/shared/gutter.ts
 // @source 9279f38ee2954ee9f5f87cf60a32ba5ae48546ba40375b06656281ce57bccee5 src/shared/module-contract.ts
 // @source 40138fcc97cf13306712cc8ebf36a081302915b240ec87ff76cbafb83f898194 src/shared/overlay.ts
-// @source d77188de0139c7fecfc9150c50bc5725b6ec1942593e56d5cf8e830f9f81d8c7 src/shared/view-shape.ts
+// @source 6b239396e62f09b55499ceb19d0318298b01d725eb736851b6a49e0314b2cb39 src/shared/view-shape.ts
 // @end-sources
 // src/shared/gesture-session.ts
 var POINTER_TYPES = Object.freeze({
