@@ -330,9 +330,9 @@ export const DEFAULT_ZONE_SIZES: readonly { readonly id: string; readonly size: 
  *  FIGURE COMES FROM `DEFAULT_ZONE_SIZES` AND FROM NOWHERE ELSE**, so the repair, the placeholder and the paint's operand
  *  are one spelling. A route supplying no member still writes nothing and answers `committed` (`D-53`'s reading at this
  *  family) — the repair is what states the figure, not the route. */
-export const viewZonesPlaceholder = (): Record<string, unknown> => {
+export const viewZonesPlaceholder = (ids: readonly string[]): Record<string, unknown> => {
   const family: Record<string, unknown> = {}
-  for (const id of DECLARED_ZONE_IDS) family[id] = defaultZoneRecord(id)
+  for (const id of ids) family[id] = defaultZoneRecord(id)
   return family
 }
 
@@ -369,9 +369,9 @@ const defaultZoneRecord = (id: string): Record<string, unknown> => {
  *  zone-resident pane and is not repaired into one. **THE SET
  *  AND THE PLACEHOLDER CANNOT DRIFT** because the family is built from `DECLARED_PANE_IDS` and the `id` member is left off
  *  each record: the key is the id here. */
-export const viewPanesPlaceholder = (): Record<string, unknown> => {
+export const viewPanesPlaceholder = (ids: readonly string[]): Record<string, unknown> => {
   const family: Record<string, unknown> = {}
-  for (const id of DECLARED_PANE_IDS) {
+  for (const id of ids) {
     const geometry = defaultPaneGeometry(id)
     const record: Record<string, unknown> = { width: geometry.width, height: geometry.height }
     // **THE BRANCH IS ON THE STAGE PANE AND NOT ON A LIST OF ZONE-RESIDENT IDS**, and that is what makes a THIRD declared

@@ -389,6 +389,12 @@ async function main(): Promise<void> {
   // gate and before the census, while the registry needs the census's records — so the instance is handed a THUNK whose
   // answer stands by the time any write can ask it. The read never asks: a stored grant is carried, never filtered at boot.
   let moduleRegistry: DeclarationRegistry | null = null
+  /** **THE PANE AND ZONE DOMAINS, ASKED WHERE EACH INSTANT NEEDS THEM** (`AN-31`'s fix (a); `docs/L3/view-record/composed-domains-signatures.md` §1):
+   *  the creation repair runs inside `createProfileStore`, long before the registry stands, so it reads the FOUNDATION's
+   *  literals; every admission after the boot, and the additive `standMissingFamilies()` pass, read the composed set. **A THUNK
+   *  and never a held set**, so one answer serves both instants without a second authority. */
+  const paneIds = () => moduleRegistry?.declaredPaneIds() ?? DECLARED_PANE_IDS
+  const zoneIds = () => moduleRegistry?.declaredZoneIds() ?? DECLARED_ZONE_IDS
   const settingsSurface = createSettingsSurface({
     userDataDir: app.getPath('userData'),
     groups: () => moduleRegistry?.declaredGroups() ?? [],
@@ -468,7 +474,7 @@ async function main(): Promise<void> {
       // call answers — which is exactly why those five bodies judge `context.value` and reach for no handle. The order is
       // each module's own and the two sets do not interleave: the ids are one namespace, and `viewConstraintDeclarations`'
       // three carry a `-must-stand` suffix no tab-record id repeats.
-      constraints: [...tabsConstraintDeclarations(() => storeHolder.current), ...viewConstraintDeclarations(() => storeHolder.current)] as never,
+      constraints: [...tabsConstraintDeclarations(() => storeHolder.current), ...viewConstraintDeclarations(() => storeHolder.current, paneIds, zoneIds)] as never,
       // ═══ `A-3` — AND THE SAME CONSTRUCTION ADOPTS THE TWO CROSSINGS' LISTENERS, WHICH IS WHAT MAKES THE INITIAL RENDER A
       // DELIVERY'S (`D-219`, `D-216`, `D-217`) ═══
       // `1.11.0` delivers at FOUR registration instants — the creation, the boot, `addConstraint` and a re-arm — in `D-117`'s
@@ -524,6 +530,8 @@ async function main(): Promise<void> {
   // **THE VIEW RECORD'S SURFACE (D-87)** — the same shape at the other family: one reference, over the ONE store this
   // boot constructed, and one subscription that fires for any of its four roots. It constructs nothing.
   const viewSurface = createViewSurface({
+    paneIds,
+    zoneIds,
     store: appStore,
     // THE VIEW RECORD'S DELIVERY, on the tab record's own terms (A-2, A-3; `D-219`): the four entries are the construction's
     // and the push is the queue's — `attach()` is gone with its subject.
@@ -765,6 +773,14 @@ async function main(): Promise<void> {
   // gate's constructor sets the boot terminal, no file is read for the state, and this object's construction is where
   // that happens — the gate itself moved here (`S-8`) and the initialization moved with it.
   const gate = new SecurityGate({ token: persisted.token, enabled: persisted.enabled, groups: composed.rule })
+  // **THE SECOND INSTANT OF THE VIEW REPAIR** (`AN-31`'s fix (a)): the creation's pass wrote the foundation's records inside
+  // `createProfileStore`; this pass mints the records the composed set names and the families still lack — the module panes
+  // and zones the census declared — and it adds nothing where nothing is missing. A value is logged, never thrown (`D-105`).
+  const viewStand = viewSurface.standMissingFamilies()
+  for (const [family, answer] of [['panes', viewStand.panes], ['zones', viewStand.zones]] as const) {
+    if (answer.status === 'absent' && answer.added.length === 0) continue
+    if (answer.added.length > 0) console.error(`[provident-main] view repair: '${family}' minted ${answer.added.join(', ')}`)
+  }
   // THE ONE-LINE OPTIONS PASS (§2.8 item 3): the server's construction options receive the
   // re-pointed module surface — the module tools' REPLY SHAPES are UNCHANGED.
   // **AND THE `data` SURFACE IS HANDED THE BOOT'S OWN STORE** (D-79, D-80): `centralStore` was constructed above

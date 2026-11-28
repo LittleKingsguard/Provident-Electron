@@ -23,6 +23,7 @@ import {
   type ViewDelivery,
   type ViewRecord,
   type ViewRecordAnswer,
+  type ViewMissingFamiliesAnswer,
   type ViewRecordStore,
   type ViewThemeRecord,
 } from '../view-record/index.js'
@@ -56,6 +57,9 @@ export interface ViewSurface {
   /** **THE DRAG'S END — the act that ENDS the family** (D-132): it takes nothing, and the record's `clearDrag` is a DELETE
    *  rather than a placeholder, so the address answers `absent` once the gesture is over. */
   clearDrag(): ViewRecordAnswer
+  /** **THE SECOND INSTANT, PROJECTED** (`AN-31`'s fix (a)): the record's additive pass over the composed set, called once by
+   *  `main.ts` after the registry stands. The surface delegates and adds nothing. */
+  standMissingFamilies(): ViewMissingFamiliesAnswer
 }
 
 export interface ViewSurfaceOptions {
@@ -66,12 +70,21 @@ export interface ViewSurfaceOptions {
    *  takes no subscription: it hands the delivery to the record, whose `subscribe` is the fan-out and nothing else. **The
    *  push carries an ADDRESS and never a value** — the renderer re-reads (`D-92`, L2 §2). */
   readonly delivery: ViewDelivery
+  /** **THE TWO DOMAINS, ASKED WHERE EACH INSTANT NEEDS THEM** (`AN-31`'s fix (a)): passed straight through to the record, so
+   *  the creation's constraints and the post-registry pass read ONE thunk each. Absent answers the foundation's literals. */
+  readonly paneIds?: () => readonly string[]
+  readonly zoneIds?: () => readonly string[]
 }
 
 export function createViewSurface(options: ViewSurfaceOptions): ViewSurface {
   // THE RECORD IS HELD HERE, ONCE: one reference over the boot's one instance (design §1), and over the delivery the
   // construction adopted — the surface takes no registration of its own (`D-219`, `D-129`).
-  const record: ViewRecord = createViewRecord({ store: options.store, delivery: options.delivery })
+  const record: ViewRecord = createViewRecord({
+    store: options.store,
+    delivery: options.delivery,
+    ...(options.paneIds === undefined ? {} : { paneIds: options.paneIds }),
+    ...(options.zoneIds === undefined ? {} : { zoneIds: options.zoneIds }),
+  })
 
   return {
     read(): ViewReadAnswer {
@@ -129,6 +142,10 @@ export function createViewSurface(options: ViewSurfaceOptions): ViewSurface {
         return { status: 'refused', reason: PANE_SHAPE_REASON, message: PANE_SHAPE_MESSAGE, address: null }
       }
       return record.commitDrag(id, geometry)
+    },
+
+    standMissingFamilies(): ViewMissingFamiliesAnswer {
+      return record.standMissingFamilies()
     },
 
     clearDrag(): ViewRecordAnswer {

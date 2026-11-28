@@ -293,13 +293,17 @@ describe('view-record · the zone family, clause 2 — one delivery per committe
     })
     bound.current = store as unknown as ViewRecordStore
     const surface = createViewSurface({ store: bound.current, delivery: viewDelivery })
-    expect(Object.keys(surface).sort(), 'the surface exposes its SIX routes and no subscription member').toEqual([
+    // **⟶ `S-7` RE-GRAIN (`2026-11-27`): SEVEN MEMBERS, AND THE SEVENTH IS A BOOT ACT AND NOT A ROUTE.** `standMissingFamilies`
+    // is the additive post-registry pass over the composed pane/zone set (`AN-31`'s fix (a)); the row's own claim is unchanged —
+    // **no subscription member stands on this surface** (`D-219`).
+    expect(Object.keys(surface).sort(), 'the surface exposes its six routes and ONE boot act, and no subscription member').toEqual([
       'clearDrag',
       'commitDrag',
       'commitPane',
       'commitTheme',
       'commitZones',
       'read',
+      'standMissingFamilies',
     ])
     // THE BRIDGE, AS THE PRELOAD DECLARES IT: the member's surviving routes, each answering what the surface answers.
     // **`commitFocus` IS NOT HERE AND THAT IS THE RE-GRAIN** (`D-142`): the route leaves both sides in the same edit, so a

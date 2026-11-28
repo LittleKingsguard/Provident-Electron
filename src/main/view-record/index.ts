@@ -345,6 +345,12 @@ export interface ViewRecordAnswer {
 export interface ViewRecordOptions {
   /** THE APP'S ONE STORE (D-64, D-65): the view record lives at this instance's three roots and owns no instance. */
   readonly store: Store
+  /** **THE PANE DOMAIN, COMPOSED, ASKED WHERE IT IS NEEDED** (`AN-31`'s fix (a); `docs/L3/view-record/composed-domains-signatures.md`
+   *  §1): a THUNK, because the creation repair runs before the registry and the admission predicates run after it. **ABSENT
+   *  ANSWERS `DECLARED_PANE_IDS`** — the foundation's own literal, and never `[]`, which would empty the creation repair. */
+  readonly paneIds?: () => readonly string[]
+  /** THE ZONE DOMAIN, same rule. */
+  readonly zoneIds?: () => readonly string[]
   /** **THE CROSSING'S DELIVERY, BUILT BEFORE THIS STORE EXISTED** (`D-219`; `docs/L3/view-record/delivery.md` §1). The
    *  registration is the CONSTRUCTION's: this object's `entries` were adopted by `cfg.listeners` when the instance was
    *  created, so the creation's repairs already delivered to it. What this record takes is the other half — the fan-out a
@@ -426,6 +432,17 @@ export interface ViewRecord {
    *  fact the tab record's `remove` relies on at its own already-absent branch (D-53). */
   clearDrag(): ViewRecordAnswer
   subscribe(handler: () => void): () => void
+  /** **THE SECOND INSTANT** (`AN-31`, `composed-domains.md` §1): the additive pass over the COMPOSED set, called once by
+   *  `main.ts` after the declaration registry stands. It mints the records a family lacks and **never rewrites a member a
+   *  writer stated** (`C-9`, `D-105`); its answer is a value, per family, naming what it added. */
+  standMissingFamilies(): ViewMissingFamiliesAnswer
+}
+
+/** The second pass's answer — a value and never a throw (`D-105`): what each family GAINED, and `absent` where the family
+ *  could not be read (so the pass wrote nothing rather than a guess). */
+export interface ViewMissingFamiliesAnswer {
+  readonly panes: { readonly status: 'committed' | 'absent'; readonly added: readonly string[] }
+  readonly zones: { readonly status: 'committed' | 'absent'; readonly added: readonly string[] }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -553,7 +570,7 @@ const isBoundary = (value: unknown): boolean => {
  *  `rowOf` performs for a tab, and its answer feeds both the READ (a member it cannot admit is not a pane the family
  *  names) and the FAMILY JUDGE — `panesAdmitAt` at a record's own node, never a composition, because rev 13's route writes
  *  LEAVES and composes nothing (`D-138`). */
-const paneOf = (id: string, held: unknown): ViewPaneGeometry | null => {
+const paneOf = (id: string, held: unknown, zoneIds: readonly string[]): ViewPaneGeometry | null => {
   if (!plain(held)) return null
   const width = held['width']
   const height = held['height']
@@ -585,7 +602,7 @@ const paneOf = (id: string, held: unknown): ViewPaneGeometry | null => {
   // member is the STAGE and is lawful; a member naming an undeclared id is the fault this parse refuses.
   if (Object.hasOwn(held, 'zone')) {
     const zone = held['zone']
-    if (typeof zone !== 'string' || !DECLARED_ZONE_IDS.includes(zone)) return null
+    if (typeof zone !== 'string' || !zoneIds.includes(zone)) return null
     pane.zone = zone
   }
   // **`index` IS THE PANE'S PLACE AMONG THE DECLARED PANES, AND IT IS JUDGED ONLY WHERE STATED** (`bounds` and `zone`'s
@@ -629,12 +646,12 @@ const paneOf = (id: string, held: unknown): ViewPaneGeometry | null => {
  *  member the family names and this parse cannot admit is DROPPED from the read's answer, which is the disposition
  *  `viewFrom` takes for a seat naming no row: a family is the panes it can state, and the missing one answers the
  *  measured default rather than a guess. */
-const panesFrom = (whole: unknown): ViewPaneGeometry[] | null => {
+const panesFrom = (whole: unknown, zoneIds: readonly string[]): ViewPaneGeometry[] | null => {
   if (!plain(whole)) return null
   const panes: ViewPaneGeometry[] = []
   for (const id of Object.keys(whole)) {
     if (id.length === 0) continue
-    const geometry = paneOf(id, whole[id])
+    const geometry = paneOf(id, whole[id], zoneIds)
     if (geometry !== null) panes.push(geometry)
   }
   return panes
@@ -819,9 +836,9 @@ const themeFrom = (whole: unknown): ViewThemeRecord | null => {
  *  `D-84`'s own measurement about a refused construction and `D-85`'s about the read-side defaults being kept rather
  *  than deleted. **NOTHING IS WRITTEN HERE**: a read that MISSed leaves the miss, and it is the CREATION repair that
  *  makes a family stand (clause 1), never a read (`D-82` clause 4: no write on read). */
-const panesOf = (store: Store): { panes: ViewPaneGeometry[]; source: ViewGeometrySource } => {
+const panesOf = (store: Store, zoneIds: readonly string[]): { panes: ViewPaneGeometry[]; source: ViewGeometrySource } => {
   try {
-    const read = panesFrom(store.read(VIEW_PANES_ADDRESS, PANES_TIER))
+    const read = panesFrom(store.read(VIEW_PANES_ADDRESS, PANES_TIER), zoneIds)
     if (read !== null) return { panes: read, source: 'record' }
   } catch {
     // a refused read is the declared-default arm below, and never a write
@@ -916,16 +933,16 @@ const boundsAdmit = (value: unknown): boolean => {
  *  outside writer meets. **A MEMBER THE SHAPE NO LONGER NAMES IS REFUSED BY THE SAME TOTALITY**: `['panes', id, 'size']` now
  *  answers `false`, because `size` is a member `D-189` split into two and a leaf write carrying it is the retired spelling
  *  (`D-105`, `D-186`). */
-const paneNodeAdmits = (node: readonly string[], value: unknown): boolean => {
+const paneNodeAdmits = (node: readonly string[], value: unknown, paneIds: readonly string[], zoneIds: readonly string[]): boolean => {
   const id = node[0]
   if (typeof id !== 'string' || id.length === 0) return false
-  if (!DECLARED_PANE_IDS.includes(id)) return false
-  if (node.length === 1) return paneOf(id, value) !== null
+  if (!paneIds.includes(id)) return false
+  if (node.length === 1) return paneOf(id, value, zoneIds) !== null
   const member = node[1]
   if (node.length === 2) {
     if (member === 'width' || member === 'height') return finiteNumber(value) && value >= 0
     if (member === 'bounds') return boundsAdmit(value)
-    if (member === 'zone') return typeof value === 'string' && DECLARED_ZONE_IDS.includes(value)
+    if (member === 'zone') return typeof value === 'string' && zoneIds.includes(value)
     // **AND THE PLACE, AT ITS OWN LEAF** — `paneOf`'s rule restated one node down, the same way `bounds`/`zone` are: a
     // leaf write at `['panes', <id>, 'index']` is judged here rather than by the record's parse, because a leaf hands the
     // pair a SCALAR (the `nodeOf` measurement) and `paneOf` would refuse a scalar by construction.
@@ -947,10 +964,10 @@ const paneNodeAdmits = (node: readonly string[], value: unknown): boolean => {
  *  record `paneOf` admits; every node below it is `paneNodeAdmits`' own. A value naming a member the read would DROP
  *  is not this family, which is the fault the arm refuses: the read is total and answers the measured default for what
  *  it cannot state, so a dropped member is a pane the app had and no longer has. */
-const panesAdmitAt = (node: readonly string[], value: unknown): boolean => {
-  if (node.length > 0) return paneNodeAdmits(node, value)
+const panesAdmitAt = (node: readonly string[], value: unknown, paneIds: readonly string[], zoneIds: readonly string[]): boolean => {
+  if (node.length > 0) return paneNodeAdmits(node, value, paneIds, zoneIds)
   if (!plain(value)) return false
-  for (const id of Object.keys(value)) if (!paneNodeAdmits([id], value[id])) return false
+  for (const id of Object.keys(value)) if (!paneNodeAdmits([id], value[id], paneIds, zoneIds)) return false
   return true
 }
 
@@ -961,10 +978,10 @@ const panesAdmitAt = (node: readonly string[], value: unknown): boolean => {
  *  NAMING an undeclared zone exactly as it refuses a write AT one. **THAT IS THE CLOSURE'S SECOND SEAT AND IT IS
  *  DELIBERATE** (`ASM-9`): closing the route alone would leave a `data.write` free to mint the very zone the ruling
  *  refuses, and the family's own judge is the only thing an outside writer meets. */
-const zoneNodeAdmits = (node: readonly string[], value: unknown): boolean => {
+const zoneNodeAdmits = (node: readonly string[], value: unknown, zoneIds: readonly string[]): boolean => {
   const id = node[0]
   if (typeof id !== 'string' || id.length === 0) return false
-  if (!DECLARED_ZONE_IDS.includes(id)) return false
+  if (!zoneIds.includes(id)) return false
   if (node.length === 1) return zoneOf(id, value) !== null
   const member = node[1]
   if (node.length === 2) return zoneMemberAdmits(member, value)
@@ -993,10 +1010,10 @@ const zoneMemberAdmits = (member: string | undefined, value: unknown): boolean =
  *  silently wrong value. **AND THAT ADMISSION IS THE SHAPE'S AND NOT THE PAINT'S** (`D-233`): a root value naming none of
  *  the four passes here and is then handed to the `size` arm, which repairs it — so `ASM-9`'s arm still admits and no
  *  longer leaves the zones unpresentable. */
-const zonesAdmitAt = (node: readonly string[], value: unknown): boolean => {
-  if (node.length > 0) return zoneNodeAdmits(node, value)
+const zonesAdmitAt = (node: readonly string[], value: unknown, zoneIds: readonly string[]): boolean => {
+  if (node.length > 0) return zoneNodeAdmits(node, value, zoneIds)
   if (!plain(value)) return false
-  for (const id of Object.keys(value)) if (!zoneNodeAdmits([id], value[id])) return false
+  for (const id of Object.keys(value)) if (!zoneNodeAdmits([id], value[id], zoneIds)) return false
   return true
 }
 
@@ -1056,7 +1073,7 @@ export const ZONE_UNSTATED_SIZE_MESSAGE =
  *  SUPERSEDED, NOT ANNOTATED** (`D-46` covers `D-n` rows; this is a comment in code, so it is rewritten in place): it was
  *  true only while every panes act wrote the family whole, and it became FALSE the moment `commitPane` wrote a leaf,
  *  because the arm it protected is exactly the one a leaf write falsifies. */
-const panesMustStand = (getStore: () => Store | null) => (context: unknown): ViewConstraintAnswer => {
+const panesMustStand = (getStore: () => Store | null, paneIds: () => readonly string[] = () => DECLARED_PANE_IDS, zoneIds: () => readonly string[] = () => DECLARED_ZONE_IDS) => (context: unknown): ViewConstraintAnswer => {
   const held = plain(context) ? context['value'] : undefined
   const node = nodeOf(context, VIEW_PANES_ADDRESS)
   // **ABSENCE IS JUDGED AT THE ROOT** (D-138 H13): only the family's own address holding nothing is the fault the repair
@@ -1065,7 +1082,7 @@ const panesMustStand = (getStore: () => Store | null) => (context: unknown): Vie
   if ((node === null || node.length === 0) && !plain(held)) {
     return {
       message: 'the pane geometry does not stand',
-      repair: repairPanes(getStore),
+      repair: repairPanes(getStore, paneIds),
     }
   }
   // **THE VALUE ARM (`D-105`), AT THE NODE THE WRITE IS AT.** A pane whose `width` is a string, a member that is no record
@@ -1073,7 +1090,7 @@ const panesMustStand = (getStore: () => Store | null) => (context: unknown): Vie
   // declare is a family the read can only answer by DROPPING the member — and a dropped member answers the measured
   // default, so the app loses the geometry it had while `source` still says `'record'`. Refused with no repair, so the
   // store's rollback leaves the standing family and the profile's bytes exactly as they were.
-  if (node === null || panesAdmitAt(node, held)) return true
+  if (node === null || panesAdmitAt(node, held, paneIds(), zoneIds())) return true
   if (!writeInstant(context)) return true
   return { message: PANE_UNUSABLE_MESSAGE }
 }
@@ -1102,8 +1119,8 @@ const panesMustStand = (getStore: () => Store | null) => (context: unknown): Vie
  *  still STANDS, and the repair does not rewrite it: the repair fires only where the address is ABSENT, and rewriting a
  *  state a writer stated is the second-authority class `C-9` refuses. A fresh profile — every row's, and every boot that
  *  meets an absent family — carries the value above. */
-const repairPanes = (getStore: () => Store | null) => (context: unknown): ViewRepairAnswer =>
-  writeWholeValue(getStore)(context, VIEW_PANES_ADDRESS, PANES_TIER, viewPanesPlaceholder())
+const repairPanes = (getStore: () => Store | null, paneIds: () => readonly string[]) => (context: unknown): ViewRepairAnswer =>
+  writeWholeValue(getStore)(context, VIEW_PANES_ADDRESS, PANES_TIER, viewPanesPlaceholder(paneIds()))
 
 /** **`zones-must-stand` — THE ZONE FAMILY'S EXISTENCE *AND ITS FIXED DIMENSION*, AND ITS PLACEHOLDER IS EVERY DECLARED ZONE
  *  ID WITH ITS DECLARED DEFAULT `size`** (D-151; **`D-233`'s item (4)**; `D-91`'s *"the family that names no zone"* is
@@ -1150,7 +1167,7 @@ const repairPanes = (getStore: () => Store | null) => (context: unknown): ViewRe
  *  `'record'`. **A ZONE THAT CARRIES NOTHING IS STILL LEGAL TO THE SHAPE** (`{}` at a declared zone id, admitted by
  *  `zonesAdmitAt`), because that state is the family's own shape and not a value fault — and it is now REPAIRED at the root
  *  rather than left standing, which is the difference between `D-151`'s answer and `D-233`'s. */
-const zonesMustStand = (getStore: () => Store | null) => (context: unknown): ViewConstraintAnswer => {
+const zonesMustStand = (getStore: () => Store | null, _paneIds: () => readonly string[] = () => DECLARED_PANE_IDS, zoneIds: () => readonly string[] = () => DECLARED_ZONE_IDS) => (context: unknown): ViewConstraintAnswer => {
   const held = plain(context) ? context['value'] : undefined
   const node = nodeOf(context, VIEW_ZONES_ADDRESS)
   // **ABSENCE IS JUDGED AT THE ROOT** (D-151 H4): only the family's own address holding nothing is the fault the repair
@@ -1159,7 +1176,7 @@ const zonesMustStand = (getStore: () => Store | null) => (context: unknown): Vie
   if ((node === null || node.length === 0) && !plain(held)) {
     return {
       message: 'the zone family does not stand',
-      repair: repairZones(getStore),
+      repair: repairZones(getStore, zoneIds),
     }
   }
   // **A NODE THIS BODY CANNOT PLACE IS NEVER A FAULT** (measured: no act reaches this arm, and the arm that cannot be
@@ -1172,13 +1189,13 @@ const zonesMustStand = (getStore: () => Store | null) => (context: unknown): Vie
   // profile's bytes exactly as they were. **AND AT OR BELOW A ZONE ID THIS IS THE WHOLE ARM** (`D-151` H4): no repair is
   // reached from a leaf write, whatever the leaf carried.
   if (node.length > 0) {
-    if (zonesAdmitAt(node, held)) return true
+    if (zonesAdmitAt(node, held, zoneIds())) return true
     if (!writeInstant(context)) return true
     return { message: ZONE_UNUSABLE_MESSAGE }
   }
   // THE ROOT'S SECOND ARM, IN ITS OWN ORDER: ADMISSION FIRST, so a fault the shape names is refused as that fault rather
   // than repaired into a legal value the caller never wrote.
-  if (!zonesAdmitAt(node, held)) {
+  if (!zonesAdmitAt(node, held, zoneIds())) {
     if (!writeInstant(context)) return true
     return { message: ZONE_UNUSABLE_MESSAGE }
   }
@@ -1186,8 +1203,8 @@ const zonesMustStand = (getStore: () => Store | null) => (context: unknown): Vie
   // is lawful at BOTH measured instants — at a write's landing instant through the record's own `write` function, and at
   // the REGISTRATION instant through the three positions the record carries there (`writeWholeValue`). A guard here would
   // abstain at the one instant the cold profile's repair is the only thing that can make the zones present.
-  if (zoneFamilyStatesSizes(held)) return true
-  return { message: ZONE_UNSTATED_SIZE_MESSAGE, repair: repairZones(getStore) }
+  if (zoneFamilyStatesSizes(held, zoneIds())) return true
+  return { message: ZONE_UNSTATED_SIZE_MESSAGE, repair: repairZones(getStore, zoneIds) }
 }
 
 /** **THE ZONES' REPAIR: EVERY DECLARED ZONE ID, EACH STATING A `size`, AS ONE WHOLE LEGAL VALUE** — the FOUR
@@ -1209,9 +1226,9 @@ const zonesMustStand = (getStore: () => Store | null) => (context: unknown): Vie
  *  each declared zone where the family answered none, while `zoneIn`'s `null` starts meaning *"an id this record does not
  *  declare"* — the two states told apart with NO new member on the reading, and no reader's own answer moves with the
  *  figure (`zoneIn` still hands back the record the family carries). */
-const repairZones = (getStore: () => Store | null) => (context: unknown): ViewRepairAnswer => {
+const repairZones = (getStore: () => Store | null, zoneIds: () => readonly string[]) => (context: unknown): ViewRepairAnswer => {
   const held = plain(context) ? context['value'] : undefined
-  return writeWholeValue(getStore)(context, VIEW_ZONES_ADDRESS, ZONES_TIER, repairedZones(held))
+  return writeWholeValue(getStore)(context, VIEW_ZONES_ADDRESS, ZONES_TIER, repairedZones(held, zoneIds()))
 }
 
 /** **THE FAMILY THE ZONES' REPAIR WRITES — THE STANDING RECORD WHERE IT STATES A `size`, THE DECLARED DEFAULT WHERE IT DOES
@@ -1222,10 +1239,23 @@ const repairZones = (getStore: () => Store | null) => (context: unknown): ViewRe
  *  **A RECORD NEEDING THE REPAIR IS REPLACED, NEVER MERGED INTO**: `size` is the only member any writer under `src/` states
  *  at this family, and a merge over what stands would be the composition `D-151` deleted — while a record whose `size` is
  *  already valid is carried WHOLE, its own other members included, so the repair never drops a member a writer stated. */
-const repairedZones = (held: unknown): Record<string, unknown> => {
-  const placeholder = viewZonesPlaceholder()
+const repairedPanes = (held: unknown, paneIds: readonly string[], zoneIds: readonly string[]): Record<string, unknown> => {
+  const placeholder = viewPanesPlaceholder(paneIds)
   const family: Record<string, unknown> = {}
-  for (const id of DECLARED_ZONE_IDS) {
+  for (const id of paneIds) {
+    const standing = plain(held) ? held[id] : undefined
+    // **A PRESENT RECORD IS CARRIED WHOLE AND NEVER REWRITTEN** (`C-9`): the second pass mints the ABSENT, and an
+    // inadmissible standing value is the family judge's fault at a write, not this pass's to replace.
+    if (plain(standing)) family[id] = { ...standing }
+    else family[id] = placeholder[id]
+  }
+  return family
+}
+
+const repairedZones = (held: unknown, zoneIds: readonly string[]): Record<string, unknown> => {
+  const placeholder = viewZonesPlaceholder(zoneIds)
+  const family: Record<string, unknown> = {}
+  for (const id of zoneIds) {
     const standing = plain(held) ? held[id] : undefined
     if (plain(standing) && zoneStatesSize(standing)) family[id] = { ...standing }
     else family[id] = placeholder[id]
@@ -1240,9 +1270,9 @@ const repairedZones = (held: unknown): Record<string, unknown> => {
  *  record that is no record at all answers `false` here too, so an id the family names as a scalar is repaired rather than
  *  left (that state is separately REFUSED by `zonesAdmitAt` at the root, which is why the refusal is the answer a caller
  *  meets and this test is what a REPAIR meets). */
-const zoneFamilyStatesSizes = (family: unknown): boolean => {
+const zoneFamilyStatesSizes = (family: unknown, zoneIds: readonly string[]): boolean => {
   if (!plain(family)) return false
-  for (const id of DECLARED_ZONE_IDS) if (!zoneStatesSize(family[id])) return false
+  for (const id of zoneIds) if (!zoneStatesSize(family[id])) return false
   return true
 }
 
@@ -1311,7 +1341,11 @@ export interface ViewPairedFamily {
   readonly address: readonly string[]
   readonly tier: ViewDeclaredRoot['tier']
   readonly id: string
-  readonly body: (getStore: () => Store | null) => (context: unknown) => ViewConstraintAnswer
+  readonly body: (
+    getStore: () => Store | null,
+    paneIds: () => readonly string[],
+    zoneIds: () => readonly string[],
+  ) => (context: unknown) => ViewConstraintAnswer
 }
 
 /** **THE UNPAIRED ARM — A ROOT WITH NO DECLARATION, WHICH IS LAWFUL AND STAYS EXPRESSIBLE** (`D-145`, `D-132`): `['drag']`
@@ -1347,7 +1381,14 @@ export type ViewFamilySpec = ViewPairedFamily | ViewUnpairedFamily
  *  instant (`D-124` (iii)) — so the half that needs a store is handed one and the half that does not is not. */
 export interface ViewFamily {
   readonly root: ViewDeclaredRoot
-  declaration(getStore: () => Store | null): ViewConstraintDeclaration | null
+  /** **THE TWO DOMAINS ARE PASSED AT THE DECLARATION INSTANT** (`AN-31`'s fix (a)): the boot builds this family's constraint
+   *  before the store exists, so each body reads the thunk's answer when it fires. Absent answers the foundation's literals,
+   *  which is the only answer the creation's instant can have. */
+  declaration(
+    getStore: () => Store | null,
+    paneIds?: () => readonly string[],
+    zoneIds?: () => readonly string[],
+  ): ViewConstraintDeclaration | null
 }
 
 /** **THE FACTORY, AND THE BODY FACTORY IT IS HANDED IS NEVER CALLED HERE** (`D-124` (iii), `D-292`): a spec's `body` is
@@ -1366,8 +1407,12 @@ export function viewFamily(spec: ViewFamilySpec): ViewFamily {
   const paired: ViewPairedFamily = spec
   return {
     root,
-    declaration(getStore: () => Store | null): ViewConstraintDeclaration {
-      return { address: paired.address, id: paired.id, constraint: paired.body(getStore) }
+    declaration(
+      getStore: () => Store | null,
+      paneIds: () => readonly string[] = () => DECLARED_PANE_IDS,
+      zoneIds: () => readonly string[] = () => DECLARED_ZONE_IDS,
+    ): ViewConstraintDeclaration {
+      return { address: paired.address, id: paired.id, constraint: paired.body(getStore, paneIds, zoneIds) }
     },
   }
 }
@@ -1423,8 +1468,12 @@ export const VIEW_FAMILIES: readonly ViewFamily[] = [
  *  declaration to publish. **THREE ROWS STAND, AND THE FOURTH LEFT WITH ITS FAMILY**, nothing having been re-ordered in
  *  its place (`D-142`); the root that family still publishes is the tuple's UNPAIRED member, and `viewDeclaredRoots()`
  *  alone answers it (`D-145`, `D-132`). */
-export function viewConstraintDeclarations(getStore: () => Store | null): readonly ViewConstraintDeclaration[] {
-  return VIEW_FAMILIES.map((family) => family.declaration(getStore)).filter(
+export function viewConstraintDeclarations(
+  getStore: () => Store | null,
+  paneIds?: () => readonly string[],
+  zoneIds?: () => readonly string[],
+): readonly ViewConstraintDeclaration[] {
+  return VIEW_FAMILIES.map((family) => family.declaration(getStore, paneIds, zoneIds)).filter(
     (declaration): declaration is ViewConstraintDeclaration => declaration !== null,
   )
 }
@@ -1483,14 +1532,14 @@ export function viewDeclaredRoots(): readonly ViewDeclaredRoot[] {
  *  **AND A PANE WHOSE RECORD CANNOT BE READ OR ADMITTED LEAVES THE AXIS ARM NOTHING TO JUDGE**, so it answers `null` and the
  *  member then lands BY ITS OWN NAME with only the store's own `AddressNotFound` to answer — a hole rev 16 NAMES rather
  *  than hides, reachable only by an outside writer removing a declared pane's node (`D-105`). */
-const adjustableMemberOf = (store: Store, id: string): 'width' | 'height' | null => {
+const adjustableMemberOf = (store: Store, id: string, zoneIds: readonly string[]): 'width' | 'height' | null => {
   let held: unknown
   try {
     held = store.read([VIEW_PANES_ADDRESS[0] as string, id], PANES_TIER)
   } catch {
     return null
   }
-  const pane = paneOf(id, held)
+  const pane = paneOf(id, held, zoneIds)
   if (pane === null) return null
   const zone = pane.zone
   if (zone === undefined) return 'height'
@@ -1613,9 +1662,14 @@ export function createViewRecord(options: ViewRecordOptions): ViewRecord {
   const standing: Store = options.store
   // THE DELIVERY THE CONSTRUCTION ADOPTED (`D-219`): this record reads the other half of it and takes no registration.
   const delivery: ViewDelivery = options.delivery
+  /** **THE TWO DOMAINS, ASKED WHERE EACH INSTANT NEEDS THEM** (`AN-31`'s fix (a), `composed-domains.md` §2): a THUNK, because
+   *  the creation's constraints are built before the registry exists and every admission after it asks again. **ABSENT
+   *  ANSWERS THE FOUNDATION'S OWN LITERAL** — never `[]`, which would empty the creation repair. */
+  const paneIds = options.paneIds ?? (() => DECLARED_PANE_IDS)
+  const zoneIds = options.zoneIds ?? (() => DECLARED_ZONE_IDS)
 
   const reading = (): ViewRecordReading => {
-    const panes = panesOf(standing)
+    const panes = panesOf(standing, zoneIds())
     const zones = zonesOf(standing)
     const theme = themeOf(standing)
     return {
@@ -1644,7 +1698,7 @@ export function createViewRecord(options: ViewRecordOptions): ViewRecord {
       // `['panes', id]` to STAND and the store creates no parent, so the declared set is the whole of what the route may be
       // handed — and this is one of the closure's TWO seats, the other being `paneNodeAdmits` (`ASM-14`). `commitZones`' arm,
       // one family over.
-      if (!DECLARED_PANE_IDS.includes(id)) {
+      if (!paneIds().includes(id)) {
         return {
           status: 'refused',
           reason: UNDECLARED_PANE_REASON,
@@ -1688,7 +1742,7 @@ export function createViewRecord(options: ViewRecordOptions): ViewRecord {
       }
       if (suppliesWidth || suppliesHeight) {
         // THE PANE'S `zone`, READ OFF ITS OWN RECORD AT THE ACT'S INSTANT — the judgement and never a second write (`D-191`).
-        const adjustable = adjustableMemberOf(standing, id)
+        const adjustable = adjustableMemberOf(standing, id, zoneIds())
         const named: 'width' | 'height' = suppliesWidth ? 'width' : 'height'
         if (adjustable !== null && adjustable !== named) {
           return { status: 'refused', reason: PANE_GEOMETRY_REASON, message: PANE_GEOMETRY_MESSAGE, address: [VIEW_PANES_ADDRESS[0] as string, id] }
@@ -1753,7 +1807,7 @@ export function createViewRecord(options: ViewRecordOptions): ViewRecord {
       // this record does not declare is refused rather than silently creating a zone (`ASM-7`). A leaf write needs
       // `['zones', id]` to STAND and the store creates no parent, so the declared set is the whole of what the route may be
       // handed — and this is one of the closure's TWO seats, the other being `zoneNodeAdmits` (`ASM-9`).
-      if (!DECLARED_ZONE_IDS.includes(id)) {
+      if (!zoneIds().includes(id)) {
         return {
           status: 'refused',
           reason: UNDECLARED_ZONE_REASON,
@@ -1886,7 +1940,7 @@ export function createViewRecord(options: ViewRecordOptions): ViewRecord {
       if (!finiteNumber(figure) || figure < 0) {
         return { status: 'refused', reason: PANE_GEOMETRY_REASON, message: PANE_GEOMETRY_MESSAGE, address: [VIEW_DRAG_ADDRESS[0] as string, id] }
       }
-      const adjustable = adjustableMemberOf(standing, id)
+      const adjustable = adjustableMemberOf(standing, id, zoneIds())
       if (adjustable !== null && adjustable !== member) {
         return { status: 'refused', reason: PANE_GEOMETRY_REASON, message: PANE_GEOMETRY_MESSAGE, address: [VIEW_DRAG_ADDRESS[0] as string, id] }
       }
@@ -1938,6 +1992,46 @@ export function createViewRecord(options: ViewRecordOptions): ViewRecord {
       // tier: 'temp'})` fires the same delivery the drag's own commit does, and the consumer's only answer is a re-read
       // (`P-3`, `D-92`).
       return delivery.subscribe(handler)
+    },
+
+    standMissingFamilies(): ViewMissingFamiliesAnswer {
+      // **THE SECOND INSTANT** (`AN-31`'s fix (a)): ONE additive pass over the composed set, after the registry stands. A
+      // family is READ, the ids it lacks are computed, and ONLY THEN is the whole value written — a family that already
+      // names every composed id is not touched, so the creation's bytes and every writer's members survive a pass that
+      // added nothing (`C-9`, `D-82` clause 4: a read writes nothing).
+      const mint = (
+        address: readonly string[],
+        tier: ViewTier,
+        ids: readonly string[],
+        familyOf: (held: unknown) => Record<string, unknown>,
+      ): ViewMissingFamiliesAnswer['panes'] => {
+        let held: unknown
+        try {
+          held = standing.read(address, tier)
+        } catch {
+          // AN UNREADABLE FAMILY IS `absent` AND NOTHING IS WRITTEN: a guess over bytes the store refused is the second
+          // authority this module's reads exist to avoid (`D-105`).
+          return { status: 'absent', added: [] }
+        }
+        const present = plain(held) ? held : undefined
+        const added = ids.filter((id) => present === undefined || !Object.hasOwn(present, id))
+        if (added.length === 0) return { status: 'committed', added: [] }
+        try {
+          standing.write(address, tier, familyOf(held))
+          return { status: 'committed', added }
+        } catch {
+          return { status: 'absent', added: [] }
+        }
+      }
+      // **A ZONE WHOSE PLACEHOLDER STATES NO FIGURE IS NOT MINTED** (`OW-1`, `D-191`): `zoneFamilyStatesSizes` is not
+      // loosened, so a memberless zone would be refused by the very constraint this pass must satisfy — the id stays
+      // ABSENT from the family and is named in the design as the owed figure's consequence, never written as a guess.
+      const zoneFigure = viewZonesPlaceholder(zoneIds())
+      const mintableZones = zoneIds().filter((id) => Object.keys(zoneFigure[id] as Record<string, unknown>).length > 0)
+      return {
+        panes: mint(VIEW_PANES_ADDRESS, PANES_TIER, paneIds(), (held) => repairedPanes(held, paneIds(), zoneIds())),
+        zones: mint(VIEW_ZONES_ADDRESS, ZONES_TIER, mintableZones, (held) => repairedZones(held, zoneIds())),
+      }
     },
   }
 }

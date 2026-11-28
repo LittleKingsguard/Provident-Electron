@@ -479,13 +479,17 @@ describe('view-record · clause 2 — the push, measured per family and against 
     // mapping in between. What they measured that no longer exists — *"a boot that never called `attach()` hears nothing"* —
     // is a state the tree can no longer be in, and the row does not pretend otherwise.
     const surface = createViewSurface({ store, delivery })
-    expect(Object.keys(surface).sort(), 'the surface exposes its SIX routes and no subscription member').toEqual([
+    // **⟶ `S-7` RE-GRAIN (`2026-11-27`): SEVEN MEMBERS, AND THE SEVENTH IS A BOOT ACT AND NOT A ROUTE.** `standMissingFamilies`
+    // is the additive post-registry pass over the composed pane/zone set (`AN-31`'s fix (a)); the row's own claim is unchanged —
+    // **no subscription member stands on this surface** (`D-219`).
+    expect(Object.keys(surface).sort(), 'the surface exposes its six routes and ONE boot act, and no subscription member').toEqual([
       'clearDrag',
       'commitDrag',
       'commitPane',
       'commitTheme',
       'commitZones',
       'read',
+      'standMissingFamilies',
     ])
     let bridged = sunk.length
     expect(surface.commitPane(DEFAULT_PANE_ID, { height: 111 }).status).toBe('committed')
